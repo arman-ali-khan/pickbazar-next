@@ -110,7 +110,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[900px] p-0 flex flex-col max-h-[90vh]">
+            <DialogContent className="sm:max-w-[900px] p-0 grid grid-rows-[auto_1fr] max-h-[90vh]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 p-8 border-b">
                     {/* Image Section */}
                     <div>
@@ -208,8 +208,8 @@ export default function ProductQuickView({ product, children }: { product: Quick
                          </div>
                     </div>
                 </div>
-                <ScrollArea className="flex-1">
-                    <div className="p-8">
+                <ScrollArea>
+                    <div className="p-8 pt-0">
                         <div className="mb-12">
                             <h3 className="font-bold text-lg mb-4">Details</h3>
                             <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
