@@ -34,7 +34,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
     return (
         <Card className="w-full overflow-hidden group border-none shadow-none rounded-lg bg-white flex flex-col">
             <CardContent className="p-0 flex flex-col flex-grow">
-                <div className="bg-gray-50 rounded-md overflow-hidden aspect-square relative mb-4">
+                <div className="bg-gray-50 rounded-md overflow-hidden aspect-[3/2] relative mb-4">
                     {hasDiscount && product.tag && (
                         <Badge className="absolute top-3 right-3 z-10 bg-yellow-400 text-yellow-900 rounded-md px-2 text-xs font-semibold border-none">
                             {product.tag}

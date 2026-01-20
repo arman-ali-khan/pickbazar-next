@@ -27,7 +27,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <Card className="w-full overflow-hidden group border rounded-lg hover:shadow-md transition-shadow duration-200 bg-white flex flex-col">
             <CardContent className="p-4 flex flex-col flex-grow">
                 <ProductQuickView product={productForQuickView}>
-                    <div className="bg-gray-50 rounded-md overflow-hidden aspect-square relative mb-4 cursor-pointer">
+                    <div className="bg-gray-50 rounded-md overflow-hidden aspect-[3/2] relative mb-4 cursor-pointer">
                         {hasDiscount && (
                             <Badge className="absolute top-3 right-3 z-10 bg-yellow-400 text-yellow-900 rounded-md px-2 text-xs font-semibold border-none">
                                 {discountPercentage}%
