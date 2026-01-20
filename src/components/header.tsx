@@ -14,6 +14,8 @@ import { LoginDialog } from '@/components/login-dialog';
 import { Input } from './ui/input';
 import { useUI } from '@/contexts/ui-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
   <Link
@@ -38,20 +40,34 @@ const categories = [
 
 export default function Header() {
   const { isSearchOpen, setSearchOpen } = useUI();
+  const router = useRouter();
+  const [searchTerm, setSearchTerm] = useState('');
   const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchOpen(false);
+      setSearchTerm('');
+    }
+  };
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white">
       <div className="container flex h-20 items-center">
         {isSearchOpen ? (
            <div className="flex w-full items-center gap-2">
-            <div className="flex w-full items-center rounded-lg border-2 border-primary bg-white">
+            <form onSubmit={handleSearch} className="flex w-full items-center rounded-lg border-2 border-primary bg-white">
                 <div className="relative flex-grow">
                     <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       placeholder="Search your products from here"
                       className="h-12 w-full border-0 bg-transparent pl-12 pr-4 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
                       autoFocus
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
                 <Button
@@ -59,10 +75,11 @@ export default function Header() {
                     size="icon"
                     className="h-11 w-11 flex-shrink-0 rounded-l-none rounded-r-md text-muted-foreground hover:bg-primary/10"
                     onClick={() => setSearchOpen(false)}
+                    type="button"
                 >
                     <X className="h-5 w-5" />
                 </Button>
-            </div>
+            </form>
           </div>
         ) : (
           <>
@@ -94,7 +111,7 @@ export default function Header() {
                             <div className="pl-8 flex flex-col items-start pt-1">
                               {category.sub.map((subCategory) => (
                                 <DropdownMenuItem key={subCategory} asChild className="w-full">
-                                  <Link href={`/shop?category=${subCategory}`}>{subCategory}</Link>
+                                  <Link href={`/shop?category=${encodeURIComponent(subCategory)}`}>{subCategory}</Link>
                                 </DropdownMenuItem>
                               ))}
                             </div>
