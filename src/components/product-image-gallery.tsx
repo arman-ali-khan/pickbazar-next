@@ -23,7 +23,7 @@ export default function HeroBanners() {
                 <div className="backdrop-blur-xl rounded-lg shadow-lg h-full hidden md:flex flex-col text-black max-h-[450px]">
                     <h2 className="text-lg text-white font-semibold p-4 border-b">Categories</h2>
                     <div className="flex-1 overflow-y-auto p-2">
-                        <Accordion type="multiple" className="w-full">
+                        <Accordion type="single" collapsible defaultValue={categoryData[0].name} className="w-full">
                             {categoryData.map((category) => (
                                 <AccordionItem value={category.name} key={category.name} className="border-b-0">
                                     <AccordionTrigger className="p-3 text-sm font-medium text-white hover:text-primary hover:no-underline rounded-md hover:bg-gray-100">
