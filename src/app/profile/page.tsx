@@ -2,7 +2,7 @@
 
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -10,40 +10,49 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { signOut } from 'firebase/auth';
-import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 import CartDrawer from '@/components/cart-drawer';
+import ProfileSidebar from '@/components/profile-sidebar';
+import { UploadCloud, Plus } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+
+const addresses = [
+    {
+        title: 'Irure Elit Fugiat S',
+        address: 'Temporibus sunt ist, Enim magni ratione p, Aperiam rem sint cor, 87067, Quisquam non atque v',
+    },
+    {
+        title: 'Bjk',
+        address: 'fjjbj, mymjf, ufjc, 234578, ba',
+    },
+];
 
 export default function ProfilePage() {
   const { user, loading } = useUser();
   const router = useRouter();
-  const auth = useAuth();
   const { toast } = useToast();
+  const [name, setName] = useState('');
+  const [bio, setBio] = useState('');
+
 
   useEffect(() => {
     if (!loading && !user) {
       router.push('/');
     }
+     if (user) {
+        setName(user.displayName || '');
+    }
   }, [user, loading, router]);
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.push('/');
-      toast({
-        title: 'Logged Out',
-        description: 'You have been successfully logged out.',
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Logout Failed',
-        description: 'An error occurred while logging out.',
-      });
-    }
-  };
+  const handleProfileUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Here you would typically update the user's profile in Firebase
+    console.log({ name, bio });
+    toast({
+        title: "Profile Updated",
+        description: "Your profile information has been saved.",
+    });
+  }
 
   if (loading || !user) {
     return (
@@ -57,39 +66,95 @@ export default function ProfilePage() {
     <div className="bg-muted/20 min-h-screen">
       <Header />
       <main className="container py-12">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">My Profile</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex items-center space-x-6">
-              <Avatar className="h-24 w-24">
-                <AvatarImage src={user.photoURL || 'https://picsum.photos/seed/profile/200'} alt={user.displayName || 'User'} data-ai-hint="person face" />
-                <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold">{user.displayName || 'New User'}</h2>
-                <p className="text-muted-foreground">{user.email}</p>
-                <Button variant="outline" size="sm">Change Photo</Button>
-              </div>
+        <div className="grid lg:grid-cols-[320px_1fr] gap-8 items-start">
+            <ProfileSidebar />
+
+            <div className="space-y-8">
+                {/* Profile Form */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Profile</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="flex flex-col items-center gap-6 p-6 border-2 border-dashed rounded-lg">
+                            <UploadCloud className="h-12 w-12 text-muted-foreground" />
+                            <div className="text-center">
+                                <p className="font-semibold text-primary">Upload an image <span className="text-muted-foreground font-normal">or drag and drop</span></p>
+                                <p className="text-xs text-muted-foreground">PNG, JPG</p>
+                            </div>
+                        </div>
+
+                        <div className="relative w-28 h-28 -mt-20 ml-8">
+                            <Avatar className="h-full w-full border-4 border-background">
+                                <AvatarImage src={user.photoURL || 'https://picsum.photos/seed/profile/200'} alt={user.displayName || 'User'} data-ai-hint="person face" />
+                                <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                        </div>
+
+                        <form onSubmit={handleProfileUpdate} className="space-y-4">
+                            <div>
+                                <Label htmlFor="name">Name</Label>
+                                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+                            </div>
+                            <div>
+                                <Label htmlFor="bio">Bio</Label>
+                                <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell us about yourself" />
+                            </div>
+                            <div className="flex justify-end">
+                                <Button type="submit">Save</Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
+
+                {/* Email */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Email</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                         <Input id="email" defaultValue={user.email || ''} disabled />
+                         <div className="flex justify-end">
+                            <Button>Update</Button>
+                         </div>
+                    </CardContent>
+                </Card>
+
+                {/* Contact Number */}
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>Contact Number</CardTitle>
+                        <Button variant="link" className="p-0 h-auto text-primary">+ Update</Button>
+                    </CardHeader>
+                    <CardContent>
+                         <Input id="contact" defaultValue="+1 (936) 514-1641" />
+                    </CardContent>
+                </Card>
+
+                 {/* Addresses */}
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <CardTitle>Addresses</CardTitle>
+                         <Button variant="link" className="p-0 h-auto text-primary flex items-center gap-1">
+                            <Plus className="h-4 w-4" />
+                            Add
+                        </Button>
+                    </CardHeader>
+                    <CardContent className="grid sm:grid-cols-2 gap-4">
+                        {addresses.map((address, i) => (
+                             <Card key={i}>
+                                <CardHeader>
+                                    <CardTitle className="text-base">{address.title}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="text-sm text-muted-foreground">{address.address}</p>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </CardContent>
+                </Card>
             </div>
-            <Separator />
-            <div className="space-y-4">
-                <div>
-                    <Label htmlFor="displayName">Display Name</Label>
-                    <Input id="displayName" defaultValue={user.displayName || ''} />
-                </div>
-                 <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" defaultValue={user.email || ''} disabled />
-                </div>
-            </div>
-            <div className="flex justify-between">
-                <Button>Update Profile</Button>
-                <Button variant="destructive" onClick={handleLogout}>Logout</Button>
-            </div>
-          </CardContent>
-        </Card>
+        </div>
       </main>
       <Footer />
       <CartDrawer />
