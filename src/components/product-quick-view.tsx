@@ -276,7 +276,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
                     </div>
                     <div>
                          <h3 className="font-bold text-lg mb-6">Related Products</h3>
-                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1">
+                         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1">
                             {product.relatedProducts.map(related => (
                                 <RelatedProductCard key={related.id} product={related} />
                             ))}
