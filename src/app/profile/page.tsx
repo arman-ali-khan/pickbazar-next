@@ -15,15 +15,33 @@ import CartDrawer from '@/components/cart-drawer';
 import ProfileSidebar from '@/components/profile-sidebar';
 import { UploadCloud, Plus } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { AddAddressDialog, type AddressFormValues } from '@/components/add-address-dialog';
 
-const addresses = [
+interface Address extends AddressFormValues {
+  id: number;
+}
+
+const initialAddresses = [
     {
+        id: 1,
+        type: 'shipping' as const,
         title: 'Irure Elit Fugiat S',
-        address: 'Temporibus sunt ist, Enim magni ratione p, Aperiam rem sint cor, 87067, Quisquam non atque v',
+        country: 'USA',
+        city: 'New York',
+        state: 'NY',
+        zip: '10001',
+        streetAddress: 'Temporibus sunt ist, Enim magni ratione p, Aperiam rem sint cor, 87067, Quisquam non atque v',
     },
     {
+        id: 2,
+        type: 'billing' as const,
         title: 'Bjk',
-        address: 'fjjbj, mymjf, ufjc, 234578, ba',
+        country: 'USA',
+        city: 'Los Angeles',
+        state: 'CA',
+        zip: '90001',
+        streetAddress: 'fjjbj, mymjf, ufjc, 234578, ba',
     },
 ];
 
@@ -33,6 +51,7 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
+  const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
 
 
   useEffect(() => {
@@ -53,6 +72,16 @@ export default function ProfilePage() {
         description: "Your profile information has been saved.",
     });
   }
+  
+  const handleAddAddress = (data: AddressFormValues) => {
+    const newAddress = { ...data, id: Date.now() };
+    setAddresses(prev => [...prev, newAddress]);
+    toast({
+      title: "Address Added",
+      description: "Your new address has been saved.",
+    });
+  };
+
 
   if (loading || !user) {
     return (
@@ -135,19 +164,24 @@ export default function ProfilePage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Addresses</CardTitle>
-                         <Button variant="link" className="p-0 h-auto text-primary flex items-center gap-1">
-                            <Plus className="h-4 w-4" />
-                            Add
-                        </Button>
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="link" className="p-0 h-auto text-primary flex items-center gap-1">
+                                    <Plus className="h-4 w-4" />
+                                    Add
+                                </Button>
+                            </DialogTrigger>
+                            <AddAddressDialog onAddAddress={handleAddAddress} />
+                        </Dialog>
                     </CardHeader>
                     <CardContent className="grid sm:grid-cols-2 gap-4">
-                        {addresses.map((address, i) => (
-                             <Card key={i}>
+                        {addresses.map((address) => (
+                             <Card key={address.id}>
                                 <CardHeader>
                                     <CardTitle className="text-base">{address.title}</CardTitle>
                                 </CardHeader>
                                 <CardContent>
-                                    <p className="text-sm text-muted-foreground">{address.address}</p>
+                                    <p className="text-sm text-muted-foreground">{address.streetAddress}, {address.city}, {address.state} {address.zip}, {address.country}</p>
                                 </CardContent>
                             </Card>
                         ))}
