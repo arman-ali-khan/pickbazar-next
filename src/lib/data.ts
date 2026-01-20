@@ -63,6 +63,10 @@ export const products = [
   },
   { id: 4, name: 'Brussels Sprout', price: 3.69, image: getImage('related_prod_3'), weight: '1lb', originalPrice: 4.50 },
   { id: 5, name: 'Clementines', price: 2.50, image: getImage('related_prod_4'), weight: '1lb', originalPrice: 2.75 },
+  { id: 6, name: 'Sweet Corn', price: 1.80, image: getImage('related_prod_5'), weight: '1lb' },
+  { id: 7, name: 'Cucumber', price: 0.75, image: getImage('related_prod_6'), weight: '1pc' },
+  { id: 8, name: 'Dates', price: 4.50, image: getImage('related_prod_7'), weight: '250g' },
+  { id: 9, name: 'French Green Beans', price: 2.20, image: getImage('related_prod_8'), weight: '1lb' },
 ];
 
 
@@ -158,7 +162,7 @@ export const product = {
   ],
 };
 
-export const relatedProducts = products.slice(1, 9).map(p => ({...p, id: p.id, name: p.name, price: p.price, image: p.image, weight: p.weight, tag: p.originalPrice ? `${Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}%` : undefined}));
+export const relatedProducts = products.slice(1, 13).map(p => ({...p, id: p.id, name: p.name, price: p.price, image: p.image, weight: p.weight, tag: p.originalPrice ? `${Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}%` : undefined}));
 
 export type Product = (typeof products)[0] & { originalPrice?: number };
 export type RelatedProduct = typeof relatedProducts[0];
