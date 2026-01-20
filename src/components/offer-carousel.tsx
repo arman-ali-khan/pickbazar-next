@@ -14,18 +14,28 @@ import Image from 'next/image';
 
 const offerBanners = [
   {
-    title: 'Free Delivery on First Order',
-    subtitle: 'Order now and get your groceries delivered for free.',
-    image: 'https://storage.googleapis.com/app-pro-us-east4-prod-content/9d739818816c4c37976e1f33f114644a/grocery-banner-2.png',
+    title: 'Express Delivery',
+    subtitle: 'With selected items',
+    image: { src: 'https://picsum.photos/seed/express-delivery/200/200', hint: 'delivery person flying' },
     link: '#',
-    bgColor: 'bg-accent/20'
+    buttonText: 'Save Now',
+    bgColor: 'bg-sky-100'
   },
   {
-    title: 'Weekly Discounts on Fresh Produce',
-    subtitle: 'Save up to 30% on selected fresh fruits and vegetables.',
-    image: 'https://picsum.photos/seed/offer-banner2/800/600',
+    title: 'Cash On Delivery',
+    subtitle: 'With selected items',
+    image: { src: 'https://picsum.photos/seed/cash-delivery/200/200', hint: 'cash payment groceries' },
     link: '#',
-    bgColor: 'bg-primary/10'
+    buttonText: 'Save Now',
+    bgColor: 'bg-emerald-100'
+  },
+  {
+    title: 'Gift Voucher',
+    subtitle: 'With personal care items',
+    image: { src: 'https://picsum.photos/seed/gift-voucher/200/200', hint: 'gift box' },
+    link: '#',
+    buttonText: 'Shop Coupons',
+    bgColor: 'bg-fuchsia-100'
   }
 ];
 
@@ -37,37 +47,36 @@ export default function OfferCarousel() {
         opts={{ loop: true }}
         className="w-full"
       >
-        <CarouselContent>
+        <CarouselContent className="-ml-4">
           {offerBanners.map((banner, index) => (
-            <CarouselItem key={index}>
-                <div className={`grid md:grid-cols-2 items-center gap-8 rounded-lg p-8 ${banner.bgColor}`}>
-                  <div className="space-y-4 text-center md:text-left">
-                      <h2 className="text-3xl md:text-4xl font-bold text-gray-800 leading-tight">
-                          {banner.title}
-                      </h2>
-                      <p className="text-gray-600 text-lg">
-                          {banner.subtitle}
-                      </p>
-                      <Button asChild size="lg" className="font-semibold px-8 py-6 text-base">
-                          <Link href={banner.link}>Learn More</Link>
-                      </Button>
-                  </div>
-                  <div className="relative h-64 md:h-[300px] mt-8 md:mt-0">
-                      <Image 
-                          src={banner.image}
-                          alt={banner.title}
-                          fill
-                          className="object-contain"
-                      />
-                  </div>
+            <CarouselItem key={index} className="pl-4 md:basis-1/2 lg:basis-1/3">
+              <div className={`rounded-lg p-6 flex items-center justify-between h-48 ${banner.bgColor}`}>
+                <div className="space-y-3">
+                    <h3 className="text-xl font-bold text-gray-800">
+                        {banner.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                        {banner.subtitle}
+                    </p>
+                    <Button asChild size="sm" className="font-semibold px-4 py-2 text-xs rounded-full bg-white text-gray-800 hover:bg-gray-50 shadow">
+                        <Link href={banner.link}>{banner.buttonText}</Link>
+                    </Button>
+                </div>
+                <div className="relative h-32 w-32">
+                    <Image 
+                        src={banner.image.src}
+                        alt={banner.title}
+                        data-ai-hint={banner.image.hint}
+                        fill
+                        className="object-contain"
+                    />
+                </div>
               </div>
             </CarouselItem>
           ))}
         </CarouselContent>
-        <div className="hidden md:block">
-            <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2" />
-            <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2" />
-        </div>
+        <CarouselPrevious className="absolute left-[-1.5rem] top-1/2 -translate-y-1/2" />
+        <CarouselNext className="absolute right-[-1.5rem] top-1/2 -translate-y-1/2" />
       </Carousel>
     </section>
   )

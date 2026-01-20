@@ -19,8 +19,9 @@ export default function HeroBanners() {
             </div>
             <div className="relative h-64 md:h-full mt-8 md:mt-0">
                 <Image 
-                    src="https://storage.googleapis.com/app-pro-us-east4-prod-content/9d739818816c4c37976e1f33f114644a/grocery-banner.png" 
+                    src="https://storage.googleapis.com/app-pro-us-east4-prod-content/9d739818816c4c37976e1f33f114644a/grocery-banner-2.png" 
                     alt="Grocery delivery" 
+                    data-ai-hint="grocery delivery"
                     fill
                     className="object-contain"
                 />
