@@ -102,7 +102,9 @@ export default function ProfilePage() {
       <Header />
       <main className="container py-12">
         <div className="grid lg:grid-cols-[320px_1fr] gap-8 items-start">
-            <ProfileSidebar />
+            <div className="hidden md:block">
+                <ProfileSidebar />
+            </div>
 
             <div className="space-y-8">
                 {/* Profile Form */}

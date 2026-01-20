@@ -18,7 +18,9 @@ export default function ProfileSubPage() {
           <Header />
           <main className="container py-12">
             <div className="grid lg:grid-cols-[320px_1fr] gap-8 items-start">
-                <ProfileSidebar />
+                <div className="hidden md:block">
+                    <ProfileSidebar />
+                </div>
                 <div className="flex items-center justify-center h-96 bg-white rounded-lg shadow-sm">
                     <h1 className="text-2xl font-bold text-muted-foreground">{pageTitle} - Coming Soon</h1>
                 </div>
