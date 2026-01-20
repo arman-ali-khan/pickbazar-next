@@ -1,6 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -119,6 +119,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
                 className="sm:max-w-[900px] p-0 max-h-[90vh] overflow-y-auto grid grid-rows-[auto_1fr]"
                 onScroll={handleScroll}
             >
+                <DialogTitle className="sr-only">{`Quick view for ${product.name}`}</DialogTitle>
                 {/* Sticky Header */}
                 <div className={cn(
                     "sticky top-0 left-0 right-0 bg-white/80 backdrop-blur-sm z-10 border-b transition-opacity duration-300",
