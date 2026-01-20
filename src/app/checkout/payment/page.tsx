@@ -10,7 +10,7 @@ import { selectSubtotal, selectCartItems, clearCart } from '@/lib/redux/slices/c
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
-import { CreditCard, Wallet, Landmark } from 'lucide-react';
+import { CreditCard, Landmark, Smartphone, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function PaymentPage() {
@@ -51,13 +51,21 @@ export default function PaymentPage() {
                     </div>
                     <RadioGroupItem value="card" id="card" />
                   </Label>
-                  <Label htmlFor="wallet" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
-                    <Wallet className="h-6 w-6 text-primary" />
+                  <Label htmlFor="mobile-banking" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                    <Smartphone className="h-6 w-6 text-primary" />
                     <div className="flex-1">
-                      <p className="font-semibold">Wallet</p>
-                      <p className="text-sm text-muted-foreground">Pay with your Pickbazar wallet points</p>
+                      <p className="font-semibold">Mobile Banking</p>
+                      <p className="text-sm text-muted-foreground">Pay with bKash, Nagad, Rocket</p>
                     </div>
-                    <RadioGroupItem value="wallet" id="wallet" />
+                    <RadioGroupItem value="mobile-banking" id="mobile-banking" />
+                  </Label>
+                  <Label htmlFor="sslcommerz" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                    <ShieldCheck className="h-6 w-6 text-primary" />
+                    <div className="flex-1">
+                      <p className="font-semibold">SSLCommerz</p>
+                      <p className="text-sm text-muted-foreground">Secure online payment gateway</p>
+                    </div>
+                    <RadioGroupItem value="sslcommerz" id="sslcommerz" />
                   </Label>
                    <Label htmlFor="cod" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                     <Landmark className="h-6 w-6 text-primary" />
