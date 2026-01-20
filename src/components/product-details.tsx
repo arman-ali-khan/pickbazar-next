@@ -7,6 +7,7 @@ import { Plus, Minus } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Product } from '@/lib/data';
 import { useCart } from '@/contexts/cart-context';
+import ProductQuickView from './product-quick-view';
 
 export default function ProductCard({ product }: { product: Product }) {
     const { addToCart, updateQuantity, getItemQuantity } = useCart();
@@ -18,27 +19,29 @@ export default function ProductCard({ product }: { product: Product }) {
     return (
         <Card className="w-full overflow-hidden group border rounded-lg hover:shadow-md transition-shadow duration-200 bg-white flex flex-col">
             <CardContent className="p-4 flex flex-col flex-grow">
-                <div className="bg-gray-50 rounded-md overflow-hidden aspect-square relative mb-4">
-                    {hasDiscount && (
-                        <Badge className="absolute top-3 right-3 z-10 bg-primary text-primary-foreground rounded-md px-2 text-xs font-semibold">
-                            {discountPercentage}%
-                        </Badge>
-                    )}
-                    <Image
-                        src={product.image.imageUrl}
-                        alt={product.name}
-                        data-ai-hint={product.image.imageHint}
-                        fill
-                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
-                    />
-                </div>
+                <ProductQuickView product={product}>
+                    <div className="bg-gray-50 rounded-md overflow-hidden aspect-square relative mb-4 cursor-pointer">
+                        {hasDiscount && (
+                            <Badge className="absolute top-3 right-3 z-10 bg-primary text-primary-foreground rounded-md px-2 text-xs font-semibold">
+                                {discountPercentage}%
+                            </Badge>
+                        )}
+                        <Image
+                            src={product.image.imageUrl}
+                            alt={product.name}
+                            data-ai-hint={product.image.imageHint}
+                            fill
+                            className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                        />
+                    </div>
+                </ProductQuickView>
                 <div className="space-y-2 flex-grow">
                     <div className="flex items-baseline gap-2">
                         <p className="font-bold text-gray-800 text-lg">${product.price.toFixed(2)}</p>
                         {hasDiscount && <p className="text-sm line-through text-muted-foreground">${product.originalPrice.toFixed(2)}</p>}
                     </div>
                     <h3 className="font-normal text-gray-600 text-sm">
-                        <Link href="#" className="hover:text-primary transition-colors">{product.name} {product.weight}</Link>
+                        <Link href={`/products/${product.id}`} className="hover:text-primary transition-colors">{product.name} {product.weight}</Link>
                     </h3>
                 </div>
                  <div className="mt-4">
