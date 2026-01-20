@@ -17,6 +17,7 @@ import { UploadCloud, Plus } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { AddAddressDialog, type AddressFormValues } from '@/components/add-address-dialog';
+import { UpdateContactDialog } from '@/components/update-contact-dialog';
 
 interface Address extends AddressFormValues {
   id: number;
@@ -52,6 +53,7 @@ export default function ProfilePage() {
   const [name, setName] = useState('');
   const [bio, setBio] = useState('');
   const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
+  const [contactNumber, setContactNumber] = useState('+1 (936) 514-1641');
 
 
   useEffect(() => {
@@ -80,6 +82,10 @@ export default function ProfilePage() {
       title: "Address Added",
       description: "Your new address has been saved.",
     });
+  };
+
+  const handleUpdateContact = (newContact: string) => {
+    setContactNumber(newContact);
   };
 
 
@@ -153,10 +159,15 @@ export default function ProfilePage() {
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle>Contact Number</CardTitle>
-                        <Button variant="link" className="p-0 h-auto text-primary">+ Update</Button>
+                         <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="link" className="p-0 h-auto text-primary">+ Update</Button>
+                            </DialogTrigger>
+                            <UpdateContactDialog currentContact={contactNumber} onUpdateContact={handleUpdateContact} />
+                        </Dialog>
                     </CardHeader>
                     <CardContent>
-                         <Input id="contact" defaultValue="+1 (936) 514-1641" />
+                         <Input id="contact" value={contactNumber} readOnly />
                     </CardContent>
                 </Card>
 
