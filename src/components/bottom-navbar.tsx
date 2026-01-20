@@ -40,7 +40,7 @@ const categories = [
     { name: 'Beverage', icon: GlassWater, sub: ['Coffee', 'Juice'] },
 ];
 
-const navItems = ['Shops', 'Offers', 'Contact'];
+const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '#' }, { name: 'Contact', href: '#' }];
 
 function PagesDrawer() {
     return (
@@ -84,7 +84,7 @@ function PagesDrawer() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                     {navItems.map((item) => (
-                      <NavItem key={item}>{item}</NavItem>
+                      <NavItem key={item.name} href={item.href}>{item.name}</NavItem>
                     ))}
                     <DropdownMenu>
                         <DropdownMenuTrigger className="flex items-center gap-1 transition-colors hover:text-primary text-sm font-medium text-gray-600">

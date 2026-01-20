@@ -17,6 +17,7 @@ export const products = [
     price: 2.10,
     image: getImage('carrots'),
     category: 'Vegetables',
+    rating: 4.5,
   },
   {
     id: 12,
@@ -25,6 +26,7 @@ export const products = [
     weight: '1lbs',
     image: getImage('white_radish'),
     category: 'Vegetables',
+    rating: 4.2,
   },
   { 
     id: 10,
@@ -34,6 +36,7 @@ export const products = [
     image: getImage('radish'),
     originalPrice: 2.59,
     category: 'Vegetables',
+    rating: 4.8,
   },
   { 
     id: 13,
@@ -42,6 +45,7 @@ export const products = [
     image: getImage('baby_radish'),
     weight: '1lbs',
     category: 'Vegetables',
+    rating: 3.9,
   },
   {
     id: 1,
@@ -51,6 +55,7 @@ export const products = [
     originalPrice: 2.00,
     image: getImage('apple_main'),
     category: 'Fruits',
+    rating: 4.7,
   },
   {
     id: 2,
@@ -59,6 +64,7 @@ export const products = [
     weight: '2lb',
     image: getImage('related_prod_1'),
     category: 'Vegetables',
+    rating: 4.3,
   },
   {
     id: 3,
@@ -67,13 +73,14 @@ export const products = [
     weight: '1lb',
     image: getImage('related_prod_2'),
     category: 'Fruits',
+    rating: 4.9,
   },
-  { id: 4, name: 'Brussels Sprout', price: 3.69, image: getImage('related_prod_3'), weight: '1lb', originalPrice: 4.50, category: 'Vegetables' },
-  { id: 5, name: 'Clementines', price: 2.50, image: getImage('related_prod_4'), weight: '1lb', originalPrice: 2.75, category: 'Fruits' },
-  { id: 6, name: 'Sweet Corn', price: 1.80, image: getImage('related_prod_5'), weight: '1lb', category: 'Vegetables' },
-  { id: 7, name: 'Cucumber', price: 0.75, image: getImage('related_prod_6'), weight: '1pc', category: 'Vegetables' },
-  { id: 8, name: 'Dates', price: 4.50, image: getImage('related_prod_7'), weight: '250g', category: 'Fruits' },
-  { id: 9, name: 'French Green Beans', price: 2.20, image: getImage('related_prod_8'), weight: '1lb', category: 'Vegetables' },
+  { id: 4, name: 'Brussels Sprout', price: 3.69, image: getImage('related_prod_3'), weight: '1lb', originalPrice: 4.50, category: 'Vegetables', rating: 4.1 },
+  { id: 5, name: 'Clementines', price: 2.50, image: getImage('related_prod_4'), weight: '1lb', originalPrice: 2.75, category: 'Fruits', rating: 4.6 },
+  { id: 6, name: 'Sweet Corn', price: 1.80, image: getImage('related_prod_5'), weight: '1lb', category: 'Vegetables', rating: 4.4 },
+  { id: 7, name: 'Cucumber', price: 0.75, image: getImage('related_prod_6'), weight: '1pc', category: 'Vegetables', rating: 4.0 },
+  { id: 8, name: 'Dates', price: 4.50, image: getImage('related_prod_7'), weight: '250g', category: 'Fruits', rating: 4.9 },
+  { id: 9, name: 'French Green Beans', price: 2.20, image: getImage('related_prod_8'), weight: '1lb', category: 'Vegetables', rating: 4.2 },
 ];
 
 
@@ -171,7 +178,7 @@ export const product = {
 
 export const relatedProducts = products.slice(1, 13).map(p => ({...p, id: p.id, name: p.name, price: p.price, image: p.image, weight: p.weight, tag: p.originalPrice ? `${Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}%` : undefined}));
 
-export type Product = (typeof products)[0] & { originalPrice?: number };
+export type Product = (typeof products)[0] & { originalPrice?: number, rating?: number };
 export type RelatedProduct = typeof relatedProducts[0];
 export type Review = typeof product.reviews[0];
 export type Question = typeof product.questions[0];
