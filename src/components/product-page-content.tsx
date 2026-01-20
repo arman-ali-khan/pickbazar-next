@@ -41,8 +41,8 @@ export default function ProductPageContent({ product, relatedProducts }: Product
         <div>
             <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
                 <div>
-                    <div className="aspect-square relative rounded-lg border mb-4">
-                        <Image src={mainImage} alt={product.name} fill className="object-contain p-8" />
+                    <div className="aspect-square relative rounded-lg border mb-4 overflow-hidden group">
+                        <Image src={mainImage} alt={product.name} fill className="object-contain p-8 transition-transform duration-300 ease-in-out group-hover:scale-125" />
                     </div>
                     <div className="grid grid-cols-5 gap-2">
                         {product.images.map((image, index) => (
