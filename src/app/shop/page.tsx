@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
@@ -28,7 +28,7 @@ const PRODUCTS_PER_PAGE = 12;
 export default function ShopPage() {
   const searchParams = useSearchParams();
   const category = searchParams.get('category');
-  const initialCategories = category ? [category] : [];
+  const initialCategories = useMemo(() => (category ? [category] : []), [category]);
 
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(allProducts);
   const [displayProducts, setDisplayProducts] = useState<Product[]>(allProducts);
