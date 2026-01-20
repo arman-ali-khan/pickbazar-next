@@ -76,7 +76,19 @@ const CategoriesNav = () => {
         )
     }
 
-    return null;
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                    <Menu className="h-5 w-5" />
+                    Categories
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-80 p-2 max-h-[calc(80vh)] overflow-y-auto">
+                {categoriesContent}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
 };
 
 export default function Header() {
@@ -139,6 +151,12 @@ export default function Header() {
           <>
             <div className="flex items-center gap-4">
                 <div className="md:hidden">
+                    <CategoriesNav />
+                </div>
+                <div className={cn(
+                    "hidden md:block transition-opacity duration-300",
+                    isScrolled ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}>
                     <CategoriesNav />
                 </div>
               <Link href="/" className="flex items-center gap-2">
