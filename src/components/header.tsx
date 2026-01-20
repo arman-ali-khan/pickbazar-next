@@ -8,6 +8,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { LoginDialog } from '@/components/login-dialog';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
   <Link
@@ -69,7 +71,12 @@ export default function Header() {
              <Button variant="ghost" size="icon">
                 <Search className="h-5 w-5" />
              </Button>
-             <Button>Join</Button>
+             <Dialog>
+                <DialogTrigger asChild>
+                    <Button>Join</Button>
+                </DialogTrigger>
+                <LoginDialog />
+              </Dialog>
              <Button>Become a Seller</Button>
           </div>
           <Sheet>
@@ -100,7 +107,12 @@ export default function Header() {
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <div className="mt-4 flex flex-col gap-2">
-                    <Button>Join</Button>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button>Join</Button>
+                        </DialogTrigger>
+                        <LoginDialog />
+                    </Dialog>
                     <Button>Become a Seller</Button>
                 </div>
               </div>
