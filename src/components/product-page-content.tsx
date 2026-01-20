@@ -11,6 +11,7 @@ import ProductCard from '@/components/product-details';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
 import { ImagePlaceholder } from '@/lib/placeholder-images';
+import ImageMagnify from './image-magnify';
 
 interface ProductPageContentProps {
     product: Product & {
@@ -33,7 +34,7 @@ interface ProductPageContentProps {
 export default function ProductPageContent({ product, relatedProducts }: ProductPageContentProps) {
     const { addToCart, updateQuantity, getItemQuantity } = useCart();
     const quantity = getItemQuantity(product.id);
-    const [mainImage, setMainImage] = useState(product.images[0].imageUrl);
+    const [mainImage, setMainImage] = useState(product.images[0]);
 
     const totalReviews = product.ratingDistribution.reduce((acc, item) => acc + item.count, 0);
 
@@ -41,15 +42,20 @@ export default function ProductPageContent({ product, relatedProducts }: Product
         <div>
             <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
                 <div>
-                    <div className="aspect-square relative rounded-lg border mb-4 overflow-hidden group">
-                        <Image src={mainImage} alt={product.name} fill className="object-contain p-8 transition-transform duration-300 ease-in-out group-hover:scale-125" />
+                    <div className="aspect-square relative rounded-lg border mb-4">
+                        <ImageMagnify
+                            src={mainImage.imageUrl}
+                            alt={product.name}
+                            imageHint={mainImage.imageHint}
+                            imageClassName="p-8"
+                        />
                     </div>
                     <div className="grid grid-cols-5 gap-2">
                         {product.images.map((image, index) => (
                             <button
                                 key={index}
-                                onClick={() => setMainImage(image.imageUrl)}
-                                className={`aspect-square relative rounded-md border-2 ${mainImage === image.imageUrl ? 'border-primary' : 'border-transparent'}`}
+                                onClick={() => setMainImage(image)}
+                                className={`aspect-square relative rounded-md border-2 ${mainImage.imageUrl === image.imageUrl ? 'border-primary' : 'border-transparent'}`}
                             >
                                 <Image src={image.imageUrl} alt={`${product.name} thumbnail ${index + 1}`} data-ai-hint={image.imageHint} fill className="object-contain p-2 rounded-md" />
                             </button>

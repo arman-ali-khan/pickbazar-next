@@ -11,6 +11,7 @@ import type { Product, ImagePlaceholder, RelatedProduct } from '@/lib/data';
 import { useCart } from '@/contexts/cart-context';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import ImageMagnify from './image-magnify';
 
 type QuickViewProduct = Product & {
     images: ImagePlaceholder[];
@@ -166,23 +167,21 @@ export default function ProductQuickView({ product, children }: { product: Quick
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 p-8">
                     {/* Image Section */}
                     <div>
-                        <div className="aspect-square relative mb-4 rounded-lg overflow-hidden group">
+                        <div className="aspect-square relative mb-4 rounded-lg">
                              {hasDiscount && (
                                 <Badge className="absolute top-4 left-4 z-10 bg-yellow-400 text-yellow-900 rounded-md px-2 py-1 text-xs font-bold border-none">
                                     {discountPercentage}%
                                 </Badge>
                             )}
-                            <Image
+                            <ImageMagnify
                                 src={product.images[currentImageIndex].imageUrl}
                                 alt={product.name}
-                                data-ai-hint={product.images[currentImageIndex].imageHint}
-                                fill
-                                className="w-full h-full object-contain rounded-lg transition-transform duration-300 ease-in-out group-hover:scale-125"
+                                imageHint={product.images[currentImageIndex].imageHint}
                             />
-                            <Button variant="ghost" size="icon" className="absolute top-1/2 left-2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/50 hover:bg-white" onClick={handlePrevImage}>
+                            <Button variant="ghost" size="icon" className="absolute top-1/2 left-2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/50 hover:bg-white z-10" onClick={handlePrevImage}>
                                 <ChevronLeft className="h-5 w-5"/>
                             </Button>
-                            <Button variant="ghost" size="icon" className="absolute top-1/2 right-2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/50 hover:bg-white" onClick={handleNextImage}>
+                            <Button variant="ghost" size="icon" className="absolute top-1/2 right-2 -translate-y-1/2 h-8 w-8 rounded-full bg-white/50 hover:bg-white z-10" onClick={handleNextImage}>
                                 <ChevronRight className="h-5 w-5"/>
                             </Button>
                         </div>
