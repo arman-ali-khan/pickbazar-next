@@ -119,7 +119,7 @@ export default function Header() {
                   <DropdownMenuContent>
                     <DropdownMenuItem>About Us</DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/contact">Contact Us</Link></DropdownMenuItem>
-                    <DropdownMenuItem>FAQ</DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/faq">FAQ</Link></DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
             </nav>

@@ -95,7 +95,7 @@ function PagesDrawer() {
                         <DropdownMenuContent>
                             <DropdownMenuItem>About Us</DropdownMenuItem>
                             <DropdownMenuItem asChild><Link href="/contact">Contact Us</Link></DropdownMenuItem>
-                            <DropdownMenuItem>FAQ</DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/faq">FAQ</Link></DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                     <div className="mt-4 flex flex-col gap-2">
