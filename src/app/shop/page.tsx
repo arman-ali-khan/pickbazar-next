@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
@@ -25,7 +25,8 @@ type ViewMode = 'grid' | 'list';
 type SortOrder = 'default' | 'price-asc' | 'price-desc';
 const PRODUCTS_PER_PAGE = 12;
 
-export default function ShopPage() {
+
+function ShopContent() {
   const searchParams = useSearchParams();
   const category = searchParams.get('category');
   const initialCategories = useMemo(() => (category ? [category] : []), [category]);
@@ -76,9 +77,7 @@ export default function ShopPage() {
   const currentProducts = displayProducts.slice(0, visibleCount);
 
   return (
-    <div className="bg-background min-h-screen">
-      <Header />
-      <main className="py-8 px-1 md:px-2">
+    <>
         <div className="mb-8 text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Shop</h1>
             <p className="text-muted-foreground mt-2">Browse our collection of fresh products.</p>
@@ -155,6 +154,18 @@ export default function ShopPage() {
                 )}
             </div>
         </div>
+    </>
+  );
+}
+
+export default function ShopPage() {
+  return (
+    <div className="bg-background min-h-screen">
+      <Header />
+      <main className="py-8 px-1 md:px-2">
+        <Suspense fallback={<div className="container py-12 text-center">Loading products...</div>}>
+          <ShopContent />
+        </Suspense>
       </main>
       <Footer />
       <CartDrawer />
