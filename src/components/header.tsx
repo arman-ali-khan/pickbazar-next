@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronDown, Menu, Search, Leaf, X, User } from 'lucide-react';
+import { ChevronDown, Menu, Search, Leaf, X, User, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,6 +9,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
@@ -42,7 +46,7 @@ const CategoriesNav = () => {
     const isMobile = useIsMobile();
 
     const categoriesContent = (
-      <Accordion type="multiple" className="w-full">
+      <Accordion type="single" collapsible defaultValue={categories[0].name} className="w-full">
         {categories.map((category) => (
           <AccordionItem value={category.name} key={category.name} className="border-b last:border-b-0">
             <AccordionTrigger className="px-4 py-3 text-sm font-medium hover:no-underline">
@@ -108,6 +112,13 @@ export default function Header() {
   const auth = useAuth();
   const { toast } = useToast();
   const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
+
+  const [hasNewNotification, setHasNewNotification] = useState(true);
+  const notifications = [
+    { id: 1, text: 'Your order #12345 has been shipped.' },
+    { id: 2, text: 'A new promotion on fresh vegetables is available.' },
+    { id: 3, text: 'Your password was changed successfully.' },
+  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -225,6 +236,7 @@ export default function Header() {
                           <AvatarImage src={user.photoURL || 'https://picsum.photos/seed/profile/200'} alt={user.displayName || 'User'} />
                           <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
                         </Avatar>
+                        {hasNewNotification && <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -234,6 +246,18 @@ export default function Header() {
                           <span>Profile</span>
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuSub>
+                        <DropdownMenuSubTrigger onFocus={() => setHasNewNotification(false)}>
+                            <Bell className="mr-2 h-4 w-4" />
+                            <span>Notifications</span>
+                             {hasNewNotification && <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />}
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                                {notifications.map(n => <DropdownMenuItem key={n.id} className="text-xs">{n.text}</DropdownMenuItem>)}
+                            </DropdownMenuSubContent>
+                        </DropdownMenuPortal>
+                      </DropdownMenuSub>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleLogout}>
                         Logout

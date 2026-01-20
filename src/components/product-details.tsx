@@ -68,7 +68,7 @@ export default function ProductCard({ product }: { product: Product }) {
                         {hasDiscount && <p className="text-sm line-through text-muted-foreground">${product.originalPrice.toFixed(2)}</p>}
                     </div>
                     <h3 className="font-normal text-gray-600 text-sm">
-                        <Link href={`/products/${product.id}`} className="hover:text-primary transition-colors">{product.name} {product.weight}</Link>
+                        <Link href={`/products/${product.id}`} className="hover:text-primary transition-colors  hover:underline">{product.name} {product.weight}</Link>
                     </h3>
                 </div>
                  <div className="mt-4">

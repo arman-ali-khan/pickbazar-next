@@ -35,7 +35,7 @@ export default function HeroBanners() {
                                     <AccordionContent>
                                         <div className="pl-11 flex flex-col items-start">
                                         {category.sub.map((subCategory) => (
-                                            <Link href={subCategory.href} key={subCategory.name} className="py-1.5 text-sm text-teal-600 text-muted-foreground hover:text-primary">{subCategory.name}</Link>
+                                            <Link href={subCategory.href} key={subCategory.name} className="py-1.5 text-sm w-full hover:underline text-teal-600 text-muted-foreground hover:text-primary">{subCategory.name}</Link>
                                         ))}
                                         </div>
                                     </AccordionContent>

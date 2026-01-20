@@ -55,7 +55,7 @@ export default function ProductRowCard({ product }: { product: Product }) {
                 <div className="flex flex-col flex-grow">
                     <p className="text-sm text-muted-foreground">{product.category}</p>
                     <h3 className="font-semibold text-lg text-gray-800 mt-1 mb-2">
-                        <Link href={`/products/${product.id}`} className="hover:text-primary transition-colors">{product.name}</Link>
+                        <Link href={`/products/${product.id}`} className="hover:text-primary transition-colors hover:underline">{product.name}</Link>
                     </h3>
                     <p className="text-sm text-muted-foreground mb-4">{product.weight}</p>
                     
