@@ -26,7 +26,7 @@ export default function FlyToCartAnimation() {
     const initialTop = startRect.top + startRect.height / 2 - size / 2;
     const initialLeft = startRect.left + startRect.width / 2 - size / 2;
 
-    // 1. Initial state: at the source, visible
+    // 1. Initial state: at the source, visible, with no transition.
     setStyles({
       position: 'fixed',
       top: `${initialTop}px`,
@@ -39,8 +39,8 @@ export default function FlyToCartAnimation() {
     });
     setIsAnimating(true);
     
-    // Using a minimal timeout to force a reflow and ensure the initial state is painted before applying the transition.
-    const timer = setTimeout(() => {
+    // 2. After a 500ms pause, apply the animation styles.
+    const animationTimer = setTimeout(() => {
         setStyles({
             position: 'fixed',
             top: `${endRect.top + endRect.height / 2}px`,
@@ -50,19 +50,18 @@ export default function FlyToCartAnimation() {
             opacity: 0,
             transform: 'translate(-50%, -50%) scale(0.2)',
             transition: 'all 0.5s cubic-bezier(0.5, 0, 1, 0.5)',
-            transitionDelay: '0.5s', // Pause for 0.5s using CSS transition-delay
         });
-    }, 20); // A small 20ms delay is enough to trigger the reflow
+    }, 500); // 500ms pause before animation starts
 
-    // 4. Clean up after animation (pause + duration)
-    const animationEndTimer = setTimeout(() => {
+    // 3. Clean up after the entire sequence is over (500ms pause + 500ms animation).
+    const cleanupTimer = setTimeout(() => {
       setIsAnimating(false);
       clearAnimation();
-    }, 1020); // 500ms pause + 500ms transition + 20ms buffer
+    }, 1000);
 
     return () => {
-      clearTimeout(timer);
-      clearTimeout(animationEndTimer);
+      clearTimeout(animationTimer);
+      clearTimeout(cleanupTimer);
     };
   }, [animationState, clearAnimation, key]);
 
