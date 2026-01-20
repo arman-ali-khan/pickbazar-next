@@ -5,9 +5,11 @@ type StarRatingProps = {
   rating: number;
   className?: string;
   size?: number;
+  color?: string;
+  fillColor?: string;
 };
 
-export function StarRating({ rating, className, size = 4 }: StarRatingProps) {
+export function StarRating({ rating, className, size = 4, color = 'text-yellow-400', fillColor = 'fill-yellow-400' }: StarRatingProps) {
   return (
     <div className={cn("flex items-center", className)}>
       {Array.from({ length: 5 }, (_, i) => (
@@ -16,8 +18,8 @@ export function StarRating({ rating, className, size = 4 }: StarRatingProps) {
           className={cn(
             `h-${size} w-${size}`,
             i < Math.round(rating)
-              ? 'text-yellow-400 fill-yellow-400'
-              : 'text-muted-foreground/50 fill-muted-foreground/20'
+              ? `${color} ${fillColor}`
+              : 'text-muted-foreground/30 fill-muted-foreground/20'
           )}
         />
       ))}
