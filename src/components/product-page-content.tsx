@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Minus, Star, ThumbsUp, ThumbsDown } from 'lucide-react';
-import { useCart } from '@/contexts/cart-context';
 import type { Product, RelatedProduct, Review, Question } from '@/lib/data';
 import ProductCard from '@/components/product-details';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
 import { ImagePlaceholder } from '@/lib/placeholder-images';
 import ImageMagnify from './image-magnify';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { addToCart, updateQuantity, selectItemQuantity, triggerFlyToCart } from '@/lib/redux/slices/cartSlice';
 
 interface ProductPageContentProps {
     product: Product & {
@@ -32,17 +33,27 @@ interface ProductPageContentProps {
 }
 
 export default function ProductPageContent({ product, relatedProducts }: ProductPageContentProps) {
-    const { addToCart, updateQuantity, getItemQuantity, triggerFlyToCart } = useCart();
-    const quantity = getItemQuantity(product.id);
+    const dispatch = useAppDispatch();
+    const quantity = useAppSelector(selectItemQuantity(product.id));
     const [mainImage, setMainImage] = useState(product.images[0]);
     const imageRef = useRef<HTMLDivElement>(null);
 
     const totalReviews = product.ratingDistribution.reduce((acc, item) => acc + item.count, 0);
     
     const handleAddToCart = () => {
-        addToCart(product);
+        dispatch(addToCart({ product }));
         if (imageRef.current) {
-            triggerFlyToCart(mainImage.imageUrl, mainImage.imageHint, imageRef.current);
+            const rect = imageRef.current.getBoundingClientRect();
+            dispatch(triggerFlyToCart({
+                imageSrc: mainImage.imageUrl,
+                imageHint: mainImage.imageHint,
+                startRect: {
+                    top: rect.top,
+                    left: rect.left,
+                    width: rect.width,
+                    height: rect.height,
+                },
+            }));
         }
     };
 
@@ -100,11 +111,11 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                             </Button>
                         ) : (
                             <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-12 w-40">
-                                <Button size="icon" variant="ghost" className="h-12 w-12 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity - 1)}>
+                                <Button size="icon" variant="ghost" className="h-12 w-12 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity - 1 }))}>
                                     <Minus className="h-5 w-5" />
                                 </Button>
                                 <span className="font-bold text-base">{quantity}</span>
-                                <Button size="icon" variant="ghost" className="h-12 w-12 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity + 1)}>
+                                <Button size="icon" variant="ghost" className="h-12 w-12 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity + 1 }))}>
                                     <Plus className="h-5 w-5" />
                                 </Button>
                             </div>

@@ -8,10 +8,11 @@ import { Plus, Minus, Heart, Star, ChevronLeft, ChevronRight } from 'lucide-reac
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { Product, ImagePlaceholder, RelatedProduct } from '@/lib/data';
-import { useCart } from '@/contexts/cart-context';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import ImageMagnify from './image-magnify';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { addToCart, updateQuantity, selectItemQuantity, triggerFlyToCart } from '@/lib/redux/slices/cartSlice';
 
 type QuickViewProduct = Product & {
     images: ImagePlaceholder[];
@@ -26,8 +27,8 @@ type QuickViewProduct = Product & {
 
 
 function RelatedProductCard({ product }: { product: RelatedProduct }) {
-    const { addToCart, updateQuantity, getItemQuantity } = useCart();
-    const quantity = getItemQuantity(product.id);
+    const dispatch = useAppDispatch();
+    const quantity = useAppSelector(selectItemQuantity(product.id));
 
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
 
@@ -62,18 +63,18 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
                         <Button
                             variant="outline"
                             className="w-full flex items-center justify-between bg-gray-100 border-gray-200 hover:bg-gray-200 hover:border-gray-300 text-gray-700"
-                            onClick={() => addToCart(product as Product)}
+                            onClick={() => dispatch(addToCart({ product: product as Product }))}
                         >
                             <span>Add</span>
                             <Plus className="h-4 w-4" />
                         </Button>
                     ) : (
                         <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-10">
-                            <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity - 1)}>
+                            <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity - 1 }))}>
                                 <Minus className="h-4 w-4" />
                             </Button>
                             <span className="font-bold text-sm">{quantity}</span>
-                            <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity + 1)}>
+                            <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity + 1 }))}>
                                 <Plus className="h-4 w-4" />
                             </Button>
                         </div>
@@ -85,8 +86,8 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
 }
 
 export default function ProductQuickView({ product, children }: { product: QuickViewProduct, children: React.ReactNode }) {
-    const { addToCart, updateQuantity, getItemQuantity, triggerFlyToCart } = useCart();
-    const quantity = getItemQuantity(product.id);
+    const dispatch = useAppDispatch();
+    const quantity = useAppSelector(selectItemQuantity(product.id));
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isScrolled, setIsScrolled] = useState(false);
     const imageRef = useRef<HTMLDivElement>(null);
@@ -104,12 +105,22 @@ export default function ProductQuickView({ product, children }: { product: Quick
     
     const handleQuantityIncrease = () => {
         if (quantity === 0) {
-            addToCart(product, 1);
+            dispatch(addToCart({ product, quantity: 1 }));
             if (imageRef.current) {
-                triggerFlyToCart(product.images[currentImageIndex].imageUrl, product.images[currentImageIndex].imageHint, imageRef.current);
+                const rect = imageRef.current.getBoundingClientRect();
+                dispatch(triggerFlyToCart({
+                    imageSrc: product.images[currentImageIndex].imageUrl,
+                    imageHint: product.images[currentImageIndex].imageHint,
+                    startRect: {
+                        top: rect.top,
+                        left: rect.left,
+                        width: rect.width,
+                        height: rect.height,
+                    },
+                }));
             }
         } else {
-            updateQuantity(product.id, quantity + 1);
+            dispatch(updateQuantity({ productId: product.id, newQuantity: quantity + 1 }));
         }
     };
     
@@ -154,7 +165,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
                                 </Button>
                             ) : (
                                 <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-10 w-28">
-                                    <Button size="icon" variant="ghost" className="h-10 w-8 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity - 1)} disabled={quantity === 0}>
+                                    <Button size="icon" variant="ghost" className="h-10 w-8 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity - 1 }))} disabled={quantity === 0}>
                                         <Minus className="h-4 w-4" />
                                     </Button>
                                     <span className="font-bold text-sm">{quantity}</span>
@@ -242,7 +253,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
                                 </Button>
                             ) : (
                                <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-12 w-32">
-                                    <Button size="icon" variant="ghost" className="h-12 w-10 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity - 1)}>
+                                    <Button size="icon" variant="ghost" className="h-12 w-10 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity - 1 }))}>
                                         <Minus className="h-5 w-5" />
                                     </Button>
                                     <span className="font-bold text-base">{quantity}</span>

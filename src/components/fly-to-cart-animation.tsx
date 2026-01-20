@@ -1,14 +1,16 @@
 'use client';
 
-import { useCart } from '@/contexts/cart-context';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { clearAnimation } from '@/lib/redux/slices/cartSlice';
 
 type AnimationPhase = 'idle' | 'start' | 'flying' | 'done';
 
 export default function FlyToCartAnimation() {
-  const { animationState, clearAnimation } = useCart();
+  const dispatch = useAppDispatch();
+  const animationState = useAppSelector(state => state.cart.animationState);
   const [phase, setPhase] = useState<AnimationPhase>('idle');
   const [styles, setStyles] = useState<React.CSSProperties>({});
   const isMobile = useIsMobile();
@@ -76,10 +78,10 @@ export default function FlyToCartAnimation() {
 
     } else if (phase === 'done') {
       // Clean up
-      clearAnimation();
+      dispatch(clearAnimation());
       setPhase('idle');
     }
-  }, [phase, animationState, clearAnimation, isMobile]);
+  }, [phase, animationState, dispatch, isMobile]);
 
   if (phase === 'idle' || !animationState) {
     return null;

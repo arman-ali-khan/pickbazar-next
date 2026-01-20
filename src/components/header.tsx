@@ -13,7 +13,6 @@ import {
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
 import { Input } from './ui/input';
-import { useUI } from '@/contexts/ui-context';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -26,6 +25,8 @@ import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { setSearchOpen } from '@/lib/redux/slices/uiSlice';
 
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
@@ -98,7 +99,8 @@ const CategoriesNav = () => {
 };
 
 export default function Header() {
-  const { isSearchOpen, setSearchOpen } = useUI();
+  const dispatch = useAppDispatch();
+  const isSearchOpen = useAppSelector(state => state.ui.isSearchOpen);
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
@@ -137,7 +139,7 @@ export default function Header() {
     e.preventDefault();
     if (searchTerm.trim()) {
       router.push(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
-      setSearchOpen(false);
+      dispatch(setSearchOpen(false));
       setSearchTerm('');
     }
   };
@@ -166,7 +168,7 @@ export default function Header() {
                     variant="ghost"
                     size="icon"
                     className="h-11 w-11 flex-shrink-0 rounded-l-none rounded-r-md text-muted-foreground hover:bg-primary/10"
-                    onClick={() => setSearchOpen(false)}
+                    onClick={() => dispatch(setSearchOpen(false))}
                     type="button"
                 >
                     <X className="h-5 w-5" />
@@ -212,7 +214,7 @@ export default function Header() {
 
             <div className="flex items-center justify-end space-x-2">
               <div className="hidden md:flex items-center space-x-2">
-                <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
+                <Button variant="ghost" size="icon" onClick={() => dispatch(setSearchOpen(true))}>
                     <Search className="h-5 w-5" />
                 </Button>
                 {user ? (
@@ -251,7 +253,7 @@ export default function Header() {
                   </Button>
               </div>
               <div className="md:hidden flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
+                <Button variant="ghost" size="icon" onClick={() => dispatch(setSearchOpen(true))}>
                     <Search className="h-5 w-5" />
                 </Button>
                  <Button asChild>

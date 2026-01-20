@@ -6,21 +6,32 @@ import { Button } from '@/components/ui/button';
 import { Plus, Minus } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Product } from '@/lib/data';
-import { useCart } from '@/contexts/cart-context';
 import { useRef } from 'react';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { addToCart, updateQuantity, selectItemQuantity, triggerFlyToCart } from '@/lib/redux/slices/cartSlice';
 
 export default function ProductRowCard({ product }: { product: Product }) {
-    const { addToCart, updateQuantity, getItemQuantity, triggerFlyToCart } = useCart();
-    const quantity = getItemQuantity(product.id);
+    const dispatch = useAppDispatch();
+    const quantity = useAppSelector(selectItemQuantity(product.id));
     const imageRef = useRef<HTMLDivElement>(null);
 
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
 
     const handleAddToCart = () => {
-        addToCart(product);
+        dispatch(addToCart({ product }));
         if (imageRef.current) {
-            triggerFlyToCart(product.image.imageUrl, product.image.imageHint, imageRef.current);
+            const rect = imageRef.current.getBoundingClientRect();
+            dispatch(triggerFlyToCart({
+                imageSrc: product.image.imageUrl,
+                imageHint: product.image.imageHint,
+                startRect: {
+                    top: rect.top,
+                    left: rect.left,
+                    width: rect.width,
+                    height: rect.height
+                }
+            }));
         }
     };
 
@@ -67,11 +78,11 @@ export default function ProductRowCard({ product }: { product: Product }) {
                                 </Button>
                             ) : (
                                 <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-10">
-                                    <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity - 1)}>
+                                    <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity - 1 }))}>
                                         <Minus className="h-4 w-4" />
                                     </Button>
                                     <span className="font-bold text-sm">{quantity}</span>
-                                    <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity + 1)}>
+                                    <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity + 1 }))}>
                                         <Plus className="h-4 w-4" />
                                     </Button>
                                 </div>

@@ -6,8 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
-import { useUI } from '@/contexts/ui-context';
-import { useCart } from '@/contexts/cart-context';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +15,9 @@ import {
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { useUser } from '@/firebase';
 import { useRouter } from 'next/navigation';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { toggleSearch } from '@/lib/redux/slices/uiSlice';
+import { openCart, selectTotalItems } from '@/lib/redux/slices/cartSlice';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
     <Link
@@ -124,8 +125,8 @@ function PagesDrawer() {
 }
 
 export default function BottomNavbar() {
-    const { toggleSearch } = useUI();
-    const { openCart, totalItems } = useCart();
+    const dispatch = useAppDispatch();
+    const totalItems = useAppSelector(selectTotalItems);
     const { user } = useUser();
     const router = useRouter();
 
@@ -140,7 +141,7 @@ export default function BottomNavbar() {
             <div className="grid h-full grid-cols-5 mx-auto">
                 <PagesDrawer />
 
-                <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={toggleSearch}>
+                <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={() => dispatch(toggleSearch())}>
                     <Search className="h-6 w-6" />
                     <span className="text-xs">Search</span>
                 </Button>
@@ -170,7 +171,7 @@ export default function BottomNavbar() {
                 )}
 
 
-                <Button id="cart-icon-mobile" variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={openCart}>
+                <Button id="cart-icon-mobile" variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={() => dispatch(openCart())}>
                     <ShoppingCart className="h-6 w-6" />
                     <span className="text-xs">Cart</span>
                     {totalItems > 0 && (

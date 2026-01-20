@@ -1,6 +1,5 @@
 'use client';
 
-import { useCart } from '@/contexts/cart-context';
 import {
   Sheet,
   SheetContent,
@@ -12,14 +11,28 @@ import { Button } from './ui/button';
 import { ShoppingBag, Plus, Minus, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
+import { 
+    updateQuantity, 
+    removeFromCart, 
+    openCart, 
+    closeCart, 
+    selectTotalItems, 
+    selectSubtotal 
+} from '@/lib/redux/slices/cartSlice';
+
 
 export default function CartDrawer() {
-  const { cartItems, updateQuantity, removeFromCart, totalItems, subtotal, isCartOpen, openCart, closeCart } = useCart();
+  const dispatch = useAppDispatch();
+  const cartItems = useAppSelector(state => state.cart.items);
+  const isCartOpen = useAppSelector(state => state.cart.isCartOpen);
+  const totalItems = useAppSelector(selectTotalItems);
+  const subtotal = useAppSelector(selectSubtotal);
 
   return (
     <>
       <div id="cart-trigger-button" className="fixed top-1/2 -translate-y-1/2 right-0 z-50 hidden md:block">
-        <Button onClick={openCart} className="h-auto p-0 flex flex-col gap-0 rounded-l-md rounded-r-none shadow-lg">
+        <Button onClick={() => dispatch(openCart())} className="h-auto p-0 flex flex-col gap-0 rounded-l-md rounded-r-none shadow-lg">
           <div className="flex items-center gap-2 px-3 py-2">
             <ShoppingBag className="h-5 w-5" />
             <span className="text-sm font-medium">{totalItems} Items</span>
@@ -30,7 +43,7 @@ export default function CartDrawer() {
         </Button>
       </div>
 
-      <Sheet open={isCartOpen} onOpenChange={(open) => open ? openCart() : closeCart()}>
+      <Sheet open={isCartOpen} onOpenChange={(open) => !open && dispatch(closeCart())}>
         <SheetContent className="w-full sm:max-w-[440px] p-0 flex flex-col bg-white">
           <div className="flex items-center justify-between p-6 border-b">
             <SheetTitle className="flex items-center gap-3 text-primary">
@@ -50,11 +63,11 @@ export default function CartDrawer() {
                       {cartItems.map((item) => (
                           <div key={item.id} className="flex items-center gap-2 sm:gap-4 p-2 sm:p-6">
                               <div className="flex flex-col items-center justify-between bg-gray-100 rounded-full h-24 w-10 py-2">
-                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-600" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-600" onClick={() => dispatch(updateQuantity({ productId: item.id, newQuantity: item.quantity + 1 }))}>
                                       <Plus className="h-4 w-4" />
                                   </Button>
                                   <span className="font-bold text-sm text-gray-800">{item.quantity}</span>
-                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-600" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-600" onClick={() => dispatch(updateQuantity({ productId: item.id, newQuantity: item.quantity - 1 }))}>
                                       <Minus className="h-4 w-4" />
                                   </Button>
                               </div>
@@ -68,7 +81,7 @@ export default function CartDrawer() {
                               </div>
                               <div className="flex items-center gap-2">
                                   <p className="font-semibold text-base text-gray-800">${(item.price * item.quantity).toFixed(2)}</p>
-                                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-red-500 w-6 h-6" onClick={() => removeFromCart(item.id)}>
+                                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-red-500 w-6 h-6" onClick={() => dispatch(removeFromCart(item.id))}>
                                       <X className="h-4 w-4" />
                                   </Button>
                               </div>
