@@ -30,36 +30,61 @@ export default function MyOrdersPage() {
                         <CardTitle>My Orders</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Order ID</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Total</TableHead>
-                                    <TableHead>Action</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {orders.map(order => (
-                                    <TableRow key={order.id}>
-                                        <TableCell className="font-medium">{order.id}</TableCell>
-                                        <TableCell>{order.date}</TableCell>
-                                        <TableCell>
+                        {/* Desktop View */}
+                        <div className="hidden md:block">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Order ID</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Total</TableHead>
+                                        <TableHead>Action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {orders.map(order => (
+                                        <TableRow key={order.id}>
+                                            <TableCell className="font-medium">{order.id}</TableCell>
+                                            <TableCell>{order.date}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={
+                                                    order.status === 'Delivered' ? 'secondary' :
+                                                    order.status === 'Cancelled' ? 'destructive' :
+                                                    'default'
+                                                }>{order.status}</Badge>
+                                            </TableCell>
+                                            <TableCell>{order.total}</TableCell>
+                                            <TableCell>
+                                                <Button variant="outline" size="sm">View Details</Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                        {/* Mobile View */}
+                        <div className="block md:hidden space-y-4">
+                            {orders.map(order => (
+                                <Card key={order.id}>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">{order.id}</CardTitle>
+                                        <p className="text-sm text-muted-foreground">{order.date}</p>
+                                    </CardHeader>
+                                    <CardContent className="flex justify-between items-center">
+                                        <div>
                                             <Badge variant={
                                                 order.status === 'Delivered' ? 'secondary' :
                                                 order.status === 'Cancelled' ? 'destructive' :
                                                 'default'
                                             }>{order.status}</Badge>
-                                        </TableCell>
-                                        <TableCell>{order.total}</TableCell>
-                                        <TableCell>
-                                            <Button variant="outline" size="sm">View Details</Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                            <p className="font-semibold mt-2">{order.total}</p>
+                                        </div>
+                                        <Button variant="outline" size="sm">View Details</Button>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
                     </CardContent>
                 </Card>
             </div>

@@ -28,34 +28,59 @@ export default function MyRefundsPage() {
                         <CardTitle>My Refunds</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Refund ID</TableHead>
-                                    <TableHead>Order ID</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Amount</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {refunds.map(refund => (
-                                    <TableRow key={refund.id}>
-                                        <TableCell className="font-medium">{refund.id}</TableCell>
-                                        <TableCell>{refund.orderId}</TableCell>
-                                        <TableCell>{refund.date}</TableCell>
-                                        <TableCell>
+                        {/* Desktop View */}
+                        <div className="hidden md:block">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Refund ID</TableHead>
+                                        <TableHead>Order ID</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Amount</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {refunds.map(refund => (
+                                        <TableRow key={refund.id}>
+                                            <TableCell className="font-medium">{refund.id}</TableCell>
+                                            <TableCell>{refund.orderId}</TableCell>
+                                            <TableCell>{refund.date}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={
+                                                    refund.status === 'Approved' ? 'secondary' :
+                                                    refund.status === 'Rejected' ? 'destructive' :
+                                                    'default'
+                                                }>{refund.status}</Badge>
+                                            </TableCell>
+                                            <TableCell>{refund.amount}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                        {/* Mobile View */}
+                         <div className="block md:hidden space-y-4">
+                            {refunds.map(refund => (
+                                <Card key={refund.id}>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">{refund.id}</CardTitle>
+                                        <p className="text-sm text-muted-foreground">Order ID: {refund.orderId}</p>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <span className="text-sm text-muted-foreground">{refund.date}</span>
                                             <Badge variant={
                                                 refund.status === 'Approved' ? 'secondary' :
                                                 refund.status === 'Rejected' ? 'destructive' :
                                                 'default'
                                             }>{refund.status}</Badge>
-                                        </TableCell>
-                                        <TableCell>{refund.amount}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
+                                        </div>
+                                        <p className="font-semibold text-right">{refund.amount}</p>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </div>
                     </CardContent>
                 </Card>
             </div>
