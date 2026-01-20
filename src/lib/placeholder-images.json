@@ -1,3 +1,70 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "product_main",
+      "description": "Main view of fresh green asparagus",
+      "imageUrl": "https://images.unsplash.com/photo-1629875235163-2e52306e4018?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhc3BhcmFndXN8ZW58MHx8fHwxNzY4OTAwNTM1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "asparagus"
+    },
+    {
+      "id": "product_thumb_1",
+      "description": "Close-up of asparagus tips",
+      "imageUrl": "https://images.unsplash.com/photo-1620588951718-cbe9eb3ae9f3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxhc3BhcmFndXMlMjB0aXBzfGVufDB8fHx8MTc2ODkwMDUzNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "asparagus tips"
+    },
+    {
+      "id": "product_thumb_2",
+      "description": "Bundle of asparagus",
+      "imageUrl": "https://images.unsplash.com/photo-1645220559451-aaacbbd7bcc5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhc3BhcmFndXMlMjBidW5kbGV8ZW58MHx8fHwxNzY4OTAwNTM1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "asparagus bundle"
+    },
+    {
+      "id": "product_thumb_3",
+      "description": "Asparagus on a wooden board",
+      "imageUrl": "https://images.unsplash.com/photo-1579216641267-17502e4ac88d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxhc3BhcmFndXMlMjBib2FyZHxlbnwwfHx8fDE3Njg5MDA1MzV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "asparagus board"
+    },
+    {
+      "id": "product_thumb_4",
+      "description": "Asparagus with water droplets",
+      "imageUrl": "https://images.unsplash.com/photo-1709756949684-99a2f5661841?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxmcmVzaCUyMGFzcGFyYWd1c3xlbnwwfHx8fDE3Njg5MDA1MzV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "fresh asparagus"
+    },
+    {
+      "id": "related_prod_1",
+      "description": "Fresh broccoli",
+      "imageUrl": "https://images.unsplash.com/photo-1615485291234-9d694218aeb3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxicm9jY29saXxlbnwwfHx8fDE3Njg4MDE1MTZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "broccoli"
+    },
+    {
+      "id": "related_prod_2",
+      "description": "Organic carrots",
+      "imageUrl": "https://images.unsplash.com/photo-1447175008436-054170c2e979?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxjYXJyb3RzfGVufDB8fHx8MTc2ODg4NTU4OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "carrots"
+    },
+    {
+      "id": "related_prod_3",
+      "description": "Red bell peppers",
+      "imageUrl": "https://images.unsplash.com/photo-1601648764658-cf37e8c89b70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxiZWxsJTIwcGVwcGVyfGVufDB8fHx8MTc2ODgzNjE3NHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "bell pepper"
+    },
+    {
+      "id": "related_prod_4",
+      "description": "Cherry tomatoes",
+      "imageUrl": "https://images.unsplash.com/photo-1598512752271-33f913a5af13?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHx0b21hdG9lc3xlbnwwfHx8fDE3Njg4ODU1ODl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tomatoes"
+    },
+    {
+      "id": "avatar_1",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/flagged/photo-1570612861542-284f4c12e75f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwZXJzb24lMjBmYWNlfGVufDB8fHx8MTc2ODg1Nzc2N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person face"
+    },
+    {
+      "id": "avatar_2",
+      "description": "User avatar",
+      "imageUrl": "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHx3b21hbiUyMGZhY2V8ZW58MHx8fHwxNzY4NzgzNDM1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman face"
+    }
+  ]
 }
