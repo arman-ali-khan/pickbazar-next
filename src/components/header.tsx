@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { ChevronDown, Menu, Search, Apple, Leaf, X, Beef, Cookie, Dog, Home, Milk, Soup, Cake, GlassWater } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -94,8 +93,8 @@ export default function Header() {
                           <AccordionContent>
                             <div className="pl-8 flex flex-col items-start pt-1">
                               {category.sub.map((subCategory) => (
-                                <DropdownMenuItem key={subCategory} className="w-full">
-                                  {subCategory}
+                                <DropdownMenuItem key={subCategory} asChild className="w-full">
+                                  <Link href={`/shop?category=${subCategory}`}>{subCategory}</Link>
                                 </DropdownMenuItem>
                               ))}
                             </div>

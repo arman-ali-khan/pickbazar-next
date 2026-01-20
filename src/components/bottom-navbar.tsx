@@ -74,7 +74,7 @@ function PagesDrawer() {
                                         <AccordionContent>
                                             <div className="pl-4 flex flex-col items-start">
                                             {category.sub.map((subCategory) => (
-                                                <Link href="#" key={subCategory} className="py-2 text-sm text-muted-foreground hover:text-primary">{subCategory}</Link>
+                                                <Link href={`/shop?category=${subCategory}`} key={subCategory} className="py-2 text-sm text-muted-foreground hover:text-primary">{subCategory}</Link>
                                             ))}
                                             </div>
                                         </AccordionContent>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
@@ -25,6 +26,10 @@ type SortOrder = 'default' | 'price-asc' | 'price-desc';
 const PRODUCTS_PER_PAGE = 12;
 
 export default function ShopPage() {
+  const searchParams = useSearchParams();
+  const category = searchParams.get('category');
+  const initialCategories = category ? [category] : [];
+
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(allProducts);
   const [displayProducts, setDisplayProducts] = useState<Product[]>(allProducts);
   const [visibleCount, setVisibleCount] = useState(PRODUCTS_PER_PAGE);
@@ -81,7 +86,7 @@ export default function ShopPage() {
         
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-2">
             <div className="hidden lg:block">
-                <FilterSidebar onFilterChange={handleFilterChange} />
+                <FilterSidebar onFilterChange={handleFilterChange} initialCategories={initialCategories} />
             </div>
             <div>
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
@@ -95,7 +100,7 @@ export default function ShopPage() {
                             </SheetTrigger>
                             <SheetContent side="left" className="p-0 w-80">
                                 <SheetTitle className="sr-only">Filters</SheetTitle>
-                                <FilterSidebar onFilterChange={handleFilterChange} />
+                                <FilterSidebar onFilterChange={handleFilterChange} initialCategories={initialCategories} />
                             </SheetContent>
                         </Sheet>
                     </div>

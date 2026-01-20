@@ -24,12 +24,17 @@ interface FilterSidebarProps {
     priceRange: number[];
     rating: number;
   }) => void;
+  initialCategories?: string[];
 }
 
-export default function FilterSidebar({ onFilterChange }: FilterSidebarProps) {
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+export default function FilterSidebar({ onFilterChange, initialCategories = [] }: FilterSidebarProps) {
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories);
   const [priceRange, setPriceRange] = useState([0, maxPrice]);
   const [selectedRating, setSelectedRating] = useState(0);
+
+  useEffect(() => {
+    setSelectedCategories(initialCategories);
+  }, [initialCategories]);
 
   useEffect(() => {
     onFilterChange({
