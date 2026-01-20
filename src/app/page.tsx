@@ -1,4 +1,4 @@
-import CartButton from "@/components/star-rating";
+import CartDrawer from "@/components/cart-drawer";
 import CategorySidebar from "@/components/product-sections";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
@@ -21,7 +21,7 @@ export default function Home() {
         </div>
       </main>
       <Footer />
-      <CartButton />
+      <CartDrawer />
     </div>
   );
 }

@@ -38,6 +38,7 @@ export const products = [
   { id: 7, name: 'Cucumber', price: 2.59, image: getImage('related_prod_6'), weight: '1lb' },
   { id: 8, name: 'Dates', price: 8.69, image: getImage('related_prod_7'), weight: '1lb', originalPrice: 10.00 },
   { id: 9, name: 'French Green Beans', price: 1.20, image: getImage('related_prod_8'), weight: '1lb' },
+  { id: 10, name: 'Radish', price: 2.11, weight: '1lbs', image: getImage('radish') },
 ];
 
 
