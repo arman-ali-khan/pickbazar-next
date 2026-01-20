@@ -4,68 +4,79 @@ import { useCart } from '@/contexts/cart-context';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
+type AnimationPhase = 'idle' | 'start' | 'flying' | 'done';
+
 export default function FlyToCartAnimation() {
   const { animationState, clearAnimation } = useCart();
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [phase, setPhase] = useState<AnimationPhase>('idle');
   const [styles, setStyles] = useState<React.CSSProperties>({});
-  const [key, setKey] = useState(0);
-
+  
+  // Effect to start the animation sequence
   useEffect(() => {
-    if (!animationState || animationState.key === key) {
-      return;
+    if (animationState) {
+      const cartButton = document.getElementById('cart-trigger-button');
+      if (!cartButton) return;
+
+      const startRect = animationState.startRect;
+      const size = 100;
+      const initialTop = startRect.top + startRect.height / 2 - size / 2;
+      const initialLeft = startRect.left + startRect.width / 2 - size / 2;
+
+      setStyles({
+        position: 'fixed',
+        top: `${initialTop}px`,
+        left: `${initialLeft}px`,
+        width: `${size}px`,
+        height: `${size}px`,
+        opacity: 1,
+        transform: 'scale(1)',
+        transition: 'none', // Important: No transition for initial placement
+      });
+      setPhase('start');
     }
-    setKey(animationState.key);
+  }, [animationState]);
 
-    const cartButton = document.getElementById('cart-trigger-button');
-    if (!cartButton) return;
+  // Effect to control the animation phases
+  useEffect(() => {
+    if (phase === 'start') {
+      // After being placed, wait for the pause duration, then start flying.
+      const pauseTimer = setTimeout(() => {
+        setPhase('flying');
+      }, 500); // 0.5s pause
+      return () => clearTimeout(pauseTimer);
 
-    const endRect = cartButton.getBoundingClientRect();
-    const startRect = animationState.startRect;
+    } else if (phase === 'flying') {
+      const cartButton = document.getElementById('cart-trigger-button');
+      if (!cartButton || !animationState) return;
+      
+      const endRect = cartButton.getBoundingClientRect();
 
-    const size = 100;
-    const initialTop = startRect.top + startRect.height / 2 - size / 2;
-    const initialLeft = startRect.left + startRect.width / 2 - size / 2;
+      // Apply final styles to trigger the animation
+      setStyles(prev => ({
+        ...prev,
+        top: `${endRect.top + endRect.height / 2}px`,
+        left: `${endRect.left + endRect.width / 2}px`,
+        width: '32px',
+        height: '32px',
+        opacity: 0,
+        transform: 'translate(-50%, -50%) scale(0.2)',
+        transition: 'all 0.5s cubic-bezier(0.5, 0, 1, 0.5)',
+      }));
 
-    // 1. Initial state: at the source, visible, with no transition.
-    setStyles({
-      position: 'fixed',
-      top: `${initialTop}px`,
-      left: `${initialLeft}px`,
-      width: `${size}px`,
-      height: `${size}px`,
-      opacity: 1,
-      transform: 'scale(1)',
-      transition: 'none',
-    });
-    setIsAnimating(true);
-    
-    // 2. After a 500ms pause, apply the animation styles.
-    const animationTimer = setTimeout(() => {
-        setStyles({
-            position: 'fixed',
-            top: `${endRect.top + endRect.height / 2}px`,
-            left: `${endRect.left + endRect.width / 2}px`,
-            width: '32px',
-            height: '32px',
-            opacity: 0,
-            transform: 'translate(-50%, -50%) scale(0.2)',
-            transition: 'all 0.5s cubic-bezier(0.5, 0, 1, 0.5)',
-        });
-    }, 500); // 500ms pause before animation starts
+      // After animation duration, mark as done
+      const flyTimer = setTimeout(() => {
+        setPhase('done');
+      }, 500); // Animation duration
+      return () => clearTimeout(flyTimer);
 
-    // 3. Clean up after the entire sequence is over (500ms pause + 500ms animation).
-    const cleanupTimer = setTimeout(() => {
-      setIsAnimating(false);
+    } else if (phase === 'done') {
+      // Clean up
       clearAnimation();
-    }, 1000);
+      setPhase('idle');
+    }
+  }, [phase, animationState, clearAnimation]);
 
-    return () => {
-      clearTimeout(animationTimer);
-      clearTimeout(cleanupTimer);
-    };
-  }, [animationState, clearAnimation, key]);
-
-  if (!isAnimating || !animationState) {
+  if (phase === 'idle' || !animationState) {
     return null;
   }
 
