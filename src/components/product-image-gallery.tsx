@@ -20,13 +20,13 @@ export default function HeroBanners() {
         </div>
         <div className="relative z-10 container h-full flex items-center">
             <div className="grid md:grid-cols-[300px_1fr] items-center gap-8 w-full">
-                <div className="bg-white/90 backdrop-blur-sm rounded-lg shadow-lg h-full hidden md:flex flex-col text-black max-h-[450px]">
-                    <h2 className="text-lg font-semibold p-4 border-b">Categories</h2>
+                <div className="backdrop-blur-xl rounded-lg shadow-lg h-full hidden md:flex flex-col text-black max-h-[450px]">
+                    <h2 className="text-lg text-white font-semibold p-4 border-b">Categories</h2>
                     <div className="flex-1 overflow-y-auto p-2">
                         <Accordion type="multiple" className="w-full">
                             {categoryData.map((category) => (
                                 <AccordionItem value={category.name} key={category.name} className="border-b-0">
-                                    <AccordionTrigger className="p-3 text-sm font-medium text-gray-700 hover:text-primary hover:no-underline rounded-md hover:bg-gray-100">
+                                    <AccordionTrigger className="p-3 text-sm font-medium text-white hover:text-primary hover:no-underline rounded-md hover:bg-gray-100">
                                         <div className="flex items-center gap-3">
                                             <category.icon className="h-5 w-5 text-muted-foreground" />
                                             <span>{category.name}</span>
@@ -35,7 +35,7 @@ export default function HeroBanners() {
                                     <AccordionContent>
                                         <div className="pl-11 flex flex-col items-start">
                                         {category.sub.map((subCategory) => (
-                                            <Link href={subCategory.href} key={subCategory.name} className="py-1.5 text-sm text-muted-foreground hover:text-primary">{subCategory.name}</Link>
+                                            <Link href={subCategory.href} key={subCategory.name} className="py-1.5 text-sm text-teal-600 text-muted-foreground hover:text-primary">{subCategory.name}</Link>
                                         ))}
                                         </div>
                                     </AccordionContent>
