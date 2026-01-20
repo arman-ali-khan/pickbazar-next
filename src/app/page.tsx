@@ -13,7 +13,7 @@ export default function Home() {
       <main>
         <HeroBanners />
         <OfferCarousel />
-        <div className="container grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 py-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 py-8 items-start px-4 md:px-8">
           <aside className="hidden lg:block">
             <CategorySidebar />
           </aside>

@@ -41,11 +41,11 @@ const offerBanners = [
 
 export default function OfferCarousel() {
   return (
-    <section className="container py-8">
+    <section className="py-8 px-4 md:px-8">
       <Carousel
         plugins={[Autoplay({ delay: 5000 })]}
         opts={{ loop: true }}
-        className="w-full"
+        className="w-full relative"
       >
         <CarouselContent className="-ml-4">
           {offerBanners.map((banner, index) => (
@@ -75,8 +75,8 @@ export default function OfferCarousel() {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="absolute left-[-1.5rem] top-1/2 -translate-y-1/2" />
-        <CarouselNext className="absolute right-[-1.5rem] top-1/2 -translate-y-1/2" />
+        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10" />
+        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10" />
       </Carousel>
     </section>
   )

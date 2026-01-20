@@ -5,7 +5,7 @@ import Image from 'next/image';
 export default function HeroBanners() {
   return (
     <section className="bg-gray-100">
-        <div className="container grid md:grid-cols-2 items-center py-12 md:py-0 md:h-[450px] gap-8">
+        <div className="grid md:grid-cols-2 items-center py-12 md:py-0 md:h-[450px] gap-8 px-4 md:px-8">
             <div className="space-y-4 text-center md:text-left">
                 <h1 className="text-4xl md:text-5xl font-bold text-gray-800 leading-tight">
                     Groceries Delivered in 90 Mins
