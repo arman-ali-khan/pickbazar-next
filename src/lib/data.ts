@@ -9,6 +9,39 @@ const getImage = (id: string): ImagePlaceholder => {
   return image;
 };
 
+export const products = [
+  {
+    id: 1,
+    name: 'Apples',
+    weight: '1lb',
+    price: 1.60,
+    originalPrice: 2.00,
+    image: getImage('apple_main'),
+  },
+  {
+    id: 2,
+    name: 'Baby Spinach',
+    price: 0.60,
+    weight: '2lb',
+    image: getImage('related_prod_1'),
+  },
+  {
+    id: 3,
+    name: 'Blueberries',
+    price: 3.00,
+    weight: '1lb',
+    image: getImage('related_prod_2'),
+  },
+  { id: 4, name: 'Brussels Sprout', price: 3.69, image: getImage('related_prod_3'), weight: '1lb', originalPrice: 4.50 },
+  { id: 5, name: 'Clementines', price: 2.50, image: getImage('related_prod_4'), weight: '1lb', originalPrice: 2.75 },
+  { id: 6, name: 'Sweet Corn', price: 4.00, image: getImage('related_prod_5'), weight: '1lb' },
+  { id: 7, name: 'Cucumber', price: 2.59, image: getImage('related_prod_6'), weight: '1lb' },
+  { id: 8, name: 'Dates', price: 8.69, image: getImage('related_prod_7'), weight: '1lb', originalPrice: 10.00 },
+  { id: 9, name: 'French Green Beans', price: 1.20, image: getImage('related_prod_8'), weight: '1lb' },
+];
+
+
+
 export const product = {
   id: 1,
   name: 'Apples',
@@ -100,18 +133,9 @@ export const product = {
   ],
 };
 
-export const relatedProducts = [
-  { id: 2, name: 'Baby Spinach', price: 0.80, image: getImage('related_prod_1'), weight: '1lb', tag: 'NEW'},
-  { id: 3, name: 'Blackberries', price: 5.00, image: getImage('related_prod_2'), weight: '1lb' },
-  { id: 4, name: 'Brussels Sprout', price: 3.69, image: getImage('related_prod_3'), weight: '1lb', tag: '20%'},
-  { id: 5, name: 'Clementines', price: 2.50, image: getImage('related_prod_4'), weight: '1lb', tag: '10%' },
-  { id: 6, name: 'Sweet Corn', price: 4.00, image: getImage('related_prod_5'), weight: '1lb', tag: 'NEW' },
-  { id: 7, name: 'Cucumber', price: 2.59, image: getImage('related_prod_6'), weight: '1lb' },
-  { id: 8, name: 'Dates', price: 8.69, image: getImage('related_prod_7'), weight: '1lb', tag: '15%' },
-  { id: 9, name: 'French Green Beans', price: 1.20, image: getImage('related_prod_8'), weight: '1lb' },
-];
+export const relatedProducts = products.slice(1, 9).map(p => ({...p, id: p.id, name: p.name, price: p.price, image: p.image, weight: p.weight, tag: p.originalPrice ? `${Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}%` : undefined}));
 
-export type Product = typeof product;
+export type Product = (typeof products)[0] & { originalPrice?: number };
 export type RelatedProduct = typeof relatedProducts[0];
 export type Review = typeof product.reviews[0];
 export type Question = typeof product.questions[0];

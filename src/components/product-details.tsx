@@ -1,55 +1,65 @@
-"use client";
+'use client';
 import { useState } from 'react';
-import { ShoppingCart, Heart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useToast } from "@/hooks/use-toast"
-import type { Product } from '@/lib/data';
 import Link from 'next/link';
+import Image from 'next/image';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { ShoppingCart, Plus, Minus } from 'lucide-react';
+import { Badge } from './ui/badge';
+import type { Product } from '@/lib/data';
 
-export default function ProductDetails({ product }: { product: Product }) {
-  const [quantity, setQuantity] = useState(1);
-  const { toast } = useToast();
+export default function ProductCard({ product }: { product: Product }) {
+    const [quantity, setQuantity] = useState(1);
 
-  const handleAddToCart = () => {
-    toast({
-      title: "Added to cart!",
-      description: `${quantity} x ${product.name} has been added to your cart.`,
-    });
-  }
+    const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+    const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
 
-  return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-3xl lg:text-4xl font-bold tracking-tight">{product.name}</h1>
-        <span className="text-sm text-muted-foreground mt-1 block">{product.weight}</span>
-      </div>
-
-      <p className="text-muted-foreground leading-relaxed text-sm">{product.shortDescription} <Link href="#details" className="text-primary font-medium hover:underline">See more</Link></p>
-      
-      <div className="flex items-baseline gap-2">
-        <span className="text-3xl font-bold text-primary">${product.discountPrice.toFixed(2)}</span>
-        <span className="text-xl line-through text-muted-foreground/80">${product.price.toFixed(2)}</span>
-      </div>
-      
-      <div className="flex flex-col sm:flex-row items-center gap-4">
-        <Button size="lg" className="w-full sm:w-auto flex-1 text-base" onClick={handleAddToCart}>
-          <ShoppingCart className="mr-2 h-5 w-5" />
-          Add to Shopping Cart
-        </Button>
-        <Button variant="outline" size="icon" className="h-11 w-11 shrink-0" aria-label="Add to wishlist">
-            <Heart className="h-5 w-5" />
-        </Button>
-      </div>
-
-       <div className="text-sm text-green-600 font-medium">
-        <span>{product.stock} pieces available</span>
-      </div>
-
-
-      <div className="border-t pt-4 space-y-2 text-sm">
-        <p><strong>Category:</strong> <Link href="#" className="text-primary hover:underline">{product.category}</Link></p>
-        <p><strong>Sellers:</strong> <Link href="#" className="text-primary hover:underline">Grocery Shop</Link></p>
-      </div>
-    </div>
-  );
+    return (
+        <Card className="w-full overflow-hidden group border rounded-lg hover:shadow-lg transition-shadow duration-300 bg-white">
+            <CardContent className="p-4 space-y-4">
+                <div className="bg-gray-50 rounded-md overflow-hidden aspect-square relative">
+                    {hasDiscount && (
+                        <Badge className="absolute top-3 left-3 z-10 bg-yellow-400 text-yellow-900 rounded-md px-2 text-xs font-semibold">
+                            {discountPercentage}%
+                        </Badge>
+                    )}
+                    <Image
+                        src={product.image.imageUrl}
+                        alt={product.name}
+                        data-ai-hint={product.image.imageHint}
+                        fill
+                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                    />
+                </div>
+                <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">{product.weight}</p>
+                    <h3 className="font-semibold text-gray-800 truncate text-base">
+                        <Link href="#" className="hover:text-primary transition-colors">{product.name}</Link>
+                    </h3>
+                    <div className="flex justify-between items-center pt-2">
+                        <div className="flex items-baseline gap-2">
+                            <p className="font-bold text-primary text-lg">${product.price.toFixed(2)}</p>
+                            {hasDiscount && <p className="text-sm line-through text-muted-foreground">${product.originalPrice.toFixed(2)}</p>}
+                        </div>
+                        {product.id === 1 ? (
+                             <div className="flex items-center bg-primary rounded-full h-9">
+                                <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full text-primary-foreground hover:bg-primary/90" onClick={() => setQuantity(q => Math.max(1, q - 1))}>
+                                    <Minus className="h-4 w-4" />
+                                </Button>
+                                <span className="font-bold w-5 text-center text-sm text-primary-foreground">{quantity}</span>
+                                <Button size="icon" variant="ghost" className="h-9 w-9 rounded-full text-primary-foreground hover:bg-primary/90" onClick={() => setQuantity(q => q + 1)}>
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        ) : (
+                            <Button size="sm" variant="outline" className="h-9 px-4 border-primary/50 text-primary hover:bg-primary hover:text-primary-foreground">
+                                <ShoppingCart className="h-4 w-4 mr-2" />
+                                Cart
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
 }

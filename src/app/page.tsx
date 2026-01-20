@@ -1,36 +1,27 @@
-import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
-import Header from '@/components/header';
-import Footer from '@/components/footer';
-import ProductImageGallery from '@/components/product-image-gallery';
-import ProductDetails from '@/components/product-details';
-import ProductSections from '@/components/product-sections';
-import RelatedProducts from '@/components/related-products';
-import { product, relatedProducts as relatedProductsData } from '@/lib/data';
+import CartButton from "@/components/star-rating";
+import CategorySidebar from "@/components/product-sections";
+import Footer from "@/components/footer";
+import Header from "@/components/header";
+import HeroBanners from "@/components/product-image-gallery";
+import ProductGrid from "@/components/related-products";
 
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-background">
+    <div className="bg-background min-h-screen">
       <Header />
-      <main className="flex-grow container py-8">
-        <div className="mb-4">
-          <Link href="#" className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Back
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 bg-white p-6 rounded-lg">
-          <ProductImageGallery images={product.images} />
-          <ProductDetails product={product} />
-        </div>
-        <div className="mt-12">
-          <ProductSections product={product} />
-        </div>
-        <div className="mt-12">
-          <RelatedProducts products={relatedProductsData} />
+      <main>
+        <HeroBanners />
+        <div className="container grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 py-8 items-start">
+          <aside className="hidden lg:block">
+            <CategorySidebar />
+          </aside>
+          <div>
+            <ProductGrid />
+          </div>
         </div>
       </main>
       <Footer />
+      <CartButton />
     </div>
   );
 }
