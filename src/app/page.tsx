@@ -1,5 +1,4 @@
 import CartDrawer from "@/components/cart-drawer";
-import CategorySidebar from "@/components/product-sections";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import HeroBanners from "@/components/product-image-gallery";
@@ -13,13 +12,8 @@ export default function Home() {
       <main>
         <HeroBanners />
         <OfferCarousel />
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 py-8 items-start px-4 md:px-8">
-          <aside className="hidden lg:block">
-            <CategorySidebar />
-          </aside>
-          <div>
+        <div className="py-8 px-4 md:px-8">
             <ProductGrid />
-          </div>
         </div>
       </main>
       <Footer />

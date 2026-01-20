@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, Menu, Search, Apple, Leaf, X } from 'lucide-react';
+import { ChevronDown, Menu, Search, Apple, Leaf, X, Beef, Cookie, Dog, Home, Milk, Soup, Cake, GlassWater } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
@@ -10,7 +10,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+} from "@/components/ui/dropdown-menu";
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
 import { Input } from './ui/input';
@@ -23,6 +27,18 @@ const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: s
     {children}
   </Link>
 );
+
+const categories = [
+    { name: 'Fruits & Vegetables', icon: Apple, sub: ['Fruits', 'Vegetables'] },
+    { name: 'Meat & Fish', icon: Beef, sub: ['Meat', 'Fish'] },
+    { name: 'Snacks', icon: Cookie, sub: ['Chips', 'Chocolate'] },
+    { name: 'Pet Care', icon: Dog, sub: ['Dog Food', 'Cat Food'] },
+    { name: 'Home & Cleaning', icon: Home, sub: ['Detergent', 'Cleaning Tools'] },
+    { name: 'Dairy', icon: Milk, sub: ['Milk', 'Cheese'] },
+    { name: 'Cooking', icon: Soup, sub: ['Oil', 'Spices'] },
+    { name: 'Breakfast', icon: Cake, sub: ['Cereal', 'Bread'] },
+    { name: 'Beverage', icon: GlassWater, sub: ['Coffee', 'Juice'] },
+];
 
 export default function Header() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -63,15 +79,29 @@ export default function Header() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" className="flex items-center gap-2 border-gray-200">
-                      <Apple className="h-4 w-4" />
-                      Grocery
+                      <Menu className="h-4 w-4" />
+                      Categories
                       <ChevronDown className="h-4 w-4 text-gray-500" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem>Fruits & Vegetables</DropdownMenuItem>
-                    <DropdownMenuItem>Meat & Fish</DropdownMenuItem>
-                    <DropdownMenuItem>Dairy</DropdownMenuItem>
+                    {categories.map((category) => (
+                        <DropdownMenuSub key={category.name}>
+                          <DropdownMenuSubTrigger>
+                            <category.icon className="mr-2 h-4 w-4" />
+                            <span>{category.name}</span>
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent>
+                              {category.sub.map((subCategory) => (
+                                <DropdownMenuItem key={subCategory}>
+                                  {subCategory}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                    ))}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -122,6 +152,31 @@ export default function Header() {
                       <h1 className="text-2xl font-bold text-gray-800">Pickbazar</h1>
                     </Link>
                   <div className="flex flex-col space-y-4">
+                     <DropdownMenu>
+                      <DropdownMenuTrigger className="flex items-center justify-between text-sm font-medium text-gray-600 transition-colors hover:text-primary">
+                        Categories
+                        <ChevronDown className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        {categories.map((category) => (
+                            <DropdownMenuSub key={category.name}>
+                              <DropdownMenuSubTrigger>
+                                <category.icon className="mr-2 h-4 w-4" />
+                                <span>{category.name}</span>
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuPortal>
+                                <DropdownMenuSubContent>
+                                  {category.sub.map((subCategory) => (
+                                    <DropdownMenuItem key={subCategory}>
+                                      {subCategory}
+                                    </DropdownMenuItem>
+                                  ))}
+                                </DropdownMenuSubContent>
+                              </DropdownMenuPortal>
+                            </DropdownMenuSub>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     {navItems.map((item) => (
                       <NavItem key={item}>{item}</NavItem>
                     ))}
