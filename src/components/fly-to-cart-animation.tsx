@@ -38,30 +38,30 @@ export default function FlyToCartAnimation() {
       transition: 'none',
     });
     setIsAnimating(true);
+    
+    // Using a minimal timeout to force a reflow and ensure the initial state is painted before applying the transition.
+    const timer = setTimeout(() => {
+        setStyles({
+            position: 'fixed',
+            top: `${endRect.top + endRect.height / 2}px`,
+            left: `${endRect.left + endRect.width / 2}px`,
+            width: '32px',
+            height: '32px',
+            opacity: 0,
+            transform: 'translate(-50%, -50%) scale(0.2)',
+            transition: 'all 0.5s cubic-bezier(0.5, 0, 1, 0.5)',
+            transitionDelay: '0.5s', // Pause for 0.5s using CSS transition-delay
+        });
+    }, 20); // A small 20ms delay is enough to trigger the reflow
 
-    // 2. Wait for 0.5s
-    const pauseTimer = setTimeout(() => {
-      // 3. Animate to cart
-      setStyles({
-        position: 'fixed',
-        top: `${endRect.top + endRect.height / 2}px`,
-        left: `${endRect.left + endRect.width / 2}px`,
-        width: '32px',
-        height: '32px',
-        opacity: 0,
-        transform: 'translate(-50%, -50%) scale(0.2)',
-        transition: 'all 0.5s cubic-bezier(0.5, 0, 1, 0.5)',
-      });
-    }, 500);
-
-    // 4. Clean up after animation
+    // 4. Clean up after animation (pause + duration)
     const animationEndTimer = setTimeout(() => {
       setIsAnimating(false);
       clearAnimation();
-    }, 1000); // 500ms delay + 500ms transition
+    }, 1020); // 500ms pause + 500ms transition + 20ms buffer
 
     return () => {
-      clearTimeout(pauseTimer);
+      clearTimeout(timer);
       clearTimeout(animationEndTimer);
     };
   }, [animationState, clearAnimation, key]);
