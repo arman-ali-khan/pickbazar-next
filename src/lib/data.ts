@@ -11,6 +11,35 @@ const getImage = (id: string): ImagePlaceholder => {
 
 export const products = [
   {
+    id: 11,
+    name: "Wegman's Carrots",
+    weight: '1lbs',
+    price: 2.10,
+    image: getImage('carrots'),
+  },
+  {
+    id: 12,
+    name: 'White Radish',
+    price: 2.99,
+    weight: '1lbs',
+    image: getImage('white_radish'),
+  },
+  { 
+    id: 10,
+    name: 'Radish',
+    price: 2.11,
+    weight: '1lbs',
+    image: getImage('radish'),
+    originalPrice: 2.59 
+  },
+  { 
+    id: 13,
+    name: 'Baby Radish',
+    price: 1.00,
+    image: getImage('baby_radish'),
+    weight: '1lbs'
+  },
+  {
     id: 1,
     name: 'Apples',
     weight: '1lb',
@@ -34,11 +63,6 @@ export const products = [
   },
   { id: 4, name: 'Brussels Sprout', price: 3.69, image: getImage('related_prod_3'), weight: '1lb', originalPrice: 4.50 },
   { id: 5, name: 'Clementines', price: 2.50, image: getImage('related_prod_4'), weight: '1lb', originalPrice: 2.75 },
-  { id: 6, name: 'Sweet Corn', price: 4.00, image: getImage('related_prod_5'), weight: '1lb' },
-  { id: 7, name: 'Cucumber', price: 2.59, image: getImage('related_prod_6'), weight: '1lb' },
-  { id: 8, name: 'Dates', price: 8.69, image: getImage('related_prod_7'), weight: '1lb', originalPrice: 10.00 },
-  { id: 9, name: 'French Green Beans', price: 1.20, image: getImage('related_prod_8'), weight: '1lb' },
-  { id: 10, name: 'Radish', price: 2.11, weight: '1lbs', image: getImage('radish') },
 ];
 
 

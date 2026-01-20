@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useCart } from '@/contexts/cart-context';
 import {
   Sheet,
   SheetContent,
@@ -12,41 +12,10 @@ import {
 import { Button } from './ui/button';
 import { ShoppingBag, Plus, Minus, X } from 'lucide-react';
 import Image from 'next/image';
-import { products } from '@/lib/data';
 import Link from 'next/link';
 
-const initialCartItems = [
-    { ...products.find(p => p.id === 10)!, quantity: 1 },
-    { ...products.find(p => p.id === 1)!, quantity: 1 },
-];
-
-let cartIdCounter = 0;
-
 export default function CartDrawer() {
-  const [cartItems, setCartItems] = useState(
-    initialCartItems.map(item => ({ ...item, cartId: cartIdCounter++ }))
-  );
-
-  const handleQuantityChange = (id: number, delta: number) => {
-    setCartItems(currentItems => {
-      const newItems = currentItems.map(item => {
-        if (item.cartId === id) {
-          const newQuantity = item.quantity + delta;
-          return { ...item, quantity: newQuantity > 0 ? newQuantity : 1 };
-        }
-        return item;
-      });
-      return newItems;
-    });
-  };
-
-  const removeItem = (id: number) => {
-    setCartItems(currentItems => currentItems.filter(item => item.cartId !== id));
-  };
-
-
-  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-  const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const { cartItems, updateQuantity, removeFromCart, totalItems, subtotal } = useCart();
 
   return (
     <Sheet>
@@ -80,13 +49,13 @@ export default function CartDrawer() {
             {cartItems.length > 0 ? (
                  <div className="divide-y">
                     {cartItems.map((item) => (
-                        <div key={item.cartId} className="flex items-center gap-4 p-6">
+                        <div key={item.id} className="flex items-center gap-4 p-6">
                             <div className="flex flex-col items-center justify-between bg-gray-100 rounded-full h-24 w-10 py-2">
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-600" onClick={() => handleQuantityChange(item.cartId, 1)}>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-600" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
                                     <Plus className="h-4 w-4" />
                                 </Button>
                                 <span className="font-bold text-sm text-gray-800">{item.quantity}</span>
-                                <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-600" onClick={() => handleQuantityChange(item.cartId, -1)}>
+                                <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-600" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
                                     <Minus className="h-4 w-4" />
                                 </Button>
                             </div>
@@ -100,7 +69,7 @@ export default function CartDrawer() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <p className="font-semibold text-base text-gray-800">${(item.price * item.quantity).toFixed(2)}</p>
-                                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-red-500 w-6 h-6" onClick={() => removeItem(item.cartId)}>
+                                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-red-500 w-6 h-6" onClick={() => removeFromCart(item.id)}>
                                     <X className="h-4 w-4" />
                                 </Button>
                             </div>
