@@ -1,5 +1,8 @@
+'use client';
+
+import { useState } from 'react';
 import Link from 'next/link';
-import { ChevronDown, Menu, Search, Apple, Leaf } from 'lucide-react';
+import { ChevronDown, Menu, Search, Apple, Leaf, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import {
@@ -10,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
+import { Input } from './ui/input';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
   <Link
@@ -21,108 +25,134 @@ const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: s
 );
 
 export default function Header() {
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navItems = ['Shops', 'Offers', 'Contact'];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white">
       <div className="container flex h-20 items-center">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2">
-            <Leaf className="h-7 w-7 text-primary" />
-            <h1 className="text-2xl font-bold text-gray-800">PickBazar</h1>
-          </Link>
-          <div className="hidden md:flex">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2 border-gray-200">
-                  <Apple className="h-4 w-4" />
-                  Grocery
-                  <ChevronDown className="h-4 w-4 text-gray-500" />
+        {isSearchOpen ? (
+           <div className="flex w-full items-center gap-2">
+            <div className="flex w-full items-center rounded-lg border-2 border-primary bg-white">
+                <div className="relative flex-grow">
+                    <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Search your products from here"
+                      className="h-12 w-full border-0 bg-transparent pl-12 pr-4 text-base focus-visible:ring-0 focus-visible:ring-offset-0"
+                      autoFocus
+                    />
+                </div>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-11 w-11 flex-shrink-0 rounded-l-none rounded-r-md text-muted-foreground hover:bg-primary/10"
+                    onClick={() => setIsSearchOpen(false)}
+                >
+                    <X className="h-5 w-5" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Fruits & Vegetables</DropdownMenuItem>
-                <DropdownMenuItem>Meat & Fish</DropdownMenuItem>
-                <DropdownMenuItem>Dairy</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            </div>
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="flex items-center gap-6">
+              <Link href="/" className="flex items-center gap-2">
+                <Leaf className="h-7 w-7 text-primary" />
+                <h1 className="text-2xl font-bold text-gray-800">PickBazar</h1>
+              </Link>
+              <div className="hidden md:flex">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="flex items-center gap-2 border-gray-200">
+                      <Apple className="h-4 w-4" />
+                      Grocery
+                      <ChevronDown className="h-4 w-4 text-gray-500" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem>Fruits & Vegetables</DropdownMenuItem>
+                    <DropdownMenuItem>Meat & Fish</DropdownMenuItem>
+                    <DropdownMenuItem>Dairy</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
 
-        <nav className="ml-auto hidden items-center space-x-6 text-sm md:flex">
-            {navItems.map((item) => (
-              <NavItem key={item}>{item}</NavItem>
-            ))}
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-1 transition-colors hover:text-primary text-sm font-medium text-gray-600">
-                Pages
-                <ChevronDown className="h-4 w-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>About Us</DropdownMenuItem>
-                <DropdownMenuItem>Contact Us</DropdownMenuItem>
-                <DropdownMenuItem>FAQ</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-        </nav>
-
-        <div className="flex items-center justify-end space-x-2 ml-6">
-           <div className="hidden md:flex items-center space-x-2">
-             <Button variant="ghost" size="icon">
-                <Search className="h-5 w-5" />
-             </Button>
-             <Dialog>
-                <DialogTrigger asChild>
-                    <Button>Join</Button>
-                </DialogTrigger>
-                <LoginDialog />
-              </Dialog>
-              <Button asChild>
-                <Link href="/invest">Become an Investor</Link>
-              </Button>
-          </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle Menu</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left">
-                <Link href="/" className="mr-6 flex items-center space-x-2 mb-6">
-                   <Leaf className="h-7 w-7 text-primary" />
-                   <h1 className="text-2xl font-bold text-gray-800">Pickbazar</h1>
-                </Link>
-              <div className="flex flex-col space-y-4">
+            <nav className="ml-auto hidden items-center space-x-6 text-sm md:flex">
                 {navItems.map((item) => (
                   <NavItem key={item}>{item}</NavItem>
                 ))}
                 <DropdownMenu>
-                    <DropdownMenuTrigger className="flex items-center gap-1 transition-colors hover:text-primary text-sm font-medium text-gray-600">
-                        Pages
-                        <ChevronDown className="h-4 w-4" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                        <DropdownMenuItem>About Us</DropdownMenuItem>
-                        <DropdownMenuItem>Contact Us</DropdownMenuItem>
-                        <DropdownMenuItem>FAQ</DropdownMenuItem>
-                    </DropdownMenuContent>
+                  <DropdownMenuTrigger className="flex items-center gap-1 transition-colors hover:text-primary text-sm font-medium text-gray-600">
+                    Pages
+                    <ChevronDown className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem>About Us</DropdownMenuItem>
+                    <DropdownMenuItem>Contact Us</DropdownMenuItem>
+                    <DropdownMenuItem>FAQ</DropdownMenuItem>
+                  </DropdownMenuContent>
                 </DropdownMenu>
-                <div className="mt-4 flex flex-col gap-2">
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button>Join</Button>
-                        </DialogTrigger>
-                        <LoginDialog />
-                    </Dialog>
-                    <Button asChild>
-                        <Link href="/invest">Become an Investor</Link>
-                    </Button>
-                </div>
+            </nav>
+
+            <div className="flex items-center justify-end space-x-2 ml-6">
+              <div className="hidden md:flex items-center space-x-2">
+                <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
+                    <Search className="h-5 w-5" />
+                </Button>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button>Join</Button>
+                    </DialogTrigger>
+                    <LoginDialog />
+                  </Dialog>
+                  <Button asChild>
+                    <Link href="/invest">Become an Investor</Link>
+                  </Button>
               </div>
-            </SheetContent>
-          </Sheet>
-        </div>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon" className="md:hidden">
+                    <Menu className="h-5 w-5" />
+                    <span className="sr-only">Toggle Menu</span>
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left">
+                    <Link href="/" className="mr-6 flex items-center space-x-2 mb-6">
+                      <Leaf className="h-7 w-7 text-primary" />
+                      <h1 className="text-2xl font-bold text-gray-800">Pickbazar</h1>
+                    </Link>
+                  <div className="flex flex-col space-y-4">
+                    {navItems.map((item) => (
+                      <NavItem key={item}>{item}</NavItem>
+                    ))}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger className="flex items-center gap-1 transition-colors hover:text-primary text-sm font-medium text-gray-600">
+                            Pages
+                            <ChevronDown className="h-4 w-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem>About Us</DropdownMenuItem>
+                            <DropdownMenuItem>Contact Us</DropdownMenuItem>
+                            <DropdownMenuItem>FAQ</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <div className="mt-4 flex flex-col gap-2">
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button>Join</Button>
+                            </DialogTrigger>
+                            <LoginDialog />
+                        </Dialog>
+                        <Button asChild>
+                            <Link href="/invest">Become an Investor</Link>
+                        </Button>
+                    </div>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </div>
+          </>
+        )}
       </div>
     </header>
   );
