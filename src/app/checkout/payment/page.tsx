@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
@@ -10,8 +11,10 @@ import { selectSubtotal, selectCartItems, clearCart } from '@/lib/redux/slices/c
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
+import { Input } from '@/components/ui/input';
 import { CreditCard, Landmark, Smartphone, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 export default function PaymentPage() {
     const router = useRouter();
@@ -20,6 +23,7 @@ export default function PaymentPage() {
     const subtotal = useAppSelector(selectSubtotal);
     const shippingCost = 5.00;
     const total = subtotal + shippingCost;
+    const [selectedMethod, setSelectedMethod] = useState('card');
     
     const handlePayment = () => {
         const orderData = {
@@ -42,7 +46,7 @@ export default function PaymentPage() {
                 <CardTitle className="text-center text-2xl">Choose Payment Method</CardTitle>
               </CardHeader>
               <CardContent>
-                <RadioGroup defaultValue="card" className="space-y-4">
+                <RadioGroup value={selectedMethod} onValueChange={setSelectedMethod} className="space-y-4">
                   <Label htmlFor="card" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                     <CreditCard className="h-6 w-6 text-primary" />
                     <div className="flex-1">
@@ -51,7 +55,14 @@ export default function PaymentPage() {
                     </div>
                     <RadioGroupItem value="card" id="card" />
                   </Label>
-                  <Label htmlFor="mobile-banking" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+
+                  <Label 
+                    htmlFor="mobile-banking" 
+                    className={cn(
+                        "flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary",
+                        selectedMethod === 'mobile-banking' && "rounded-b-none"
+                    )}
+                  >
                     <Smartphone className="h-6 w-6 text-primary" />
                     <div className="flex-1">
                       <p className="font-semibold">Mobile Banking</p>
@@ -59,6 +70,27 @@ export default function PaymentPage() {
                     </div>
                     <RadioGroupItem value="mobile-banking" id="mobile-banking" />
                   </Label>
+                  {selectedMethod === 'mobile-banking' && (
+                    <div className="p-4 border border-t-0 rounded-b-md bg-muted/20 space-y-4 -mt-4">
+                        <p className="text-sm text-muted-foreground">
+                            1. Go to your bKash/Nagad/Rocket App and select 'Send Money'.<br/>
+                            2. Enter the agent number: <strong className="text-primary">01xxxxxxxxx</strong><br/>
+                            3. Enter the total amount: <strong className="text-primary">${total.toFixed(2)}</strong><br/>
+                            4. Complete the transaction and enter the details below.
+                        </p>
+                        <div className="grid sm:grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="trxId">Transaction ID</Label>
+                                <Input id="trxId" placeholder="Enter TrxID" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="mobileLast4">Your Mobile No. (Last 4 Digits)</Label>
+                                <Input id="mobileLast4" placeholder="e.g., 1234" />
+                            </div>
+                        </div>
+                    </div>
+                  )}
+
                   <Label htmlFor="sslcommerz" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                     <ShieldCheck className="h-6 w-6 text-primary" />
                     <div className="flex-1">
@@ -67,6 +99,7 @@ export default function PaymentPage() {
                     </div>
                     <RadioGroupItem value="sslcommerz" id="sslcommerz" />
                   </Label>
+
                    <Label htmlFor="cod" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                     <Landmark className="h-6 w-6 text-primary" />
                     <div className="flex-1">
