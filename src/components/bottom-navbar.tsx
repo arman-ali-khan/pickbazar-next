@@ -40,7 +40,7 @@ const categories = [
     { name: 'Beverage', icon: GlassWater, sub: ['Coffee', 'Juice'] },
 ];
 
-const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '#' }, { name: 'Contact', href: '#' }];
+const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
 
 function PagesDrawer() {
     return (
@@ -94,7 +94,7 @@ function PagesDrawer() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
                             <DropdownMenuItem>About Us</DropdownMenuItem>
-                            <DropdownMenuItem>Contact Us</DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href="/contact">Contact Us</Link></DropdownMenuItem>
                             <DropdownMenuItem>FAQ</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>

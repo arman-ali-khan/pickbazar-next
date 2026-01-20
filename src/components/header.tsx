@@ -42,7 +42,7 @@ const categories = [
 
 export default function Header() {
   const { isSearchOpen, setSearchOpen } = useUI();
-  const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '#' }, { name: 'Contact', href: '#' }];
+  const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white">
@@ -118,7 +118,7 @@ export default function Header() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem>About Us</DropdownMenuItem>
-                    <DropdownMenuItem>Contact Us</DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/contact">Contact Us</Link></DropdownMenuItem>
                     <DropdownMenuItem>FAQ</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

@@ -9,8 +9,8 @@ import { products as allProducts } from '@/lib/data';
 import type { Product } from '@/lib/data';
 import FilterSidebar from '@/components/filter-sidebar';
 import { Button } from '@/components/ui/button';
-import { Filter, Grid, List } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { Filter, Grid, List, Plus } from 'lucide-react';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import {
   Select,
   SelectContent,
@@ -22,10 +22,12 @@ import ProductRowCard from '@/components/product-row-card';
 
 type ViewMode = 'grid' | 'list';
 type SortOrder = 'default' | 'price-asc' | 'price-desc';
+const PRODUCTS_PER_PAGE = 12;
 
 export default function ShopPage() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(allProducts);
   const [displayProducts, setDisplayProducts] = useState<Product[]>(allProducts);
+  const [visibleCount, setVisibleCount] = useState(PRODUCTS_PER_PAGE);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortOrder, setSortOrder] = useState<SortOrder>('default');
 
@@ -49,6 +51,7 @@ export default function ShopPage() {
     }
     
     setFilteredProducts(products);
+    setVisibleCount(PRODUCTS_PER_PAGE);
   }, []);
 
   useEffect(() => {
@@ -60,17 +63,23 @@ export default function ShopPage() {
     }
     setDisplayProducts(sortedProducts);
   }, [filteredProducts, sortOrder]);
+
+  const loadMoreProducts = () => {
+    setVisibleCount(prevCount => prevCount + PRODUCTS_PER_PAGE);
+  };
   
+  const currentProducts = displayProducts.slice(0, visibleCount);
+
   return (
     <div className="bg-background min-h-screen">
       <Header />
-      <main className="py-8 px-4 md:px-8">
+      <main className="py-8 px-1 md:px-2">
         <div className="mb-8 text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Shop</h1>
             <p className="text-muted-foreground mt-2">Browse our collection of fresh products.</p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-2">
             <div className="hidden lg:block">
                 <FilterSidebar onFilterChange={handleFilterChange} />
             </div>
@@ -90,7 +99,7 @@ export default function ShopPage() {
                             </SheetContent>
                         </Sheet>
                     </div>
-                    <p className="text-sm text-muted-foreground hidden sm:block">Showing {displayProducts.length} of {allProducts.length} products</p>
+                    <p className="text-sm text-muted-foreground hidden sm:block">Showing {currentProducts.length} of {displayProducts.length} products</p>
                     <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                         <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as SortOrder)}>
                             <SelectTrigger className="w-[180px]">
@@ -115,21 +124,29 @@ export default function ShopPage() {
 
                 {viewMode === 'grid' ? (
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
-                      {displayProducts.map(product => (
+                      {currentProducts.map(product => (
                           <ProductCard key={product.id} product={product} />
                       ))}
                   </div>
                 ) : (
                   <div className="flex flex-col gap-4">
-                      {displayProducts.map(product => (
+                      {currentProducts.map(product => (
                           <ProductRowCard key={product.id} product={product} />
                       ))}
                   </div>
                 )}
-                {displayProducts.length === 0 && (
+                {currentProducts.length === 0 && (
                     <div className="text-center py-16">
                         <p className="text-lg text-muted-foreground">No products found matching your criteria.</p>
                     </div>
+                )}
+
+                {currentProducts.length < displayProducts.length && (
+                  <div className="text-center mt-12">
+                    <Button onClick={loadMoreProducts} variant="outline" size="lg">
+                      Load More
+                    </Button>
+                  </div>
                 )}
             </div>
         </div>

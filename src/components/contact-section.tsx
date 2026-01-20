@@ -9,7 +9,7 @@ export default function ContactSection() {
             Can't find the answer you're looking for? Please chat to our friendly team.
         </p>
         <Button asChild size="lg">
-            <Link href="#">Get in touch</Link>
+            <Link href="/contact">Get in touch</Link>
         </Button>
     </section>
   )
