@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { Home, Search, Menu, User, ShoppingCart, ChevronDown, Apple, Beef, Cookie, Dog, Home as HomeIcon, Milk, Soup, Cake, GlassWater, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
 import { useUI } from '@/contexts/ui-context';
@@ -52,6 +52,7 @@ function PagesDrawer() {
                 </Button>
             </SheetTrigger>
             <SheetContent side="left" className="w-80">
+                <SheetTitle className="sr-only">Pages Menu</SheetTitle>
                 <div className="p-6">
                     <Link href="/" className="mr-6 flex items-center space-x-2 mb-6">
                       <Leaf className="h-7 w-7 text-primary" />

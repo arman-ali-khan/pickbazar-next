@@ -10,7 +10,7 @@ import type { Product } from '@/lib/data';
 import FilterSidebar from '@/components/filter-sidebar';
 import { Button } from '@/components/ui/button';
 import { Filter } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 
 export default function ShopPage() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(allProducts);
@@ -54,6 +54,7 @@ export default function ShopPage() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-80">
+                    <SheetTitle className="sr-only">Filters</SheetTitle>
                     <FilterSidebar onFilterChange={handleFilterChange} />
                 </SheetContent>
             </Sheet>
