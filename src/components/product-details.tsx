@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Minus } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Product } from '@/lib/data';
+import { product as detailedProduct } from '@/lib/data';
 import { useCart } from '@/contexts/cart-context';
 import ProductQuickView from './product-quick-view';
 
@@ -16,13 +17,18 @@ export default function ProductCard({ product }: { product: Product }) {
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
 
+    const productForQuickView = {
+        ...detailedProduct,
+        ...product,
+    };
+
     return (
         <Card className="w-full overflow-hidden group border rounded-lg hover:shadow-md transition-shadow duration-200 bg-white flex flex-col">
             <CardContent className="p-4 flex flex-col flex-grow">
-                <ProductQuickView product={product}>
+                <ProductQuickView product={productForQuickView}>
                     <div className="bg-gray-50 rounded-md overflow-hidden aspect-square relative mb-4 cursor-pointer">
                         {hasDiscount && (
-                            <Badge className="absolute top-3 right-3 z-10 bg-primary text-primary-foreground rounded-md px-2 text-xs font-semibold">
+                            <Badge className="absolute top-3 right-3 z-10 bg-yellow-400 text-yellow-900 rounded-md px-2 text-xs font-semibold border-none">
                                 {discountPercentage}%
                             </Badge>
                         )}
