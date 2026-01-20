@@ -8,6 +8,7 @@ import RecentlyAddedProducts from "@/components/recently-added-products";
 import CategoryProducts from "@/components/category-products";
 import CustomerReviews from "@/components/customer-reviews";
 import ContactSection from "@/components/contact-section";
+import FaqSection from "@/components/faq-section";
 
 
 export default function Home() {
@@ -21,6 +22,7 @@ export default function Home() {
         <RecentlyAddedProducts />
         <CategoryProducts />
         <CustomerReviews />
+        <FaqSection />
         <ContactSection />
       </main>
       <Footer />
