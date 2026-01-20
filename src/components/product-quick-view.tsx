@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
@@ -9,8 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import type { Product, ImagePlaceholder, RelatedProduct } from '@/lib/data';
 import { useCart } from '@/contexts/cart-context';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 type QuickViewProduct = Product & {
     images: ImagePlaceholder[];
@@ -87,6 +87,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
     const { addToCart, updateQuantity, getItemQuantity } = useCart();
     const quantity = getItemQuantity(product.id);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [isScrolled, setIsScrolled] = useState(false);
 
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
@@ -106,12 +107,53 @@ export default function ProductQuickView({ product, children }: { product: Quick
             updateQuantity(product.id, quantity + 1);
         }
     };
+    
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        setIsScrolled(e.currentTarget.scrollTop > 300);
+    };
 
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[900px] p-0 grid grid-rows-[auto_1fr] max-h-[90vh]">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 p-8 border-b">
+            <DialogContent 
+                className="sm:max-w-[900px] p-0 max-h-[90vh] overflow-y-auto"
+                onScroll={handleScroll}
+            >
+                {/* Sticky Header */}
+                <div className={cn(
+                    "sticky top-0 left-0 right-0 bg-white/80 backdrop-blur-sm z-10 border-b transition-opacity duration-300",
+                    isScrolled ? "opacity-100" : "opacity-0 pointer-events-none"
+                )}>
+                   <div className="p-4 flex items-center justify-between container mx-auto">
+                        <div className="flex items-center gap-4">
+                            <div className="relative h-14 w-14 flex-shrink-0 bg-gray-100 rounded-md">
+                                <Image src={product.images[0].imageUrl} data-ai-hint={product.images[0].imageHint} alt={product.name} fill className="rounded-md object-contain p-1"/>
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-base">{product.name}</h3>
+                                <p className="text-sm text-muted-foreground">{product.weight}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                             <div className="flex items-baseline gap-2">
+                                <p className="font-bold text-primary text-xl">${product.price.toFixed(2)}</p>
+                                {hasDiscount && <p className="text-base line-through text-muted-foreground">${product.originalPrice?.toFixed(2)}</p>}
+                            </div>
+                            <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-10 w-28">
+                                <Button size="icon" variant="ghost" className="h-10 w-8 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity - 1)} disabled={quantity === 0}>
+                                    <Minus className="h-4 w-4" />
+                                </Button>
+                                <span className="font-bold text-sm">{quantity}</span>
+                                <Button size="icon" variant="ghost" className="h-10 w-8 text-white hover:bg-primary/90" onClick={handleQuantityIncrease}>
+                                    <Plus className="h-4 w-4" />
+                                </Button>
+                            </div>
+                        </div>
+                   </div>
+                </div>
+
+                {/* Main Content */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 p-8">
                     {/* Image Section */}
                     <div>
                         <div className="aspect-square relative mb-4">
@@ -208,22 +250,21 @@ export default function ProductQuickView({ product, children }: { product: Quick
                          </div>
                     </div>
                 </div>
-                <ScrollArea>
-                    <div className="p-8 pt-0">
-                        <div className="mb-12">
-                            <h3 className="font-bold text-lg mb-4">Details</h3>
-                            <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
-                        </div>
-                        <div>
-                             <h3 className="font-bold text-lg mb-6">Related Products</h3>
-                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                                {product.relatedProducts.map(related => (
-                                    <RelatedProductCard key={related.id} product={related} />
-                                ))}
-                             </div>
-                        </div>
+
+                <div className="px-8 pb-8">
+                    <div className="mb-12">
+                        <h3 className="font-bold text-lg mb-4">Details</h3>
+                        <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
                     </div>
-                </ScrollArea>
+                    <div>
+                         <h3 className="font-bold text-lg mb-6">Related Products</h3>
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                            {product.relatedProducts.map(related => (
+                                <RelatedProductCard key={related.id} product={related} />
+                            ))}
+                         </div>
+                    </div>
+                </div>
             </DialogContent>
         </Dialog>
     );
