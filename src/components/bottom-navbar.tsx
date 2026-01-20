@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Search, Menu, User, ShoppingCart, ChevronDown, Apple, Beef, Cookie, Dog, Home as HomeIcon, Milk, Soup, Cake, GlassWater, Leaf } from 'lucide-react';
+import { Home, Search, Menu, User, ShoppingCart, ChevronDown, Apple, Beef, Cookie, Dog, Home as HomeIcon, Milk, Soup, Cake, GlassWater, Leaf, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
@@ -146,8 +146,8 @@ export default function BottomNavbar() {
                     <Sheet>
                         <SheetTrigger asChild>
                             <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2">
-                                <User className="h-6 w-6" />
-                                <span className="text-xs">Profile</span>
+                                <Settings className="h-6 w-6" />
+                                <span className="text-xs">Account</span>
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="right" className="p-0 w-80 overflow-y-auto">
