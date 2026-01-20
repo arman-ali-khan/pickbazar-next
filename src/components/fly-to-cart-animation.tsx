@@ -22,13 +22,17 @@ export default function FlyToCartAnimation() {
     const endRect = cartButton.getBoundingClientRect();
     const startRect = animationState.startRect;
 
+    const size = 100;
+    const initialTop = startRect.top + startRect.height / 2 - size / 2;
+    const initialLeft = startRect.left + startRect.width / 2 - size / 2;
+
     // 1. Initial state: at the source, visible
     setStyles({
       position: 'fixed',
-      top: `${startRect.top}px`,
-      left: `${startRect.left}px`,
-      width: `${startRect.width}px`,
-      height: `${startRect.height}px`,
+      top: `${initialTop}px`,
+      left: `${initialLeft}px`,
+      width: `${size}px`,
+      height: `${size}px`,
       opacity: 1,
       transform: 'scale(1)',
       transition: 'none',
@@ -45,7 +49,7 @@ export default function FlyToCartAnimation() {
         width: '32px',
         height: '32px',
         opacity: 0,
-        transform: 'translate(-50%, -50%)',
+        transform: 'translate(-50%, -50%) scale(0.2)',
         transition: 'all 0.5s cubic-bezier(0.5, 0, 1, 0.5)',
       });
     }, 500);
