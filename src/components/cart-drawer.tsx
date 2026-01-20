@@ -98,7 +98,7 @@ export default function CartDrawer() {
           
           <SheetFooter className="p-6 bg-white border-t mt-auto">
               <Button className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 text-base font-semibold relative" asChild>
-                  <Link href="#" className="flex items-center justify-center text-white">
+                  <Link href="/checkout" className="flex items-center justify-center text-white">
                       Checkout
                       <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-primary rounded-full px-5 py-2.5 text-sm font-bold">
                           ${subtotal.toFixed(2)}

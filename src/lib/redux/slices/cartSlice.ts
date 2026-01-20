@@ -69,6 +69,9 @@ export const cartSlice = createSlice({
     },
     clearAnimation: (state) => {
         state.animationState = null;
+    },
+    clearCart: (state) => {
+        state.items = [];
     }
   },
 })
@@ -81,7 +84,8 @@ export const {
     openCart, 
     closeCart,
     triggerFlyToCart,
-    clearAnimation
+    clearAnimation,
+    clearCart
 } = cartSlice.actions;
 
 const selectCartItems = (state: RootState) => state.cart.items;
