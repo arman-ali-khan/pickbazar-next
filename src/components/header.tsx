@@ -175,9 +175,11 @@ export default function Header() {
                     <ChevronDown className="h-4 w-4" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem>About Us</DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/about">About Us</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/contact">Contact Us</Link></DropdownMenuItem>
                     <DropdownMenuItem asChild><Link href="/faq">FAQ</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/privacy-policy">Privacy Policy</Link></DropdownMenuItem>
+                    <DropdownMenuItem asChild><Link href="/terms-and-conditions">Terms & Conditions</Link></DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
             </nav>
