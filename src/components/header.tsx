@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronDown, Menu, Search, Apple, Leaf, X, Beef, Cookie, Dog, Home, Milk, Soup, Cake, GlassWater } from 'lucide-react';
+import { ChevronDown, Menu, Search, Leaf, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -15,9 +15,12 @@ import { Input } from './ui/input';
 import { useUI } from '@/contexts/ui-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { categoryData as categories } from '@/lib/category-data';
+import { cn } from '@/lib/utils';
+
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
   <Link
@@ -27,18 +30,6 @@ const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: s
     {children}
   </Link>
 );
-
-const categories = [
-    { name: 'Fruits & Vegetables', icon: Apple, sub: ['Fruits', 'Vegetables'] },
-    { name: 'Meat & Fish', icon: Beef, sub: ['Meat', 'Fish'] },
-    { name: 'Snacks', icon: Cookie, sub: ['Chips', 'Chocolate'] },
-    { name: 'Pet Care', icon: Dog, sub: ['Dog Food', 'Cat Food'] },
-    { name: 'Home & Cleaning', icon: Home, sub: ['Detergent', 'Cleaning Tools'] },
-    { name: 'Dairy', icon: Milk, sub: ['Milk', 'Cheese'] },
-    { name: 'Cooking', icon: Soup, sub: ['Oil', 'Spices'] },
-    { name: 'Breakfast', icon: Cake, sub: ['Cereal', 'Bread'] },
-    { name: 'Beverage', icon: GlassWater, sub: ['Coffee', 'Juice'] },
-];
 
 const CategoriesNav = () => {
     const isMobile = useIsMobile();
@@ -56,7 +47,7 @@ const CategoriesNav = () => {
             <AccordionContent>
               <div className="pl-8 flex flex-col items-start">
                 {category.sub.map((subCategory) => (
-                  <Link href={`/shop?category=${encodeURIComponent(subCategory)}`} key={subCategory} className="py-2 text-sm text-muted-foreground hover:text-primary w-full text-left">{subCategory}</Link>
+                  <Link href={subCategory.href} key={subCategory.name} className="py-2 text-sm text-muted-foreground hover:text-primary w-full text-left">{subCategory.name}</Link>
                 ))}
               </div>
             </AccordionContent>
@@ -85,26 +76,24 @@ const CategoriesNav = () => {
         )
     }
 
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2 border-gray-200">
-                    <Menu className="h-4 w-4" />
-                    Categories
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 p-0">
-                {categoriesContent}
-            </DropdownMenuContent>
-        </DropdownMenu>
-    );
+    return null;
 };
 
 export default function Header() {
   const { isSearchOpen, setSearchOpen } = useUI();
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isScrolled, setIsScrolled] = useState(false);
   const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 0);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,7 +106,10 @@ export default function Header() {
 
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-white">
+    <header className={cn(
+        "sticky top-0 z-50 w-full border-b transition-all duration-300",
+        isScrolled ? 'bg-white border-gray-200 shadow-sm' : 'bg-transparent border-transparent'
+    )}>
       <div className="container flex h-20 items-center justify-between">
         {isSearchOpen ? (
            <div className="flex w-full items-center gap-2">
@@ -146,7 +138,9 @@ export default function Header() {
         ) : (
           <>
             <div className="flex items-center gap-4">
-                <CategoriesNav />
+                <div className="md:hidden">
+                    <CategoriesNav />
+                </div>
               <Link href="/" className="flex items-center gap-2">
                 <Leaf className="h-7 w-7 text-primary" />
                 <h1 className="text-2xl font-bold text-gray-800">PickBazar</h1>
