@@ -9,8 +9,8 @@ import { products as allProducts } from '@/lib/data';
 import type { Product } from '@/lib/data';
 import FilterSidebar from '@/components/filter-sidebar';
 import { Button } from '@/components/ui/button';
-import { Filter, Grid, List, Plus } from 'lucide-react';
-import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
+import { Filter, Grid, List } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import {
   Select,
   SelectContent,
