@@ -88,7 +88,7 @@ export const {
     clearCart
 } = cartSlice.actions;
 
-const selectCartItems = (state: RootState) => state.cart.items;
+export const selectCartItems = (state: RootState) => state.cart.items;
 
 export const selectTotalItems = createSelector(
     selectCartItems,
