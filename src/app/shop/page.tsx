@@ -40,7 +40,7 @@ export default function ShopPage() {
   return (
     <div className="bg-background min-h-screen">
       <Header />
-      <main className="container py-8">
+      <main className="py-8 px-4 md:px-8">
         <div className="mb-8 text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Shop</h1>
             <p className="text-muted-foreground mt-2">Browse our collection of fresh products.</p>
@@ -64,7 +64,7 @@ export default function ShopPage() {
                 <FilterSidebar onFilterChange={handleFilterChange} />
             </div>
             <div>
-                <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
                     {filteredProducts.map(product => (
                         <ProductCard key={product.id} product={product} />
                     ))}
