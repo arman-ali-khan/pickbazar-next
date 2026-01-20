@@ -14,10 +14,11 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { useUser } from '@/firebase';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { toggleSearch } from '@/lib/redux/slices/uiSlice';
 import { openCart, selectTotalItems } from '@/lib/redux/slices/cartSlice';
+import ProfileSidebar from './profile-sidebar';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
     <Link
@@ -129,12 +130,56 @@ export default function BottomNavbar() {
     const totalItems = useAppSelector(selectTotalItems);
     const { user } = useUser();
     const router = useRouter();
+    const pathname = usePathname();
+    const isProfilePage = pathname.startsWith('/profile');
 
     const handleProfileClick = () => {
         if (user) {
             router.push('/profile');
         }
     }
+    
+    const renderProfileButton = () => {
+        if (user) {
+            if (isProfilePage) {
+                return (
+                    <Sheet>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2">
+                                <User className="h-6 w-6" />
+                                <span className="text-xs">Profile</span>
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="right" className="p-0 w-80 overflow-y-auto">
+                            <SheetTitle className="sr-only">Profile Menu</SheetTitle>
+                            <div className="p-6">
+                                <ProfileSidebar />
+                            </div>
+                        </SheetContent>
+                    </Sheet>
+                );
+            } else {
+                return (
+                    <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={handleProfileClick}>
+                        <User className="h-6 w-6" />
+                        <span className="text-xs">Profile</span>
+                    </Button>
+                );
+            }
+        } else {
+            return (
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2">
+                            <User className="h-6 w-6" />
+                            <span className="text-xs">Profile</span>
+                        </Button>
+                    </DialogTrigger>
+                    <LoginDialog />
+                </Dialog>
+            );
+        }
+    };
 
     return (
         <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t md:hidden">
@@ -153,23 +198,7 @@ export default function BottomNavbar() {
                     <span className="sr-only">Home</span>
                 </Link>
 
-                {user ? (
-                    <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={handleProfileClick}>
-                        <User className="h-6 w-6" />
-                        <span className="text-xs">Profile</span>
-                    </Button>
-                ) : (
-                    <Dialog>
-                        <DialogTrigger asChild>
-                             <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2">
-                                <User className="h-6 w-6" />
-                                <span className="text-xs">Profile</span>
-                            </Button>
-                        </DialogTrigger>
-                        <LoginDialog />
-                    </Dialog>
-                )}
-
+                {renderProfileButton()}
 
                 <Button id="cart-icon-mobile" variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={() => dispatch(openCart())}>
                     <ShoppingCart className="h-6 w-6" />
