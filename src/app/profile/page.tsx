@@ -100,13 +100,13 @@ export default function ProfilePage() {
   return (
     <div className="bg-muted/20 min-h-screen">
       <Header />
-      <main className="container py-12">
-        <div className="grid lg:grid-cols-[320px_1fr] gap-8 items-start">
+      <main className="container py-12 w-full mx-auto">
+        <div className="grid w-full md:grid-cols-[320px_1fr] gap-8 items-start">
             <div className="hidden md:block">
                 <ProfileSidebar />
             </div>
 
-            <div className="space-y-8">
+            <div className="space-y-8 w-full">
                 {/* Profile Form */}
                 <Card>
                     <CardHeader>

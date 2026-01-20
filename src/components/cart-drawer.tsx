@@ -37,7 +37,7 @@ export default function CartDrawer() {
             <ShoppingBag className="h-5 w-5" />
             <span className="text-sm font-medium">{totalItems} Items</span>
           </div>
-          <div className="bg-white text-primary rounded-md w-full py-1 px-4 text-sm font-bold m-1">
+          <div className="bg-white text-primary rounded-md mx-4 py-1 px-4 text-sm font-bold m-1">
             ${subtotal.toFixed(2)}
           </div>
         </Button>

@@ -7,11 +7,9 @@ import {
   KeyRound,
   CreditCard,
   ShoppingBag,
-  Download,
   Heart,
   HelpCircle,
   RefreshCw,
-  FileText,
   Wallet,
   LogOut,
 } from 'lucide-react';
@@ -29,12 +27,10 @@ const navItems = [
     { href: '/profile/change-password', icon: KeyRound, label: 'Change Password' },
     { href: '/profile/my-cards', icon: CreditCard, label: 'My Cards' },
     { href: '/profile/my-orders', icon: ShoppingBag, label: 'My Orders' },
-    { href: '/profile/downloads', icon: Download, label: 'Downloads' },
     { href: '/profile/my-wishlists', icon: Heart, label: 'My Wishlists' },
     { href: '/profile/my-questions', icon: HelpCircle, label: 'My Questions' },
     { href: '/profile/my-refunds', icon: RefreshCw, label: 'My Refunds' },
-    { href: '/profile/my-reports', icon: FileText, label: 'My Reports' },
-    { href: '/profile/need-help', icon: HelpCircle, label: 'Need Help' },
+    { href: '/contact', icon: HelpCircle, label: 'Need Help' },
 ];
 
 const ProfileNavLink = ({ href, icon: Icon, label }: typeof navItems[0]) => {

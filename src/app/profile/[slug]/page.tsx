@@ -17,7 +17,7 @@ export default function ProfileSubPage() {
         <div className="bg-muted/20 min-h-screen">
           <Header />
           <main className="container py-12">
-            <div className="grid lg:grid-cols-[320px_1fr] gap-8 items-start">
+            <div className="grid sm:grid-cols-[320px_1fr] gap-8 items-start">
                 <div className="hidden md:block">
                     <ProfileSidebar />
                 </div>
