@@ -56,7 +56,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white">
-      <div className="container flex h-20 items-center">
+      <div className="container flex h-20 items-center justify-between">
         {isSearchOpen ? (
            <div className="flex w-full items-center gap-2">
             <form onSubmit={handleSearch} className="flex w-full items-center rounded-lg border-2 border-primary bg-white">
@@ -88,43 +88,43 @@ export default function Header() {
                 <Leaf className="h-7 w-7 text-primary" />
                 <h1 className="text-2xl font-bold text-gray-800">PickBazar</h1>
               </Link>
-              <div className="hidden md:flex">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="flex items-center gap-2 border-gray-200">
-                      <Menu className="h-4 w-4" />
-                      Categories
-                      <ChevronDown className="h-4 w-4 text-gray-500" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-64 p-0">
-                    <Accordion type="multiple" className="w-full">
-                      {categories.map((category) => (
-                        <AccordionItem value={category.name} key={category.name} className="border-b last:border-b-0">
-                          <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline hover:bg-accent rounded-sm">
-                            <div className="flex items-center gap-2">
-                              <category.icon className="h-4 w-4" />
-                              <span>{category.name}</span>
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent>
-                            <div className="pl-8 flex flex-col items-start pt-1">
-                              {category.sub.map((subCategory) => (
-                                <DropdownMenuItem key={subCategory} asChild className="w-full">
-                                  <Link href={`/shop?category=${encodeURIComponent(subCategory)}`}>{subCategory}</Link>
-                                </DropdownMenuItem>
-                              ))}
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
             </div>
 
-            <nav className="ml-auto hidden items-center space-x-6 text-sm md:flex">
+            <nav className="hidden items-center space-x-6 text-sm md:flex">
+                <div className="hidden md:flex">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="flex items-center gap-2 border-gray-200">
+                        <Menu className="h-4 w-4" />
+                        Categories
+                        <ChevronDown className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-64 p-0">
+                      <Accordion type="multiple" className="w-full">
+                        {categories.map((category) => (
+                          <AccordionItem value={category.name} key={category.name} className="border-b last:border-b-0">
+                            <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline hover:bg-accent rounded-sm">
+                              <div className="flex items-center gap-2">
+                                <category.icon className="h-4 w-4" />
+                                <span>{category.name}</span>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                              <div className="pl-8 flex flex-col items-start pt-1">
+                                {category.sub.map((subCategory) => (
+                                  <DropdownMenuItem key={subCategory} asChild className="w-full">
+                                    <Link href={`/shop?category=${encodeURIComponent(subCategory)}`}>{subCategory}</Link>
+                                  </DropdownMenuItem>
+                                ))}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))}
+                      </Accordion>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
                 {navItems.map((item) => (
                   <NavItem key={item.name} href={item.href}>{item.name}</NavItem>
                 ))}
@@ -141,7 +141,7 @@ export default function Header() {
                 </DropdownMenu>
             </nav>
 
-            <div className="flex items-center justify-end space-x-2 ml-6">
+            <div className="flex items-center justify-end space-x-2">
               <div className="hidden md:flex items-center space-x-2">
                 <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
                     <Search className="h-5 w-5" />
