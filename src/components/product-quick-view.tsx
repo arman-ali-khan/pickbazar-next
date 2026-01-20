@@ -98,7 +98,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
     };
 
     const handleNextImage = () => {
-        setCurrentImageIndex((prevIndex) => (prevIndex === product.images.length - 1 ? 0 : prevIndex + 1));
+        setCurrentImageIndex((prevIndex) => (prevIndex === product.images.length - 1 ? 0 : prevIndex - 1));
     };
     
     const handleQuantityIncrease = () => {
@@ -276,7 +276,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
                     </div>
                     <div>
                          <h3 className="font-bold text-lg mb-6">Related Products</h3>
-                         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                         <div className="grid grid-cols-2 md:grid-cols-4 gap-1">
                             {product.relatedProducts.map(related => (
                                 <RelatedProductCard key={related.id} product={related} />
                             ))}
