@@ -1,6 +1,6 @@
 'use client';
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -32,17 +32,25 @@ interface ProductPageContentProps {
 }
 
 export default function ProductPageContent({ product, relatedProducts }: ProductPageContentProps) {
-    const { addToCart, updateQuantity, getItemQuantity } = useCart();
+    const { addToCart, updateQuantity, getItemQuantity, triggerFlyToCart } = useCart();
     const quantity = getItemQuantity(product.id);
     const [mainImage, setMainImage] = useState(product.images[0]);
+    const imageRef = useRef<HTMLDivElement>(null);
 
     const totalReviews = product.ratingDistribution.reduce((acc, item) => acc + item.count, 0);
+    
+    const handleAddToCart = () => {
+        addToCart(product);
+        if (imageRef.current) {
+            triggerFlyToCart(mainImage.imageUrl, mainImage.imageHint, imageRef.current);
+        }
+    };
 
     return (
         <div>
             <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
                 <div>
-                    <div className="aspect-square relative rounded-lg border mb-4">
+                    <div ref={imageRef} className="aspect-square relative rounded-lg border mb-4">
                         <ImageMagnify
                             src={mainImage.imageUrl}
                             alt={product.name}
@@ -86,7 +94,7 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                         {quantity === 0 ? (
                             <Button
                                 className="h-12 text-base px-10"
-                                onClick={() => addToCart(product)}
+                                onClick={handleAddToCart}
                             >
                                 Add to cart
                             </Button>

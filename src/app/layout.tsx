@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import './globals.css';
 import { Inter } from 'next/font/google'
 import { CartProvider } from '@/contexts/cart-context';
+import FlyToCartAnimation from '@/components/fly-to-cart-animation';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -23,6 +24,7 @@ export default function RootLayout({
         <CartProvider>
           {children}
           <Toaster />
+          <FlyToCartAnimation />
         </CartProvider>
       </body>
     </html>

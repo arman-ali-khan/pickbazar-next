@@ -7,6 +7,13 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
+interface AnimationState {
+  key: number;
+  imageSrc: string;
+  imageHint: string;
+  startRect: DOMRect;
+}
+
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (product: Product, quantity?: number) => void;
@@ -15,6 +22,9 @@ interface CartContextType {
   getItemQuantity: (productId: number) => number;
   totalItems: number;
   subtotal: number;
+  triggerFlyToCart: (imageSrc: string, imageHint: string, startElement: HTMLElement) => void;
+  animationState: AnimationState | null;
+  clearAnimation: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -29,6 +39,7 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [animationState, setAnimationState] = useState<AnimationState | null>(null);
 
   useEffect(() => {
     try {
@@ -85,6 +96,20 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     return item ? item.quantity : 0;
   };
 
+  const triggerFlyToCart = (imageSrc: string, imageHint: string, startElement: HTMLElement) => {
+    const startRect = startElement.getBoundingClientRect();
+    setAnimationState({
+      key: Date.now(),
+      imageSrc,
+      imageHint,
+      startRect,
+    });
+  };
+
+  const clearAnimation = () => {
+    setAnimationState(null);
+  };
+
   const totalItems = useMemo(() => cartItems.reduce((acc, item) => acc + item.quantity, 0), [cartItems]);
   const subtotal = useMemo(() => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0), [cartItems]);
 
@@ -98,7 +123,10 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         updateQuantity,
         getItemQuantity,
         totalItems,
-        subtotal
+        subtotal,
+        triggerFlyToCart,
+        animationState,
+        clearAnimation,
       }}
     >
       {children}

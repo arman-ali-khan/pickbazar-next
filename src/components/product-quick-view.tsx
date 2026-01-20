@@ -85,10 +85,11 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
 }
 
 export default function ProductQuickView({ product, children }: { product: QuickViewProduct, children: React.ReactNode }) {
-    const { addToCart, updateQuantity, getItemQuantity } = useCart();
+    const { addToCart, updateQuantity, getItemQuantity, triggerFlyToCart } = useCart();
     const quantity = getItemQuantity(product.id);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isScrolled, setIsScrolled] = useState(false);
+    const imageRef = useRef<HTMLDivElement>(null);
 
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
@@ -104,6 +105,9 @@ export default function ProductQuickView({ product, children }: { product: Quick
     const handleQuantityIncrease = () => {
         if (quantity === 0) {
             addToCart(product, 1);
+            if (imageRef.current) {
+                triggerFlyToCart(product.images[currentImageIndex].imageUrl, product.images[currentImageIndex].imageHint, imageRef.current);
+            }
         } else {
             updateQuantity(product.id, quantity + 1);
         }
@@ -167,7 +171,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 p-8">
                     {/* Image Section */}
                     <div>
-                        <div className="aspect-square relative mb-4 rounded-lg">
+                        <div ref={imageRef} className="aspect-square relative mb-4 rounded-lg">
                              {hasDiscount && (
                                 <Badge className="absolute top-4 left-4 z-10 bg-yellow-400 text-yellow-900 rounded-md px-2 py-1 text-xs font-bold border-none">
                                     {discountPercentage}%

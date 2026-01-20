@@ -9,10 +9,12 @@ import type { Product } from '@/lib/data';
 import { product as detailedProduct, relatedProducts } from '@/lib/data';
 import { useCart } from '@/contexts/cart-context';
 import ProductQuickView from './product-quick-view';
+import { useRef } from 'react';
 
 export default function ProductCard({ product }: { product: Product }) {
-    const { addToCart, updateQuantity, getItemQuantity } = useCart();
+    const { addToCart, updateQuantity, getItemQuantity, triggerFlyToCart } = useCart();
     const quantity = getItemQuantity(product.id);
+    const imageRef = useRef<HTMLDivElement>(null);
 
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
@@ -23,11 +25,18 @@ export default function ProductCard({ product }: { product: Product }) {
         relatedProducts: relatedProducts.filter(p => p.id !== product.id),
     };
 
+    const handleAddToCart = () => {
+        addToCart(product);
+        if (imageRef.current) {
+            triggerFlyToCart(product.image.imageUrl, product.image.imageHint, imageRef.current);
+        }
+    };
+
     return (
         <Card className="w-full overflow-hidden group border rounded-lg hover:shadow-md transition-shadow duration-200 bg-white flex flex-col">
             <CardContent className="p-4 flex flex-col flex-grow">
                 <ProductQuickView product={productForQuickView}>
-                    <div className="bg-gray-50 rounded-md overflow-hidden aspect-[3/2] relative mb-4 cursor-pointer">
+                    <div ref={imageRef} className="bg-gray-50 rounded-md overflow-hidden aspect-[3/2] relative mb-4 cursor-pointer">
                         {hasDiscount && (
                             <Badge className="absolute top-3 right-3 z-10 bg-yellow-400 text-yellow-900 rounded-md px-2 text-xs font-semibold border-none">
                                 {discountPercentage}%
@@ -56,7 +65,7 @@ export default function ProductCard({ product }: { product: Product }) {
                         <Button
                             variant="outline"
                             className="w-full flex items-center justify-between bg-gray-100 border-gray-200 hover:bg-gray-200 hover:border-gray-300 text-gray-700"
-                            onClick={() => addToCart(product)}
+                            onClick={handleAddToCart}
                         >
                             <span>Add</span>
                             <Plus className="h-4 w-4" />

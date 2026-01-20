@@ -20,7 +20,7 @@ export default function CartDrawer() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <div className="fixed top-1/2 -translate-y-1/2 right-0 z-50">
+        <div id="cart-trigger-button" className="fixed top-1/2 -translate-y-1/2 right-0 z-50">
           <Button className="h-auto p-0 flex flex-col gap-0 rounded-l-md rounded-r-none shadow-lg">
             <div className="flex items-center gap-2 px-3 py-2">
               <ShoppingBag className="h-5 w-5" />
