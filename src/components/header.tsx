@@ -16,6 +16,8 @@ import { useUI } from '@/contexts/ui-context';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
   <Link
@@ -37,6 +39,66 @@ const categories = [
     { name: 'Breakfast', icon: Cake, sub: ['Cereal', 'Bread'] },
     { name: 'Beverage', icon: GlassWater, sub: ['Coffee', 'Juice'] },
 ];
+
+const CategoriesNav = () => {
+    const isMobile = useIsMobile();
+
+    const categoriesContent = (
+      <Accordion type="multiple" className="w-full">
+        {categories.map((category) => (
+          <AccordionItem value={category.name} key={category.name} className="border-b last:border-b-0">
+            <AccordionTrigger className="px-4 py-3 text-sm font-medium hover:no-underline">
+              <div className="flex items-center gap-2">
+                <category.icon className="h-5 w-5" />
+                <span>{category.name}</span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="pl-8 flex flex-col items-start">
+                {category.sub.map((subCategory) => (
+                  <Link href={`/shop?category=${encodeURIComponent(subCategory)}`} key={subCategory} className="py-2 text-sm text-muted-foreground hover:text-primary w-full text-left">{subCategory}</Link>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    );
+
+    if (isMobile) {
+        return (
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="outline" size="icon">
+                        <Menu className="h-5 w-5" />
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="p-0 w-80">
+                    <SheetHeader className="p-4 border-b">
+                        <SheetTitle>Categories</SheetTitle>
+                    </SheetHeader>
+                    <div className="p-2">
+                        {categoriesContent}
+                    </div>
+                </SheetContent>
+            </Sheet>
+        )
+    }
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2 border-gray-200">
+                    <Menu className="h-4 w-4" />
+                    Categories
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-64 p-0">
+                {categoriesContent}
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+};
 
 export default function Header() {
   const { isSearchOpen, setSearchOpen } = useUI();
@@ -83,7 +145,8 @@ export default function Header() {
           </div>
         ) : (
           <>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-4">
+                <CategoriesNav />
               <Link href="/" className="flex items-center gap-2">
                 <Leaf className="h-7 w-7 text-primary" />
                 <h1 className="text-2xl font-bold text-gray-800">PickBazar</h1>
@@ -91,40 +154,6 @@ export default function Header() {
             </div>
 
             <nav className="hidden items-center space-x-6 text-sm md:flex">
-                <div className="hidden md:flex">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="flex items-center gap-2 border-gray-200">
-                        <Menu className="h-4 w-4" />
-                        Categories
-                        <ChevronDown className="h-4 w-4 text-gray-500" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-64 p-0">
-                      <Accordion type="multiple" className="w-full">
-                        {categories.map((category) => (
-                          <AccordionItem value={category.name} key={category.name} className="border-b last:border-b-0">
-                            <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline hover:bg-accent rounded-sm">
-                              <div className="flex items-center gap-2">
-                                <category.icon className="h-4 w-4" />
-                                <span>{category.name}</span>
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                              <div className="pl-8 flex flex-col items-start pt-1">
-                                {category.sub.map((subCategory) => (
-                                  <DropdownMenuItem key={subCategory} asChild className="w-full">
-                                    <Link href={`/shop?category=${encodeURIComponent(subCategory)}`}>{subCategory}</Link>
-                                  </DropdownMenuItem>
-                                ))}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))}
-                      </Accordion>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
                 {navItems.map((item) => (
                   <NavItem key={item.name} href={item.href}>{item.name}</NavItem>
                 ))}
@@ -156,10 +185,13 @@ export default function Header() {
                     <Link href="/invest">Become an Investor</Link>
                   </Button>
               </div>
-              <div className="md:hidden">
+              <div className="md:hidden flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
                     <Search className="h-5 w-5" />
                 </Button>
+                 <Button asChild>
+                    <Link href="/invest">Invest</Link>
+                  </Button>
               </div>
             </div>
           </>
