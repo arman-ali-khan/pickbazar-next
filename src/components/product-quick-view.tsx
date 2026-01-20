@@ -7,17 +7,81 @@ import Link from 'next/link';
 import { Plus, Minus, Heart, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import type { Product, ImagePlaceholder } from '@/lib/data';
+import type { Product, ImagePlaceholder, RelatedProduct } from '@/lib/data';
 import { useCart } from '@/contexts/cart-context';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Card, CardContent } from '@/components/ui/card';
 
 type QuickViewProduct = Product & {
     images: ImagePlaceholder[];
     stock: number;
     rating: number;
     shortDescription: string;
+    description: string;
     category: string;
     tags: string[];
+    relatedProducts: RelatedProduct[];
 };
+
+
+function RelatedProductCard({ product }: { product: RelatedProduct }) {
+    const { addToCart, updateQuantity, getItemQuantity } = useCart();
+    const quantity = getItemQuantity(product.id);
+
+    const hasDiscount = product.originalPrice && product.originalPrice > product.price;
+
+    return (
+        <Card className="w-full overflow-hidden group border-none shadow-none rounded-lg bg-white flex flex-col">
+            <CardContent className="p-0 flex flex-col flex-grow">
+                <div className="bg-gray-50 rounded-md overflow-hidden aspect-square relative mb-4">
+                    {hasDiscount && product.tag && (
+                        <Badge className="absolute top-3 right-3 z-10 bg-yellow-400 text-yellow-900 rounded-md px-2 text-xs font-semibold border-none">
+                            {product.tag}
+                        </Badge>
+                    )}
+                    <Image
+                        src={product.image.imageUrl}
+                        alt={product.name}
+                        data-ai-hint={product.image.imageHint}
+                        fill
+                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                    />
+                </div>
+                <div className="space-y-2 flex-grow">
+                    <div className="flex items-baseline gap-2">
+                        <p className="font-bold text-gray-800 text-base">${product.price.toFixed(2)}</p>
+                        {hasDiscount && <p className="text-sm line-through text-muted-foreground">${product.originalPrice?.toFixed(2)}</p>}
+                    </div>
+                    <h3 className="font-normal text-gray-600 text-sm">
+                        <Link href={`/products/${product.id}`} className="hover:text-primary transition-colors">{product.name} {product.weight}</Link>
+                    </h3>
+                </div>
+                <div className="mt-4">
+                    {quantity === 0 ? (
+                        <Button
+                            variant="outline"
+                            className="w-full flex items-center justify-between bg-gray-100 border-gray-200 hover:bg-gray-200 hover:border-gray-300 text-gray-700"
+                            onClick={() => addToCart(product as Product)}
+                        >
+                            <span>Add</span>
+                            <Plus className="h-4 w-4" />
+                        </Button>
+                    ) : (
+                        <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-10">
+                            <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity - 1)}>
+                                <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="font-bold text-sm">{quantity}</span>
+                            <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity + 1)}>
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function ProductQuickView({ product, children }: { product: QuickViewProduct, children: React.ReactNode }) {
     const { addToCart, updateQuantity, getItemQuantity } = useCart();
@@ -46,8 +110,8 @@ export default function ProductQuickView({ product, children }: { product: Quick
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-[900px] p-0">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 p-8">
+            <DialogContent className="sm:max-w-[900px] p-0 flex flex-col max-h-[90vh]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 p-8 border-b">
                     {/* Image Section */}
                     <div>
                         <div className="aspect-square relative mb-4">
@@ -70,8 +134,8 @@ export default function ProductQuickView({ product, children }: { product: Quick
                                 <ChevronRight className="h-5 w-5"/>
                             </Button>
                         </div>
-                         <div className="grid grid-cols-4 gap-2">
-                            {product.images.slice(0, 4).map((image, index) => (
+                         <div className="grid grid-cols-5 gap-2">
+                            {product.images.slice(0, 5).map((image, index) => (
                                 <button
                                     key={image.id}
                                     onClick={() => setCurrentImageIndex(index)}
@@ -92,7 +156,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
                                     <Heart className="h-5 w-5 text-gray-500" />
                                 </Button>
                                 <Badge className="bg-primary text-primary-foreground text-sm font-bold flex items-center gap-1">
-                                    {product.rating.toFixed(2)}
+                                    {product.rating.toFixed(1)}
                                     <Star className="h-4 w-4 fill-white" />
                                 </Badge>
                              </div>
@@ -144,6 +208,22 @@ export default function ProductQuickView({ product, children }: { product: Quick
                          </div>
                     </div>
                 </div>
+                <ScrollArea className="flex-1">
+                    <div className="p-8">
+                        <div className="mb-12">
+                            <h3 className="font-bold text-lg mb-4">Details</h3>
+                            <p className="text-sm text-gray-600 leading-relaxed">{product.description}</p>
+                        </div>
+                        <div>
+                             <h3 className="font-bold text-lg mb-6">Related Products</h3>
+                             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                {product.relatedProducts.slice(0,4).map(related => (
+                                    <RelatedProductCard key={related.id} product={related} />
+                                ))}
+                             </div>
+                        </div>
+                    </div>
+                </ScrollArea>
             </DialogContent>
         </Dialog>
     );

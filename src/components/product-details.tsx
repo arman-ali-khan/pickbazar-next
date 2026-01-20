@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Minus } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Product } from '@/lib/data';
-import { product as detailedProduct } from '@/lib/data';
+import { product as detailedProduct, relatedProducts } from '@/lib/data';
 import { useCart } from '@/contexts/cart-context';
 import ProductQuickView from './product-quick-view';
 
@@ -20,6 +20,7 @@ export default function ProductCard({ product }: { product: Product }) {
     const productForQuickView = {
         ...detailedProduct,
         ...product,
+        relatedProducts: relatedProducts.filter(p => p.id !== product.id),
     };
 
     return (
