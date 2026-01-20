@@ -25,6 +25,9 @@ interface CartContextType {
   triggerFlyToCart: (imageSrc: string, imageHint: string, startElement: HTMLElement) => void;
   animationState: AnimationState | null;
   clearAnimation: () => void;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -40,6 +43,7 @@ export const useCart = () => {
 export const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [animationState, setAnimationState] = useState<AnimationState | null>(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -110,6 +114,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     setAnimationState(null);
   };
 
+  const openCart = () => setIsCartOpen(true);
+  const closeCart = () => setIsCartOpen(false);
+
   const totalItems = useMemo(() => cartItems.reduce((acc, item) => acc + item.quantity, 0), [cartItems]);
   const subtotal = useMemo(() => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0), [cartItems]);
 
@@ -127,6 +134,9 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
         triggerFlyToCart,
         animationState,
         clearAnimation,
+        isCartOpen,
+        openCart,
+        closeCart,
       }}
     >
       {children}

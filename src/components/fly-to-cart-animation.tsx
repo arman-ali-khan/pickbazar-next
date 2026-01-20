@@ -3,6 +3,7 @@
 import { useCart } from '@/contexts/cart-context';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 type AnimationPhase = 'idle' | 'start' | 'flying' | 'done';
 
@@ -10,11 +11,14 @@ export default function FlyToCartAnimation() {
   const { animationState, clearAnimation } = useCart();
   const [phase, setPhase] = useState<AnimationPhase>('idle');
   const [styles, setStyles] = useState<React.CSSProperties>({});
+  const isMobile = useIsMobile();
   
   // Effect to start the animation sequence
   useEffect(() => {
     if (animationState) {
-      const cartButton = document.getElementById('cart-trigger-button');
+      const cartButtonId = isMobile ? 'cart-icon-mobile' : 'cart-trigger-button';
+      const cartButton = document.getElementById(cartButtonId);
+
       if (!cartButton) return;
 
       const startRect = animationState.startRect;
@@ -34,7 +38,7 @@ export default function FlyToCartAnimation() {
       });
       setPhase('start');
     }
-  }, [animationState]);
+  }, [animationState, isMobile]);
 
   // Effect to control the animation phases
   useEffect(() => {
@@ -46,7 +50,8 @@ export default function FlyToCartAnimation() {
       return () => clearTimeout(pauseTimer);
 
     } else if (phase === 'flying') {
-      const cartButton = document.getElementById('cart-trigger-button');
+      const cartButtonId = isMobile ? 'cart-icon-mobile' : 'cart-trigger-button';
+      const cartButton = document.getElementById(cartButtonId);
       if (!cartButton || !animationState) return;
       
       const endRect = cartButton.getBoundingClientRect();
@@ -74,7 +79,7 @@ export default function FlyToCartAnimation() {
       clearAnimation();
       setPhase('idle');
     }
-  }, [phase, animationState, clearAnimation]);
+  }, [phase, animationState, clearAnimation, isMobile]);
 
   if (phase === 'idle' || !animationState) {
     return null;

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, Menu, Search, Apple, Leaf, X, Beef, Cookie, Dog, Home, Milk, Soup, Cake, GlassWater } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,6 +17,7 @@ import {
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
 import { Input } from './ui/input';
+import { useUI } from '@/contexts/ui-context';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
   <Link
@@ -41,7 +41,7 @@ const categories = [
 ];
 
 export default function Header() {
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { isSearchOpen, setSearchOpen } = useUI();
   const navItems = ['Shops', 'Offers', 'Contact'];
 
   return (
@@ -62,7 +62,7 @@ export default function Header() {
                     variant="ghost"
                     size="icon"
                     className="h-11 w-11 flex-shrink-0 rounded-l-none rounded-r-md text-muted-foreground hover:bg-primary/10"
-                    onClick={() => setIsSearchOpen(false)}
+                    onClick={() => setSearchOpen(false)}
                 >
                     <X className="h-5 w-5" />
                 </Button>
@@ -126,7 +126,7 @@ export default function Header() {
 
             <div className="flex items-center justify-end space-x-2 ml-6">
               <div className="hidden md:flex items-center space-x-2">
-                <Button variant="ghost" size="icon" onClick={() => setIsSearchOpen(true)}>
+                <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
                     <Search className="h-5 w-5" />
                 </Button>
                 <Dialog>
@@ -139,72 +139,11 @@ export default function Header() {
                     <Link href="/invest">Become an Investor</Link>
                   </Button>
               </div>
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="md:hidden">
-                    <Menu className="h-5 w-5" />
-                    <span className="sr-only">Toggle Menu</span>
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left">
-                    <Link href="/" className="mr-6 flex items-center space-x-2 mb-6">
-                      <Leaf className="h-7 w-7 text-primary" />
-                      <h1 className="text-2xl font-bold text-gray-800">Pickbazar</h1>
-                    </Link>
-                  <div className="flex flex-col space-y-4">
-                     <DropdownMenu>
-                      <DropdownMenuTrigger className="flex items-center justify-between text-sm font-medium text-gray-600 transition-colors hover:text-primary">
-                        Categories
-                        <ChevronDown className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {categories.map((category) => (
-                            <DropdownMenuSub key={category.name}>
-                              <DropdownMenuSubTrigger>
-                                <category.icon className="mr-2 h-4 w-4" />
-                                <span>{category.name}</span>
-                              </DropdownMenuSubTrigger>
-                              <DropdownMenuPortal>
-                                <DropdownMenuSubContent>
-                                  {category.sub.map((subCategory) => (
-                                    <DropdownMenuItem key={subCategory}>
-                                      {subCategory}
-                                    </DropdownMenuItem>
-                                  ))}
-                                </DropdownMenuSubContent>
-                              </DropdownMenuPortal>
-                            </DropdownMenuSub>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    {navItems.map((item) => (
-                      <NavItem key={item}>{item}</NavItem>
-                    ))}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger className="flex items-center gap-1 transition-colors hover:text-primary text-sm font-medium text-gray-600">
-                            Pages
-                            <ChevronDown className="h-4 w-4" />
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem>About Us</DropdownMenuItem>
-                            <DropdownMenuItem>Contact Us</DropdownMenuItem>
-                            <DropdownMenuItem>FAQ</DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <div className="mt-4 flex flex-col gap-2">
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button>Join</Button>
-                            </DialogTrigger>
-                            <LoginDialog />
-                        </Dialog>
-                        <Button asChild>
-                            <Link href="/invest">Become an Investor</Link>
-                        </Button>
-                    </div>
-                  </div>
-                </SheetContent>
-              </Sheet>
+              <div className="md:hidden">
+                <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
+                    <Search className="h-5 w-5" />
+                </Button>
+              </div>
             </div>
           </>
         )}
