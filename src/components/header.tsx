@@ -77,7 +77,9 @@ export default function Header() {
                 </DialogTrigger>
                 <LoginDialog />
               </Dialog>
-             <Button>Become a Seller</Button>
+              <Button asChild>
+                <Link href="/invest">Become an Investor</Link>
+              </Button>
           </div>
           <Sheet>
             <SheetTrigger asChild>
@@ -113,7 +115,9 @@ export default function Header() {
                         </DialogTrigger>
                         <LoginDialog />
                     </Dialog>
-                    <Button>Become a Seller</Button>
+                    <Button asChild>
+                        <Link href="/invest">Become an Investor</Link>
+                    </Button>
                 </div>
               </div>
             </SheetContent>
