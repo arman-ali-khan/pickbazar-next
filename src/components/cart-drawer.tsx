@@ -31,7 +31,7 @@ export default function CartDrawer() {
       </div>
 
       <Sheet open={isCartOpen} onOpenChange={(open) => open ? openCart() : closeCart()}>
-        <SheetContent className="w-[440px] sm:max-w-[440px] p-0 flex flex-col bg-white">
+        <SheetContent className="w-full sm:max-w-[440px] p-0 flex flex-col bg-white">
           <div className="flex items-center justify-between p-6 border-b">
             <SheetTitle className="flex items-center gap-3 text-primary">
               <ShoppingBag className="h-6 w-6" />
@@ -48,7 +48,7 @@ export default function CartDrawer() {
               {cartItems.length > 0 ? (
                    <div className="divide-y">
                       {cartItems.map((item) => (
-                          <div key={item.id} className="flex items-center gap-4 p-6">
+                          <div key={item.id} className="flex items-center gap-2 sm:gap-4 p-2 sm:p-6">
                               <div className="flex flex-col items-center justify-between bg-gray-100 rounded-full h-24 w-10 py-2">
                                   <Button variant="ghost" size="icon" className="h-6 w-6 text-gray-600" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
                                       <Plus className="h-4 w-4" />

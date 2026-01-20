@@ -127,7 +127,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
                 <DialogTitle className="sr-only">{`Quick view for ${product.name}`}</DialogTitle>
                 {/* Sticky Header */}
                 <div className={cn(
-                    "sticky top-0 left-0 right-0 bg-white/80 backdrop-blur-sm z-10 border-b transition-opacity duration-300",
+                    "sticky  z-[990] top-0 left-0 right-0 bg-white/80 backdrop-blur-sm border-b transition-opacity duration-300",
                     isScrolled ? "opacity-100" : "opacity-0 pointer-events-none"
                 )}>
                    <div className="p-4 flex items-center justify-between container mx-auto max-w-[850px]">

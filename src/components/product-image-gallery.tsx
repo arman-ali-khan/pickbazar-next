@@ -6,8 +6,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 
 export default function HeroBanners() {
   return (
-    <section className="bg-gray-100 pt-20">
-        <div className="container grid md:grid-cols-[300px_1fr] items-stretch gap-4 md:h-[calc(450px-5rem)] py-8 md:py-4">
+    <section className="bg-gray-100 pt-2">
+        <div className="container grid md:grid-cols-[300px_1fr] items-stretch gap-4 py-8 md:py-4">
             <div className="bg-white rounded-lg shadow-sm h-full hidden md:flex flex-col">
                 <h2 className="text-lg font-semibold p-4 border-b">Categories</h2>
                 <div className="flex-1 overflow-y-auto p-2">
@@ -46,9 +46,9 @@ export default function HeroBanners() {
                 </div>
                 <div className="relative h-64 md:h-full">
                     <Image 
-                        src="https://storage.googleapis.com/app-pro-us-east4-prod-content/9d739818816c4c37976e1f33f114644a/grocery-banner-2.png" 
-                        alt="Grocery delivery" 
-                        data-ai-hint="grocery delivery"
+                        src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxmcnVpdHN8ZW58MHx8fHwxNzY4OTI5MzY5fDA&ixlib=rb-4.1.0&q=80&w=1080" 
+                        alt="Fresh fruits banner" 
+                        data-ai-hint="fresh fruits"
                         fill
                         className="object-contain"
                     />

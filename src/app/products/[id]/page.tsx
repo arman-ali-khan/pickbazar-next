@@ -15,7 +15,7 @@ export default function ProductPage({ params }: { params: { id: string } }) {
   return (
     <div className="bg-background min-h-screen">
       <Header />
-      <main className="container py-8">
+      <main className="container px-2 sm:px-4 py-8">
         <ProductPageContent product={productToShow} relatedProducts={relatedProducts} />
       </main>
       <Footer />
