@@ -9,15 +9,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
 import { Input } from './ui/input';
 import { useUI } from '@/contexts/ui-context';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
   <Link
@@ -84,24 +81,28 @@ export default function Header() {
                       <ChevronDown className="h-4 w-4 text-gray-500" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {categories.map((category) => (
-                        <DropdownMenuSub key={category.name}>
-                          <DropdownMenuSubTrigger>
-                            <category.icon className="mr-2 h-4 w-4" />
-                            <span>{category.name}</span>
-                          </DropdownMenuSubTrigger>
-                          <DropdownMenuPortal>
-                            <DropdownMenuSubContent>
+                  <DropdownMenuContent className="w-64 p-0">
+                    <Accordion type="multiple" className="w-full">
+                      {categories.map((category) => (
+                        <AccordionItem value={category.name} key={category.name} className="border-b last:border-b-0">
+                          <AccordionTrigger className="px-4 py-2 text-sm font-medium hover:no-underline hover:bg-accent rounded-sm">
+                            <div className="flex items-center gap-2">
+                              <category.icon className="h-4 w-4" />
+                              <span>{category.name}</span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="pl-8 flex flex-col items-start pt-1">
                               {category.sub.map((subCategory) => (
-                                <DropdownMenuItem key={subCategory}>
+                                <DropdownMenuItem key={subCategory} className="w-full">
                                   {subCategory}
                                 </DropdownMenuItem>
                               ))}
-                            </DropdownMenuSubContent>
-                          </DropdownMenuPortal>
-                        </DropdownMenuSub>
-                    ))}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

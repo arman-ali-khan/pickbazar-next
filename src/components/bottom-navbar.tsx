@@ -13,11 +13,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
     <Link
@@ -59,31 +56,34 @@ function PagesDrawer() {
                       <h1 className="text-2xl font-bold text-gray-800">Pickbazar</h1>
                     </Link>
                   <div className="flex flex-col space-y-4">
-                     <DropdownMenu>
-                      <DropdownMenuTrigger className="flex items-center justify-between w-full text-sm font-medium text-gray-600 transition-colors hover:text-primary">
-                        Categories
-                        <ChevronDown className="h-4 w-4" />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        {categories.map((category) => (
-                            <DropdownMenuSub key={category.name}>
-                              <DropdownMenuSubTrigger>
-                                <category.icon className="mr-2 h-4 w-4" />
-                                <span>{category.name}</span>
-                              </DropdownMenuSubTrigger>
-                              <DropdownMenuPortal>
-                                <DropdownMenuSubContent>
-                                  {category.sub.map((subCategory) => (
-                                    <DropdownMenuItem key={subCategory}>
-                                      {subCategory}
-                                    </DropdownMenuItem>
-                                  ))}
-                                </DropdownMenuSubContent>
-                              </DropdownMenuPortal>
-                            </DropdownMenuSub>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                     <Accordion type="multiple" className="w-full -my-2">
+                        <AccordionItem value="categories" className="border-b-0">
+                            <AccordionTrigger className="py-2 text-sm font-medium text-gray-600 hover:text-primary hover:no-underline flex justify-between w-full">
+                                Categories
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <Accordion type="multiple" className="ml-4">
+                                {categories.map((category) => (
+                                    <AccordionItem value={category.name} key={category.name} className="border-b-0">
+                                        <AccordionTrigger className="py-2 hover:no-underline">
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <category.icon className="h-4 w-4" />
+                                                <span>{category.name}</span>
+                                            </div>
+                                        </AccordionTrigger>
+                                        <AccordionContent>
+                                            <div className="pl-4 flex flex-col items-start">
+                                            {category.sub.map((subCategory) => (
+                                                <Link href="#" key={subCategory} className="py-2 text-sm text-muted-foreground hover:text-primary">{subCategory}</Link>
+                                            ))}
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                                </Accordion>
+                            </AccordionContent>
+                        </AccordionItem>
+                     </Accordion>
                     {navItems.map((item) => (
                       <NavItem key={item.name} href={item.href}>{item.name}</NavItem>
                     ))}
