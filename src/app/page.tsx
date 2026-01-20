@@ -3,7 +3,12 @@ import Footer from "@/components/footer";
 import Header from "@/components/header";
 import HeroBanners from "@/components/product-image-gallery";
 import OfferCarousel from "@/components/offer-carousel";
-import ProductGrid from "@/components/related-products";
+import RecommendedProducts from "@/components/recommended-products";
+import RecentlyAddedProducts from "@/components/recently-added-products";
+import CategoryProducts from "@/components/category-products";
+import CustomerReviews from "@/components/customer-reviews";
+import ContactSection from "@/components/contact-section";
+
 
 export default function Home() {
   return (
@@ -12,9 +17,11 @@ export default function Home() {
       <main>
         <HeroBanners />
         <OfferCarousel />
-        <div className="py-8 px-4 md:px-8">
-            <ProductGrid />
-        </div>
+        <RecommendedProducts />
+        <RecentlyAddedProducts />
+        <CategoryProducts />
+        <CustomerReviews />
+        <ContactSection />
       </main>
       <Footer />
       <CartDrawer />

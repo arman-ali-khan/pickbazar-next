@@ -16,6 +16,7 @@ export const products = [
     weight: '1lbs',
     price: 2.10,
     image: getImage('carrots'),
+    category: 'Vegetables',
   },
   {
     id: 12,
@@ -23,6 +24,7 @@ export const products = [
     price: 2.99,
     weight: '1lbs',
     image: getImage('white_radish'),
+    category: 'Vegetables',
   },
   { 
     id: 10,
@@ -30,14 +32,16 @@ export const products = [
     price: 2.11,
     weight: '1lbs',
     image: getImage('radish'),
-    originalPrice: 2.59 
+    originalPrice: 2.59,
+    category: 'Vegetables',
   },
   { 
     id: 13,
     name: 'Baby Radish',
     price: 1.00,
     image: getImage('baby_radish'),
-    weight: '1lbs'
+    weight: '1lbs',
+    category: 'Vegetables',
   },
   {
     id: 1,
@@ -46,6 +50,7 @@ export const products = [
     price: 1.60,
     originalPrice: 2.00,
     image: getImage('apple_main'),
+    category: 'Fruits',
   },
   {
     id: 2,
@@ -53,6 +58,7 @@ export const products = [
     price: 0.60,
     weight: '2lb',
     image: getImage('related_prod_1'),
+    category: 'Vegetables',
   },
   {
     id: 3,
@@ -60,13 +66,14 @@ export const products = [
     price: 3.00,
     weight: '1lb',
     image: getImage('related_prod_2'),
+    category: 'Fruits',
   },
-  { id: 4, name: 'Brussels Sprout', price: 3.69, image: getImage('related_prod_3'), weight: '1lb', originalPrice: 4.50 },
-  { id: 5, name: 'Clementines', price: 2.50, image: getImage('related_prod_4'), weight: '1lb', originalPrice: 2.75 },
-  { id: 6, name: 'Sweet Corn', price: 1.80, image: getImage('related_prod_5'), weight: '1lb' },
-  { id: 7, name: 'Cucumber', price: 0.75, image: getImage('related_prod_6'), weight: '1pc' },
-  { id: 8, name: 'Dates', price: 4.50, image: getImage('related_prod_7'), weight: '250g' },
-  { id: 9, name: 'French Green Beans', price: 2.20, image: getImage('related_prod_8'), weight: '1lb' },
+  { id: 4, name: 'Brussels Sprout', price: 3.69, image: getImage('related_prod_3'), weight: '1lb', originalPrice: 4.50, category: 'Vegetables' },
+  { id: 5, name: 'Clementines', price: 2.50, image: getImage('related_prod_4'), weight: '1lb', originalPrice: 2.75, category: 'Fruits' },
+  { id: 6, name: 'Sweet Corn', price: 1.80, image: getImage('related_prod_5'), weight: '1lb', category: 'Vegetables' },
+  { id: 7, name: 'Cucumber', price: 0.75, image: getImage('related_prod_6'), weight: '1pc', category: 'Vegetables' },
+  { id: 8, name: 'Dates', price: 4.50, image: getImage('related_prod_7'), weight: '250g', category: 'Fruits' },
+  { id: 9, name: 'French Green Beans', price: 2.20, image: getImage('related_prod_8'), weight: '1lb', category: 'Vegetables' },
 ];
 
 
