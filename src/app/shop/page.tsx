@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
@@ -15,7 +15,7 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 export default function ShopPage() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(allProducts);
 
-  const handleFilterChange = (filters: {
+  const handleFilterChange = useCallback((filters: {
     categories: string[];
     priceRange: number[];
     rating: number;
@@ -35,7 +35,7 @@ export default function ShopPage() {
     }
     
     setFilteredProducts(products);
-  };
+  }, []);
   
   return (
     <div className="bg-background min-h-screen">
