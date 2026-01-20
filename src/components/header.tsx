@@ -1,25 +1,31 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronDown, Menu, Search, Leaf, X } from 'lucide-react';
+import { ChevronDown, Menu, Search, Leaf, X, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
 import { Input } from './ui/input';
 import { useUI } from '@/contexts/ui-context';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { categoryData as categories } from '@/lib/category-data';
 import { cn } from '@/lib/utils';
+import { useUser } from '@/firebase';
+import { useAuth } from '@/firebase';
+import { signOut } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
@@ -96,6 +102,9 @@ export default function Header() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
+  const { user } = useUser();
+  const auth = useAuth();
+  const { toast } = useToast();
   const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
 
   useEffect(() => {
@@ -105,6 +114,23 @@ export default function Header() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/');
+       toast({
+        title: 'Logged Out',
+        description: 'You have been successfully logged out.',
+      });
+    } catch (error) {
+       toast({
+        variant: 'destructive',
+        title: 'Logout Failed',
+        description: 'An error occurred while logging out.',
+      });
+    }
+  };
 
 
   const handleSearch = (e: React.FormEvent) => {
@@ -189,12 +215,37 @@ export default function Header() {
                 <Button variant="ghost" size="icon" onClick={() => setSearchOpen(true)}>
                     <Search className="h-5 w-5" />
                 </Button>
-                <Dialog>
-                    <DialogTrigger asChild>
-                        <Button>Join</Button>
-                    </DialogTrigger>
-                    <LoginDialog />
-                  </Dialog>
+                {user ? (
+                   <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                        <Avatar>
+                          <AvatarImage src={user.photoURL || 'https://picsum.photos/seed/profile/200'} alt={user.displayName || 'User'} />
+                          <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile">
+                          <User className="mr-2 h-4 w-4" />
+                          <span>Profile</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleLogout}>
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Dialog>
+                      <DialogTrigger asChild>
+                          <Button>Join</Button>
+                      </DialogTrigger>
+                      <LoginDialog />
+                    </Dialog>
+                )}
                   <Button asChild>
                     <Link href="/invest">Become an Investor</Link>
                   </Button>

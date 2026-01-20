@@ -6,12 +6,23 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogClose,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Leaf, Eye, EyeOff, Smartphone } from 'lucide-react';
 import Link from 'next/link';
+import { useAuth } from '@/firebase';
+import { useRouter } from 'next/navigation';
+import { useToast } from "@/hooks/use-toast";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
+  sendPasswordResetEmail
+} from 'firebase/auth';
 
 type View = 'login' | 'register' | 'forgotPassword';
 
@@ -28,8 +39,76 @@ const GoogleIcon = () => (
 export function LoginDialog() {
   const [view, setView] = useState<View>('login');
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const auth = useAuth();
+  const router = useRouter();
+  const { toast } = useToast();
 
   const togglePassword = () => setShowPassword(prev => !prev);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({ title: 'Login Successful', description: "Welcome back!" });
+      router.push('/profile');
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Login Failed", description: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+      toast({ title: 'Registration Successful', description: "Welcome to Pickbazar!" });
+      router.push('/profile');
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Registration Failed", description: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    setIsSubmitting(true);
+    try {
+      await signInWithPopup(auth, provider);
+      toast({ title: 'Login Successful', description: "Welcome!" });
+      router.push('/profile');
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Google Login Failed", description: error.message });
+    } finally {
+        setIsSubmitting(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast({ variant: "destructive", title: "Error", description: "Please enter your email address." });
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast({ title: "Password Reset Email Sent", description: "Check your inbox for a link to reset your password." });
+      setView('login');
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Error", description: error.message });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const headerContent: Record<View, {title: string, description: React.ReactNode}> = {
     login: {
@@ -42,11 +121,11 @@ export function LoginDialog() {
         <>
           By signing up, you agree to our{' '}
           <Button variant="link" asChild className="p-0 h-auto text-primary">
-            <Link href="#">terms</Link>
+            <Link href="/terms-and-conditions">terms</Link>
           </Button>
           {' '}&{' '}
           <Button variant="link" asChild className="p-0 h-auto text-primary">
-             <Link href="#">policy</Link>
+             <Link href="/privacy-policy">policy</Link>
           </Button>
         </>
       )
@@ -72,24 +151,25 @@ export function LoginDialog() {
       </DialogHeader>
       
       {view === 'login' && (
-         <>
+         <form onSubmit={handleLogin}>
             <div className="space-y-4">
                 <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="customer@demo.com" defaultValue="customer@demo.com" />
+                <Input id="email" type="email" placeholder="customer@demo.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                 <div className="flex justify-between items-center">
                     <Label htmlFor="password">Password</Label>
-                    <Button variant="link" size="sm" className="h-auto p-0 text-xs text-primary" onClick={() => setView('forgotPassword')}>
+                    <Button variant="link" size="sm" type="button" className="h-auto p-0 text-xs text-primary" onClick={() => setView('forgotPassword')}>
                         Forgot password?
                     </Button>
                 </div>
                 <div className="relative">
-                    <Input id="password" type={showPassword ? 'text' : 'password'} defaultValue="............" />
+                    <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                     <Button
                     variant="ghost"
                     size="icon"
+                    type="button"
                     className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-gray-500"
                     onClick={togglePassword}
                     >
@@ -97,8 +177,8 @@ export function LoginDialog() {
                     </Button>
                 </div>
                 </div>
-                <Button className="w-full h-12 bg-primary hover:bg-primary/90">
-                Login
+                <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+                  {isSubmitting ? 'Logging in...' : 'Login'}
                 </Button>
             </div>
             <div className="relative my-6">
@@ -110,51 +190,52 @@ export function LoginDialog() {
                 </div>
             </div>
             <div className="space-y-3">
-                <Button variant="outline" className="w-full h-12 bg-[#4285F4] text-white hover:bg-[#4285F4]/90 hover:text-white border-transparent">
+                <Button type="button" variant="outline" className="w-full h-12 bg-[#4285F4] text-white hover:bg-[#4285F4]/90 hover:text-white border-transparent" onClick={handleGoogleLogin} disabled={isSubmitting}>
                     <GoogleIcon />
                     Login with Google
                 </Button>
-                <Button variant="outline" className="w-full h-12 bg-gray-600 text-white hover:bg-gray-700 hover:text-white border-transparent">
+                <Button type="button" variant="outline" className="w-full h-12 bg-gray-600 text-white hover:bg-gray-700 hover:text-white border-transparent" disabled>
                     <Smartphone className="h-5 w-5 mr-2" />
                     Login with Mobile number
                 </Button>
             </div>
             <p className="mt-6 text-center text-sm text-muted-foreground">
                 Don't have any account?{' '}
-                <Button variant="link" className="p-0 h-auto font-semibold text-primary" onClick={() => setView('register')}>
+                <Button variant="link" type="button" className="p-0 h-auto font-semibold text-primary" onClick={() => setView('register')}>
                     Register
                 </Button>
             </p>
-        </>
+        </form>
       )}
 
       {view === 'register' && (
-        <>
+        <form onSubmit={handleRegister}>
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="name">Name</Label>
-                    <Input id="name" type="text" placeholder="Enter your name" />
+                    <Input id="name" type="text" placeholder="Enter your name" value={name} onChange={(e) => setName(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="register-email">Email</Label>
-                    <Input id="register-email" type="email" defaultValue="admin@demo.com" />
+                    <Input id="register-email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="register-password">Password</Label>
                     <div className="relative">
-                        <Input id="register-password" type={showPassword ? 'text' : 'password'} defaultValue="............" />
+                        <Input id="register-password" type={showPassword ? 'text' : 'password'} placeholder="Create a password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                         <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-gray-500"
-                        onClick={togglePassword}
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-gray-500"
+                          onClick={togglePassword}
                         >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
                     </div>
                 </div>
-                <Button className="w-full h-12 bg-primary hover:bg-primary/90">
-                    Register
+                <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+                    {isSubmitting ? 'Registering...' : 'Register'}
                 </Button>
             </div>
             <div className="relative my-6">
@@ -167,30 +248,30 @@ export function LoginDialog() {
             </div>
             <p className="mt-2 text-center text-sm text-muted-foreground">
                 Already have an account?{' '}
-                <Button variant="link" className="p-0 h-auto font-semibold text-primary" onClick={() => setView('login')}>
+                <Button variant="link" type="button" className="p-0 h-auto font-semibold text-primary" onClick={() => setView('login')}>
                     Login
                 </Button>
             </p>
-        </>
+        </form>
       )}
 
       {view === 'forgotPassword' && (
-         <>
+         <form onSubmit={handleForgotPassword}>
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="forgot-email">Email</Label>
-                    <Input id="forgot-email" type="email" placeholder="Enter your email" />
+                    <Input id="forgot-email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
-                <Button className="w-full h-12 bg-primary hover:bg-primary/90">
-                    Submit
+                <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+                  {isSubmitting ? 'Sending...' : 'Submit'}
                 </Button>
             </div>
             <p className="mt-6 text-center text-sm text-muted-foreground">
-                <Button variant="link" className="p-0 h-auto font-semibold text-primary" onClick={() => setView('login')}>
+                <Button variant="link" type="button" className="p-0 h-auto font-semibold text-primary" onClick={() => setView('login')}>
                     Back to login
                 </Button>
             </p>
-        </>
+        </form>
       )}
 
     </DialogContent>

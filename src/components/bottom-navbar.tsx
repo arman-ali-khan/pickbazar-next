@@ -15,6 +15,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
     <Link
@@ -40,6 +42,7 @@ const categories = [
 const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
 
 function PagesDrawer() {
+    const { user } = useUser();
     return (
         <Sheet>
             <SheetTrigger asChild>
@@ -101,12 +104,14 @@ function PagesDrawer() {
                         </DropdownMenuContent>
                     </DropdownMenu>
                     <div className="mt-4 flex flex-col gap-2">
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button>Join</Button>
-                            </DialogTrigger>
-                            <LoginDialog />
-                        </Dialog>
+                        {!user && (
+                          <Dialog>
+                              <DialogTrigger asChild>
+                                  <Button>Join</Button>
+                              </DialogTrigger>
+                              <LoginDialog />
+                          </Dialog>
+                        )}
                         <Button asChild>
                             <Link href="/invest">Become an Investor</Link>
                         </Button>
@@ -121,6 +126,14 @@ function PagesDrawer() {
 export default function BottomNavbar() {
     const { toggleSearch } = useUI();
     const { openCart, totalItems } = useCart();
+    const { user } = useUser();
+    const router = useRouter();
+
+    const handleProfileClick = () => {
+        if (user) {
+            router.push('/profile');
+        }
+    }
 
     return (
         <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t md:hidden">
@@ -139,15 +152,22 @@ export default function BottomNavbar() {
                     <span className="sr-only">Home</span>
                 </Link>
 
-                <Dialog>
-                    <DialogTrigger asChild>
-                         <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2">
-                            <User className="h-6 w-6" />
-                            <span className="text-xs">Profile</span>
-                        </Button>
-                    </DialogTrigger>
-                    <LoginDialog />
-                </Dialog>
+                {user ? (
+                    <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={handleProfileClick}>
+                        <User className="h-6 w-6" />
+                        <span className="text-xs">Profile</span>
+                    </Button>
+                ) : (
+                    <Dialog>
+                        <DialogTrigger asChild>
+                             <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2">
+                                <User className="h-6 w-6" />
+                                <span className="text-xs">Profile</span>
+                            </Button>
+                        </DialogTrigger>
+                        <LoginDialog />
+                    </Dialog>
+                )}
 
 
                 <Button id="cart-icon-mobile" variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={openCart}>
