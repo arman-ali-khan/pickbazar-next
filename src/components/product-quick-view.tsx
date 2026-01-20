@@ -109,14 +109,14 @@ export default function ProductQuickView({ product, children }: { product: Quick
     };
     
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        setIsScrolled(e.currentTarget.scrollTop > 300);
+        setIsScrolled(e.currentTarget.scrollTop > 0);
     };
 
     return (
         <Dialog>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent 
-                className="sm:max-w-[900px] p-0 max-h-[90vh] overflow-y-auto"
+                className="sm:max-w-[900px] p-0 max-h-[90vh] overflow-y-auto grid grid-rows-[auto_1fr]"
                 onScroll={handleScroll}
             >
                 {/* Sticky Header */}
@@ -124,7 +124,7 @@ export default function ProductQuickView({ product, children }: { product: Quick
                     "sticky top-0 left-0 right-0 bg-white/80 backdrop-blur-sm z-10 border-b transition-opacity duration-300",
                     isScrolled ? "opacity-100" : "opacity-0 pointer-events-none"
                 )}>
-                   <div className="p-4 flex items-center justify-between container mx-auto">
+                   <div className="p-4 flex items-center justify-between container mx-auto max-w-[850px]">
                         <div className="flex items-center gap-4">
                             <div className="relative h-14 w-14 flex-shrink-0 bg-gray-100 rounded-md">
                                 <Image src={product.images[0].imageUrl} data-ai-hint={product.images[0].imageHint} alt={product.name} fill className="rounded-md object-contain p-1"/>
@@ -139,15 +139,24 @@ export default function ProductQuickView({ product, children }: { product: Quick
                                 <p className="font-bold text-primary text-xl">${product.price.toFixed(2)}</p>
                                 {hasDiscount && <p className="text-base line-through text-muted-foreground">${product.originalPrice?.toFixed(2)}</p>}
                             </div>
-                            <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-10 w-28">
-                                <Button size="icon" variant="ghost" className="h-10 w-8 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity - 1)} disabled={quantity === 0}>
-                                    <Minus className="h-4 w-4" />
+                            {quantity === 0 ? (
+                                <Button
+                                    className="h-10 px-6"
+                                    onClick={handleQuantityIncrease}
+                                >
+                                    Add to cart
                                 </Button>
-                                <span className="font-bold text-sm">{quantity}</span>
-                                <Button size="icon" variant="ghost" className="h-10 w-8 text-white hover:bg-primary/90" onClick={handleQuantityIncrease}>
-                                    <Plus className="h-4 w-4" />
-                                </Button>
-                            </div>
+                            ) : (
+                                <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-10 w-28">
+                                    <Button size="icon" variant="ghost" className="h-10 w-8 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity - 1)} disabled={quantity === 0}>
+                                        <Minus className="h-4 w-4" />
+                                    </Button>
+                                    <span className="font-bold text-sm">{quantity}</span>
+                                    <Button size="icon" variant="ghost" className="h-10 w-8 text-white hover:bg-primary/90" onClick={handleQuantityIncrease}>
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
                         </div>
                    </div>
                 </div>
@@ -220,15 +229,24 @@ export default function ProductQuickView({ product, children }: { product: Quick
 
 
                         <div className="flex items-center gap-4 mb-6">
-                           <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-12 w-32">
-                                <Button size="icon" variant="ghost" className="h-12 w-10 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity - 1)} disabled={quantity === 0}>
-                                    <Minus className="h-5 w-5" />
+                           {quantity === 0 ? (
+                                <Button
+                                    className="h-12 text-base px-10"
+                                    onClick={handleQuantityIncrease}
+                                >
+                                    Add to cart
                                 </Button>
-                                <span className="font-bold text-base">{quantity}</span>
-                                <Button size="icon" variant="ghost" className="h-12 w-10 text-white hover:bg-primary/90" onClick={handleQuantityIncrease}>
-                                    <Plus className="h-5 w-5" />
-                                </Button>
-                            </div>
+                            ) : (
+                               <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-12 w-32">
+                                    <Button size="icon" variant="ghost" className="h-12 w-10 text-white hover:bg-primary/90" onClick={() => updateQuantity(product.id, quantity - 1)}>
+                                        <Minus className="h-5 w-5" />
+                                    </Button>
+                                    <span className="font-bold text-base">{quantity}</span>
+                                    <Button size="icon" variant="ghost" className="h-12 w-10 text-white hover:bg-primary/90" onClick={handleQuantityIncrease}>
+                                        <Plus className="h-5 w-5" />
+                                    </Button>
+                                </div>
+                            )}
                             <p className="text-sm text-muted-foreground">{product.stock} pieces available</p>
                         </div>
 
