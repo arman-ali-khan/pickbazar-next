@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { orders as allOrdersData, products as allProducts } from '@/lib/data';
 import { notFound } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
@@ -39,8 +39,14 @@ export default function OrderDetailsPage({ params }: { params: { id: string } })
     
     const [status, setStatus] = useState(order?.status);
 
+    useEffect(() => {
+        if (!order) {
+            notFound();
+        }
+    }, [order]);
+
     if (!order) {
-        notFound();
+        return null;
     }
     
     const handleStatusChange = (newStatus: Order['status']) => {
