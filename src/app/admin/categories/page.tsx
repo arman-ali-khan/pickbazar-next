@@ -25,18 +25,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, PlusCircle, Pencil, Trash2 } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogClose,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
+import { useState } from "react";
+import Link from 'next/link';
 
 
 const initialCategories = [
@@ -50,136 +40,12 @@ const initialCategories = [
 
 type Category = typeof initialCategories[0];
 
-// Dialog for Add/Edit
-function CategoryFormDialog({
-    isOpen,
-    setIsOpen,
-    category,
-    onSave
-}: {
-    isOpen: boolean;
-    setIsOpen: (open: boolean) => void;
-    category: Category | null;
-    onSave: (data: { name: string, slug: string, description: string }) => void;
-}) {
-    const [name, setName] = useState('');
-    const [slug, setSlug] = useState('');
-    const [description, setDescription] = useState('');
-    const isEditing = !!category;
-    const slugManuallyEdited = useRef(false);
-
-    useEffect(() => {
-        if (isOpen) {
-            if (category) {
-                setName(category.name);
-                setSlug(category.slug);
-                setDescription(category.description);
-            } else {
-                setName('');
-                setSlug('');
-                setDescription('');
-                slugManuallyEdited.current = false;
-            }
-        }
-    }, [category, isOpen]);
-
-    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const newName = e.target.value;
-        setName(newName);
-        if (!isEditing && !slugManuallyEdited.current) {
-            setSlug(newName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
-        }
-    };
-    
-    const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setSlug(e.target.value);
-        if (!isEditing) {
-            slugManuallyEdited.current = true;
-        }
-    };
-
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        onSave({ name, slug, description });
-        setIsOpen(false);
-    };
-
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogContent className="sm:max-w-[425px]">
-                <form onSubmit={handleSubmit}>
-                    <DialogHeader>
-                        <DialogTitle>{category ? 'Edit Category' : 'Add Category'}</DialogTitle>
-                        <DialogDescription>
-                            {category ? 'Make changes to your category here. Click save when you\'re done.' : 'Add a new category to your store.'}
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name" className="text-right">
-                                Name
-                            </Label>
-                            <Input id="name" value={name} onChange={handleNameChange} className="col-span-3" />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="slug" className="text-right">
-                                Slug
-                            </Label>
-                            <Input id="slug" value={slug} onChange={handleSlugChange} className="col-span-3" />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="description" className="text-right">
-                                Description
-                            </Label>
-                            <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button type="button" variant="secondary">
-                                Cancel
-                            </Button>
-                        </DialogClose>
-                        <Button type="submit">Save changes</Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
-}
-
 
 export default function AdminCategoriesPage() {
     const [categories, setCategories] = useState(initialCategories);
-    const [isFormOpen, setIsFormOpen] = useState(false);
-    const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
-
-    const openFormForEdit = (category: Category) => {
-        setCurrentCategory(category);
-        setIsFormOpen(true);
-    };
-
-    const openFormForAdd = () => {
-        setCurrentCategory(null);
-        setIsFormOpen(true);
-    };
 
     const handleDelete = (id: number) => {
         setCategories(categories.filter(c => c.id !== id));
-    };
-
-    const handleSave = (data: { name: string, slug: string, description: string }) => {
-        if (currentCategory) { // Editing
-            setCategories(categories.map(c => c.id === currentCategory.id ? { ...c, ...data } : c));
-        } else { // Adding
-            const newCategory = {
-                id: Date.now(),
-                ...data,
-                productCount: 0,
-                subcategories: []
-            };
-            setCategories([...categories, newCategory]);
-        }
     };
 
     return (
@@ -190,11 +56,13 @@ export default function AdminCategoriesPage() {
                         <CardTitle>Categories</CardTitle>
                         <CardDescription>Manage your product categories.</CardDescription>
                     </div>
-                    <Button size="sm" className="h-8 gap-1" onClick={openFormForAdd}>
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                            Add Category
-                        </span>
+                    <Button size="sm" className="h-8 gap-1" asChild>
+                         <Link href="/admin/categories/create">
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                                Add Category
+                            </span>
+                        </Link>
                     </Button>
                 </CardHeader>
                 <CardContent>
@@ -232,8 +100,10 @@ export default function AdminCategoriesPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                    <DropdownMenuItem onClick={() => openFormForEdit(category)}>
-                                                        <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href={`/admin/categories/edit/${category.id}`}>
+                                                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                        </Link>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(category.id)}>
                                                         <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -260,8 +130,10 @@ export default function AdminCategoriesPage() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => openFormForEdit(category)}>
-                                                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                <DropdownMenuItem asChild>
+                                                     <Link href={`/admin/categories/edit/${category.id}`}>
+                                                        <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                    </Link>
                                                 </DropdownMenuItem>
                                                 <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(category.id)}>
                                                     <Trash2 className="mr-2 h-4 w-4" /> Delete
@@ -285,13 +157,6 @@ export default function AdminCategoriesPage() {
                     </div>
                 </CardContent>
             </Card>
-
-            <CategoryFormDialog
-                isOpen={isFormOpen}
-                setIsOpen={setIsFormOpen}
-                category={currentCategory}
-                onSave={handleSave}
-            />
         </main>
     );
 }
