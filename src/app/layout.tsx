@@ -6,6 +6,8 @@ import FlyToCartAnimation from '@/components/fly-to-cart-animation';
 import BottomNavbar from '@/components/bottom-navbar';
 import { ReduxProvider } from '@/lib/redux/provider';
 import SupabaseProvider from '@/lib/supabase/provider';
+import { isSupabaseConfigured } from '@/lib/supabase/config';
+import { SetupSupabase } from '@/components/setup-supabase';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -20,6 +22,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  if (!isSupabaseConfigured) {
+    return (
+      <html lang="en" className={`${inter.variable} light`}>
+        <body className="font-body antialiased">
+          <SetupSupabase />
+        </body>
+      </html>
+    );
+  }
+
   return (
     <html lang="en" className={`${inter.variable} light`}>
       <body className="font-body antialiased pb-16 md:pb-0">

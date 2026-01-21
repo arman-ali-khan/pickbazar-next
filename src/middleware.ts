@@ -1,8 +1,16 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
-import { supabaseUrl, supabaseAnonKey } from '@/lib/supabase/config'
+import { supabaseUrl, supabaseAnonKey, isSupabaseConfigured } from '@/lib/supabase/config'
 
 export async function middleware(request: NextRequest) {
+  if (!isSupabaseConfigured) {
+    return NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
+  }
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
