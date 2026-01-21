@@ -361,6 +361,73 @@ export const reviewsForAdmin = [
     }
 ];
 
+export const questionsForAdmin = [
+    {
+      id: 1,
+      author: {
+        name: 'CuriousCustomer',
+        avatar: getImage('avatar_1'),
+      },
+      product: {
+          id: 1,
+          name: 'Apples',
+          image: getImage('apple_main')
+      },
+      question: 'How long I can store this product?',
+      answer: 'Hi, in freezer you can store them for about 2 weeks in freezer.',
+      date: '2024-07-20T10:00:00.000Z',
+      status: 'Answered' as const,
+    },
+    {
+      id: 2,
+      author: {
+        name: 'VeggieLover',
+        avatar: getImage('avatar_2'),
+      },
+      product: {
+          id: 1,
+          name: 'Apples',
+          image: getImage('apple_main')
+      },
+      question: 'How many apples will be there on 1 lbs',
+      answer: null,
+      date: '2024-07-22T11:30:00.000Z',
+      status: 'Pending' as const,
+    },
+    {
+      id: 3,
+      author: {
+        name: 'AppleFan',
+        avatar: getImage('avatar_3'),
+      },
+      product: {
+          id: 2,
+          name: 'Baby Spinach',
+          image: getImage('related_prod_1')
+      },
+      question: 'Is this spinach pre-washed?',
+      answer: 'Yes, it is triple washed and ready to eat.',
+      date: '2024-07-23T09:00:00.000Z',
+      status: 'Answered' as const,
+    },
+     {
+      id: 4,
+      author: {
+        name: 'Mary Johnson',
+        avatar: getImage('avatar_1'),
+      },
+      product: {
+          id: 4,
+          name: 'Brussels Sprout',
+          image: getImage('related_prod_3')
+      },
+      question: 'Are these organic?',
+      answer: null,
+      date: '2024-07-24T18:45:00.000Z',
+      status: 'Pending' as const,
+    }
+];
+
 
 export type Product = (typeof products)[0] & { originalPrice?: number, rating?: number };
 export type RelatedProduct = typeof relatedProducts[0];
@@ -370,3 +437,4 @@ export type Order = typeof orders[0];
 export type Transaction = typeof transactions[0];
 export type Admin = typeof admins[0];
 export type AdminReview = typeof reviewsForAdmin[0];
+export type AdminQuestion = typeof questionsForAdmin[0];

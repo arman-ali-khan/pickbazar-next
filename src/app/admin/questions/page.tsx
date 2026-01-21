@@ -1,15 +1,164 @@
+'use client';
 
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { MoreHorizontal, Trash2, MessageSquare } from "lucide-react";
+import Link from 'next/link';
+import { questionsForAdmin as initialQuestions } from '@/lib/data';
+import type { AdminQuestion } from '@/lib/data';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Image from 'next/image';
+import { format } from 'date-fns';
+
+const getStatusVariant = (status: AdminQuestion['status']) => {
+    return status === 'Answered' ? 'secondary' : 'default';
+};
 
 export default function AdminQuestionsPage() {
+    const [questions, setQuestions] = useState(initialQuestions);
+
+    const handleDelete = (questionId: number) => {
+        setQuestions(questions.filter(q => q.id !== questionId));
+    };
+
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Questions Management</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p>Manage your questions here.</p>
-            </CardContent>
-        </Card>
+        <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Questions Management</CardTitle>
+                    <CardDescription>View, answer, and manage customer questions.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {/* Desktop View */}
+                    <div className="hidden md:block">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Product</TableHead>
+                                    <TableHead>Customer</TableHead>
+                                    <TableHead>Question/Answer</TableHead>
+                                    <TableHead>Date</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {questions.map((question) => (
+                                    <TableRow key={question.id}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative h-12 w-12 rounded-md border">
+                                                    <Image src={question.product.image.imageUrl} alt={question.product.name} data-ai-hint={question.product.image.imageHint} fill className="object-contain p-1" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-sm">{question.product.name}</p>
+                                                    <Button variant="link" asChild className="p-0 h-auto text-xs">
+                                                        <Link href={`/products/${question.product.id}`}>View Product</Link>
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-9 w-9">
+                                                    <AvatarImage src={question.author.avatar.imageUrl} alt={question.author.name} data-ai-hint={question.author.avatar.imageHint} />
+                                                    <AvatarFallback>{question.author.name.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <p className="font-medium">{question.author.name}</p>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="max-w-xs">
+                                            <p className="font-semibold text-sm truncate">Q: {question.question}</p>
+                                            {question.answer && <p className="text-sm text-muted-foreground mt-1 truncate">A: {question.answer}</p>}
+                                        </TableCell>
+                                        <TableCell suppressHydrationWarning>{format(new Date(question.date), 'PP')}</TableCell>
+                                        <TableCell>
+                                            <Badge variant={getStatusVariant(question.status)}>{question.status}</Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon">
+                                                        <MoreHorizontal className="h-4 w-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href={`/admin/questions/answer/${question.id}`}>
+                                                            <MessageSquare className="mr-2 h-4 w-4" /> Answer
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(question.id)}>
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+
+                    {/* Mobile View */}
+                    <div className="grid grid-cols-1 gap-4 md:hidden">
+                        {questions.map((question) => (
+                            <Card key={question.id}>
+                                <CardHeader className="flex flex-row items-start gap-4 space-y-0">
+                                    <Avatar className="h-10 w-10">
+                                        <AvatarImage src={question.author.avatar.imageUrl} alt={question.author.name} data-ai-hint={question.author.avatar.imageHint} />
+                                        <AvatarFallback>{question.author.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                        <CardTitle className="text-base flex justify-between">
+                                            <span>{question.author.name}</span>
+                                            <Badge variant={getStatusVariant(question.status)}>{question.status}</Badge>
+                                        </CardTitle>
+                                        <CardDescription suppressHydrationWarning>{format(new Date(question.date), 'PPp')}</CardDescription>
+                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="-mt-2 -mr-2">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                             <DropdownMenuItem asChild>
+                                                <Link href={`/admin/questions/answer/${question.id}`}>
+                                                    <MessageSquare className="mr-2 h-4 w-4" /> Answer
+                                                </Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(question.id)}>
+                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </CardHeader>
+                                <CardContent>
+                                    <p className="font-semibold text-sm mb-2">Q: {question.question}</p>
+                                    {question.answer && <p className="text-sm text-muted-foreground mb-4">A: {question.answer}</p>}
+                                    
+                                    <div className="flex items-center gap-3 p-2 bg-muted/50 rounded-md">
+                                        <div className="relative h-12 w-12 rounded-md border flex-shrink-0">
+                                            <Image src={question.product.image.imageUrl} alt={question.product.name} data-ai-hint={question.product.image.imageHint} fill className="object-contain p-1" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-sm">{question.product.name}</p>
+                                            <Button variant="link" asChild className="p-0 h-auto text-xs">
+                                                <Link href={`/products/${question.product.id}`}>View Product</Link>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+        </main>
     );
 }
