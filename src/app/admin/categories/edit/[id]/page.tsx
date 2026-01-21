@@ -9,55 +9,101 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabase } from '@/lib/supabase/provider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
-// Mock data - in a real app, this would come from an API
-const initialCategories = [
-    { id: 1, name: 'Fruits & Vegetables', slug: 'fruits-vegetables', description: 'Fresh fruits and vegetables', productCount: 32, subcategories: ['Fruits', 'Vegetables'] },
-    { id: 2, name: 'Meat & Fish', slug: 'meat-fish', description: 'Fresh meat and fish', productCount: 21, subcategories: ['Meat', 'Fish'] },
-    { id: 3, name: 'Snacks', slug: 'snacks', description: 'Chips, chocolate, and more', productCount: 15, subcategories: ['Chips', 'Chocolate', 'Nuts'] },
-    { id: 4, name: 'Pet Care', slug: 'pet-care', description: 'Food and supplies for pets', productCount: 8, subcategories: ['Dog Food', 'Cat Food'] },
-    { id: 5, name: 'Home & Cleaning', slug: 'home-cleaning', description: 'Household cleaning supplies', productCount: 12, subcategories: ['Detergent', 'Cleaning Tools'] },
-    { id: 6, name: 'Dairy', slug: 'dairy', description: 'Milk, cheese, yogurt', productCount: 18, subcategories: ['Milk', 'Cheese', 'Yogurt'] },
-];
+interface Category {
+  id: number;
+  name: string;
+}
 
 export default function EditCategoryPage() {
     const router = useRouter();
     const params = useParams<{ id: string }>();
     const { toast } = useToast();
+    const { supabase } = useSupabase();
     const categoryId = parseInt(params.id, 10);
     
-    const [category, setCategory] = useState(() => initialCategories.find(c => c.id === categoryId));
-    
-    const [name, setName] = useState(category?.name || '');
-    const [slug, setSlug] = useState(category?.slug || '');
-    const [description, setDescription] = useState(category?.description || '');
+    const [name, setName] = useState('');
+    const [slug, setSlug] = useState('');
+    const [description, setDescription] = useState('');
+    const [parentId, setParentId] = useState<string | null>(null);
+    const [parentCategories, setParentCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const foundCategory = initialCategories.find(c => c.id === categoryId);
-        if (foundCategory) {
-            setCategory(foundCategory);
-            setName(foundCategory.name);
-            setSlug(foundCategory.slug);
-            setDescription(foundCategory.description);
-        } else {
-            notFound();
-        }
-    }, [categoryId]);
+        const fetchCategoryData = async () => {
+            if (isNaN(categoryId)) {
+                notFound();
+                return;
+            }
 
+            // Fetch the category being edited
+            const { data: categoryData, error: categoryError } = await supabase
+                .from('categories')
+                .select('*')
+                .eq('id', categoryId)
+                .single();
 
-    if (!category) {
-        return null; 
-    }
+            if (categoryError || !categoryData) {
+                toast({ variant: 'destructive', title: 'Error', description: 'Category not found.' });
+                notFound();
+                return;
+            }
+
+            setName(categoryData.name);
+            setSlug(categoryData.slug);
+            setDescription(categoryData.description || '');
+            setParentId(categoryData.parent_id ? String(categoryData.parent_id) : null);
+
+            // Fetch potential parent categories (all top-level categories, excluding the current one if it's a top-level)
+            const { data: parentsData, error: parentsError } = await supabase
+                .from('categories')
+                .select('id, name')
+                .is('parent_id', null)
+                .not('id', 'eq', categoryId);
+            
+            if (parentsData) {
+                setParentCategories(parentsData);
+            }
+            setLoading(false);
+        };
+        fetchCategoryData();
+    }, [categoryId, supabase, toast]);
     
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log({ id: category.id, name, slug, description });
-        toast({
-            title: "Category Updated",
-            description: `The category "${name}" has been successfully updated.`,
-        });
-        router.push('/admin/categories');
+        setLoading(true);
+
+        const updatedCategory = {
+            name,
+            slug,
+            description,
+            parent_id: parentId ? parseInt(parentId) : null,
+        };
+
+        const { error } = await supabase.from('categories').update(updatedCategory).eq('id', categoryId);
+        setLoading(false);
+
+        if (error) {
+            toast({
+                variant: 'destructive',
+                title: "Error Updating Category",
+                description: error.message,
+            });
+        } else {
+             toast({
+                title: "Category Updated",
+                description: `The category "${name}" has been successfully updated.`,
+            });
+            router.push('/admin/categories');
+        }
     };
+
+    if (loading) {
+        return <p>Loading category...</p>
+    }
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
@@ -103,10 +149,25 @@ export default function EditCategoryPage() {
                                 />
                             </div>
                             <div className="grid gap-3">
+                                <Label htmlFor="parent">Parent Category</Label>
+                                <Select onValueChange={(value) => setParentId(value || null)} value={parentId || ''}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a parent category (optional)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="">None (Top-level category)</SelectItem>
+                                        {parentCategories.map(cat => (
+                                            <SelectItem key={cat.id} value={String(cat.id)}>
+                                                {cat.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-3">
                                 <Label htmlFor="description">Description</Label>
-                                <Input
+                                <Textarea
                                     id="description"
-                                    type="text"
                                     className="w-full"
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
@@ -115,7 +176,7 @@ export default function EditCategoryPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end border-t pt-6">
-                        <Button type="submit">Update Category</Button>
+                        <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Update Category'}</Button>
                     </CardFooter>
                 </Card>
             </form>
