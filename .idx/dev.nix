@@ -18,6 +18,10 @@
     projectId = "demo-app";
     services = ["auth" "firestore"];
   };
+  services.mongodb = {
+  enable = true;
+  port = 27017;
+};
   idx = {
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
