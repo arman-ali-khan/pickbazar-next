@@ -1,5 +1,7 @@
-create or replace function get_admin_orders()
-returns table (
+DROP FUNCTION IF EXISTS get_admin_orders();
+
+CREATE OR REPLACE FUNCTION get_admin_orders()
+RETURNS TABLE (
     id int,
     order_number text,
     created_at timestamptz,
@@ -7,22 +9,20 @@ returns table (
     status order_status,
     shipping_details jsonb,
     customer_avatar_url text
-) as $$
-begin
-    return query
-    select
-        o.id, -- Use alias to resolve ambiguity
+) AS $$
+BEGIN
+  RETURN QUERY
+    SELECT
+        o.id,
         o.order_number,
         o.created_at,
         o.total_amount,
         o.status,
         o.shipping_details,
         p.avatar_url
-    from
-        orders as o
-    left join
-        profiles as p on o.user_id = p.id
-    order by
-        o.created_at desc;
-end;
-$$ language plpgsql security definer;
+    FROM
+        orders AS o
+    JOIN
+        profiles AS p ON o.user_id = p.id;
+END;
+$$ LANGUAGE plpgsql;
