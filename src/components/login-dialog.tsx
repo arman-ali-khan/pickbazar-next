@@ -21,7 +21,8 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  updateProfile,
 } from 'firebase/auth';
 
 type View = 'login' | 'register' | 'forgotPassword';
@@ -68,33 +69,35 @@ export function LoginDialog() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // Step 1: Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
-      // Step 2: On successful Firebase registration, save user to MongoDB via our API
-      if (userCredential.user) {
-        const response = await fetch('/api/register', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ email, fullName: name }),
-        });
+      await updateProfile(userCredential.user, {
+        displayName: name
+      });
 
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, fullName: name }),
+      });
+
+      if (!response.ok) {
         const data = await response.json();
-
-        if (!response.ok) {
-          // If MongoDB save fails, we should ideally handle this.
-          // For now, we'll just toast the error but still proceed since Firebase auth succeeded.
-          // In a real app, you might want to delete the Firebase user or have a retry mechanism.
-          throw new Error(data.message || 'Failed to save user data to database.');
-        }
+        throw new Error(data.message || 'Failed to save user data to database.');
       }
 
       toast({ title: 'Registration Successful', description: "Welcome to Pickbazar!" });
       router.push('/profile');
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Registration Failed", description: error.message });
+      let description = error.message;
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'An account with this email already exists. Please login instead.';
+      } else if (error.code === 'auth/weak-password') {
+        description = 'The password is too weak. Please use at least 6 characters.';
+      }
+      toast({ variant: "destructive", title: "Registration Failed", description });
     } finally {
       setIsSubmitting(false);
     }
