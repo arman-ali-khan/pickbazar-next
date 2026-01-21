@@ -69,17 +69,10 @@ export default function OrderDetailsPage() {
     const fetchOrder = useCallback(async () => {
         setLoading(true);
         const { data, error } = await supabase
-            .from('orders')
-            .select(`
-                *,
-                profiles (full_name, avatar_url),
-                order_items (id, quantity, price_at_purchase, products (name, featured_image_url))
-            `)
-            .eq('order_number', orderNumber)
-            .single();
+            .rpc('get_admin_order_details', { p_order_number: orderNumber });
 
         if (error || !data) {
-            toast({ variant: "destructive", title: "Error", description: "Order not found." });
+            toast({ variant: "destructive", title: "Error", description: `Order not found. ${error?.message || ''}`.trim() });
             notFound();
         } else {
             setOrder(data as OrderDetails);
