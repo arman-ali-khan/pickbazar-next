@@ -26,13 +26,16 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
-  Leaf
+  Leaf,
+  ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { cn } from '@/lib/utils';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import React from 'react';
 
 const navItems = [
   { href: '/admin', icon: LayoutGrid, label: 'Dashboard' },
@@ -47,7 +50,14 @@ const navItems = [
   { href: '/admin/questions', icon: HelpCircle, label: 'Questions' },
   { href: '/admin/offers', icon: Gift, label: 'Offers' },
   { href: '/admin/messages', icon: MessageSquare, label: 'Messages' },
-  { href: '/admin/settings', icon: Settings, label: 'Settings' },
+];
+
+const settingsNavItems = [
+    { href: '/admin/settings', label: 'General', tab: 'general' },
+    { href: '/admin/settings?tab=seo', label: 'SEO', tab: 'seo' },
+    { href: '/admin/settings?tab=payments', label: 'Payments', tab: 'payments' },
+    { href: '/admin/settings?tab=maintenance', label: 'Maintenance', tab: 'maintenance' },
+    { href: '/admin/settings?tab=promo', label: 'Promotions', tab: 'promo' },
 ];
 
 const SidebarNavLink = ({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string; }) => {
@@ -66,6 +76,49 @@ const SidebarNavLink = ({ href, icon: Icon, label }: { href: string; icon: React
     );
 };
 
+const SettingsAccordion = () => {
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
+    const currentTab = searchParams.get('tab') || 'general';
+    const isSettingsPage = pathname.startsWith('/admin/settings');
+    const { state } = useSidebar();
+    
+    return (
+        <SidebarMenuItem>
+            <Accordion type="single" collapsible defaultValue={isSettingsPage ? "settings" : ""}>
+                <AccordionItem value="settings" className="border-b-0">
+                    <AccordionTrigger
+                        className={cn(
+                            "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
+                            "h-8 justify-start hover:no-underline",
+                            isSettingsPage && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
+                            state === 'collapsed' && "h-8 w-8 p-2 justify-center"
+                        )}
+                    >
+                       <Settings className="h-5 w-5 shrink-0" />
+                       <span className={cn("truncate flex-1 text-left", state === 'collapsed' && 'hidden')}>Settings</span>
+                        <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform duration-200", state === 'collapsed' && 'hidden', 'data-[state=open]:-rotate-180')} />
+                    </AccordionTrigger>
+                    <AccordionContent className={cn("pt-1", state === 'collapsed' ? 'hidden' : 'block')}>
+                        <SidebarMenu className="pl-6">
+                            {settingsNavItems.map(item => {
+                                const isActive = isSettingsPage && currentTab === item.tab;
+                                return (
+                                <SidebarMenuItem key={item.href}>
+                                    <SidebarMenuButton asChild isActive={isActive} size="sm" className="w-full justify-start font-normal">
+                                        <Link href={item.href}>
+                                            {item.label}
+                                        </Link>
+                                    </SidebarMenuButton>
+                                </SidebarMenuItem>
+                            )})}
+                        </SidebarMenu>
+                    </AccordionContent>
+                </AccordionItem>
+            </Accordion>
+        </SidebarMenuItem>
+    )
+}
 
 export default function AdminSidebar() {
   const { state } = useSidebar();
@@ -87,6 +140,7 @@ export default function AdminSidebar() {
             {navItems.map(item => (
                 <SidebarNavLink key={item.href} {...item} />
             ))}
+            <SettingsAccordion />
         </SidebarMenu>
       </SidebarContent>
 
