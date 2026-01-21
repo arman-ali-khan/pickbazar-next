@@ -1,7 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
-import { orders as allOrdersData, products as allProducts } from '@/lib/data';
+import { useState, useEffect, useCallback } from 'react';
 import { notFound, useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,60 +13,117 @@ import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import type { Order } from '@/lib/data';
+import { useSupabase } from '@/lib/supabase/provider';
+import type { OrderStatus } from '@/lib/data';
 
-const getStatusVariant = (status: Order['status']) => {
+interface OrderItem {
+    id: number;
+    quantity: number;
+    price: number;
+    products: { name: string; featured_image_url: string; } | null;
+}
+
+interface OrderDetails {
+    id: number;
+    order_number: string;
+    created_at: string;
+    total_amount: number;
+    status: OrderStatus;
+    shipping_details: {
+        firstName: string;
+        lastName: string;
+        email: string;
+        address: string;
+        city: string;
+        state: string;
+        zip: string;
+    };
+    profiles: {
+        full_name: string;
+        avatar_url: string | null;
+    } | null;
+    order_items: OrderItem[];
+}
+
+const getStatusVariant = (status: OrderStatus) => {
     switch (status) {
-        case 'Delivered':
-            return 'secondary';
-        case 'Cancelled':
-            return 'destructive';
-        case 'Pending':
-            return 'default';
-        case 'Processing':
-            return 'outline';
-        case 'Shipped':
-            return 'default';
-        default:
-            return 'default';
+        case 'Delivered': return 'secondary';
+        case 'Cancelled': return 'destructive';
+        case 'Pending': return 'default';
+        case 'Processing': return 'outline';
+        case 'Shipped': return 'default';
+        default: return 'default';
     }
 };
 
-
 export default function OrderDetailsPage() {
     const params = useParams<{ id: string }>();
-    const order = allOrdersData.find(o => o.id === params.id);
+    const orderNumber = params.id;
+    const { supabase } = useSupabase();
     const { toast } = useToast();
-    
-    const [status, setStatus] = useState(order?.status);
+
+    const [order, setOrder] = useState<OrderDetails | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [status, setStatus] = useState<OrderStatus>('Pending');
+
+    const fetchOrder = useCallback(async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('orders')
+            .select(`
+                *,
+                profiles (full_name, avatar_url),
+                order_items (id, quantity, price, products (name, featured_image_url))
+            `)
+            .eq('order_number', orderNumber)
+            .single();
+
+        if (error || !data) {
+            toast({ variant: "destructive", title: "Error", description: "Order not found." });
+            notFound();
+        } else {
+            setOrder(data as OrderDetails);
+            setStatus(data.status as OrderStatus);
+        }
+        setLoading(false);
+    }, [orderNumber, supabase, toast]);
 
     useEffect(() => {
-        if (!order) {
-            notFound();
+        fetchOrder();
+    }, [fetchOrder]);
+    
+    const handleStatusChange = (newStatus: OrderStatus) => {
+        setStatus(newStatus);
+    };
+
+    const handleUpdate = async () => {
+        if (!order) return;
+        const { error } = await supabase
+            .from('orders')
+            .update({ status: status })
+            .eq('id', order.id);
+
+        if (error) {
+            toast({ variant: "destructive", title: "Update Failed", description: error.message });
+        } else {
+            toast({
+                title: "Order Status Updated",
+                description: `Order ${order.order_number} is now ${status}. A notification has been sent.`,
+            });
+            fetchOrder(); // Re-fetch to confirm update
         }
-    }, [order]);
+    };
+
+    if (loading) {
+        return <div>Loading order details...</div>;
+    }
 
     if (!order) {
         return null;
     }
-    
-    const handleStatusChange = (newStatus: Order['status']) => {
-        setStatus(newStatus);
-    };
 
-    const handleUpdate = () => {
-        // Here you would normally update the order status in your backend
-        console.log(`Updating status to ${status}`);
-        toast({
-            title: "Order Status Updated",
-            description: `Order ${order.id} is now ${status}. A notification has been sent.`,
-        });
-    };
-
-    const subtotal = order.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-    const shipping = 5.00;
-    const tax = subtotal * 0.08;
-    const total = subtotal + shipping + tax;
+    const subtotal = order.order_items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const shipping = Number(order.total_amount) - subtotal; // Simplified calculation
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
@@ -92,32 +149,28 @@ export default function OrderDetailsPage() {
                  <div className="grid auto-rows-max gap-4 lg:col-span-2">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <CardTitle>Order {order.id}</CardTitle>
-                             <Badge variant={getStatusVariant(status || order.status)}>{status || order.status}</Badge>
+                            <CardTitle>Order {order.order_number}</CardTitle>
+                             <Badge variant={getStatusVariant(status)}>{status}</Badge>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {order.items.map(item => {
-                                    const product = allProducts.find(p => p.id === item.id);
-                                    return (
-                                        <div key={item.id} className="flex items-center gap-4">
-                                            <div className="relative h-16 w-16 rounded-md overflow-hidden border">
-                                            <Image 
-                                                src={product?.image.imageUrl || ''} 
-                                                alt={item.name} 
-                                                data-ai-hint={product?.image.imageHint} 
-                                                fill 
-                                                className="object-contain p-1" 
-                                            />
-                                            </div>
-                                            <div className="flex-1">
-                                            <p className="font-semibold">{item.name}</p>
-                                            <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
-                                            </div>
-                                            <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                                {order.order_items.map(item => (
+                                    <div key={item.id} className="flex items-center gap-4">
+                                        <div className="relative h-16 w-16 rounded-md overflow-hidden border">
+                                        <Image 
+                                            src={item.products?.featured_image_url || ''} 
+                                            alt={item.products?.name || 'Product'} 
+                                            fill 
+                                            className="object-contain p-1" 
+                                        />
                                         </div>
-                                    )
-                                })}
+                                        <div className="flex-1">
+                                        <p className="font-semibold">{item.products?.name}</p>
+                                        <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                                        </div>
+                                        <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                                    </div>
+                                ))}
                             </div>
                             <Separator className="my-4" />
                              <div className="space-y-2 text-sm">
@@ -129,14 +182,10 @@ export default function OrderDetailsPage() {
                                     <p className="text-muted-foreground">Shipping</p>
                                     <p className="font-medium">${shipping.toFixed(2)}</p>
                                 </div>
-                                 <div className="flex justify-between">
-                                    <p className="text-muted-foreground">Tax</p>
-                                    <p className="font-medium">${tax.toFixed(2)}</p>
-                                </div>
                                 <Separator className="my-2" />
                                 <div className="flex justify-between font-semibold text-base">
                                     <p>Total</p>
-                                    <p>${total.toFixed(2)}</p>
+                                    <p>${Number(order.total_amount).toFixed(2)}</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -150,26 +199,20 @@ export default function OrderDetailsPage() {
                         <CardContent className="space-y-4">
                              <div className="flex items-center gap-4">
                                 <Avatar className="h-12 w-12">
-                                    <AvatarImage src={order.customer.avatar.imageUrl} alt={order.customer.name} data-ai-hint={order.customer.avatar.imageHint} />
-                                    <AvatarFallback>{order.customer.name.charAt(0)}</AvatarFallback>
+                                    <AvatarImage src={order.profiles?.avatar_url || undefined} alt={order.shipping_details.firstName} />
+                                    <AvatarFallback>{order.shipping_details.firstName.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold">{order.customer.name}</p>
-                                    <p className="text-sm text-muted-foreground">{order.customer.email}</p>
+                                    <p className="font-semibold">{order.shipping_details.firstName} {order.shipping_details.lastName}</p>
+                                    <p className="text-sm text-muted-foreground">{order.shipping_details.email}</p>
                                 </div>
                             </div>
                             <Separator />
                             <div>
                                 <h4 className="font-semibold mb-2">Shipping Address</h4>
                                 <address className="not-italic text-muted-foreground text-sm">
-                                    123 Market St<br />
-                                    San Francisco, CA 94103
-                                </address>
-                            </div>
-                            <div>
-                                <h4 className="font-semibold mb-2">Billing Address</h4>
-                                <address className="not-italic text-muted-foreground text-sm">
-                                    Same as shipping
+                                    {order.shipping_details.address}<br />
+                                    {order.shipping_details.city}, {order.shipping_details.state} {order.shipping_details.zip}
                                 </address>
                             </div>
                         </CardContent>
@@ -179,7 +222,7 @@ export default function OrderDetailsPage() {
                              <CardTitle>Order Status</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <Select value={status} onValueChange={(value) => handleStatusChange(value as Order['status'])}>
+                            <Select value={status} onValueChange={(value) => handleStatusChange(value as OrderStatus)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select status" />
                                 </SelectTrigger>

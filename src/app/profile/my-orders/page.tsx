@@ -1,5 +1,7 @@
+
 'use client';
 
+import { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
@@ -8,15 +10,55 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useSupabase } from '@/lib/supabase/provider';
+import { useToast } from '@/hooks/use-toast';
+import { format } from 'date-fns';
+import Link from 'next/link';
+import type { OrderStatus } from '@/lib/data';
 
-const orders = [
-    { id: 'ORD-12345', date: 'June 15, 2024', status: 'Delivered', total: '$125.50' },
-    { id: 'ORD-12346', date: 'June 18, 2024', status: 'Processing', total: '$89.90' },
-    { id: 'ORD-12347', date: 'June 20, 2024', status: 'Shipped', total: '$210.00' },
-    { id: 'ORD-12348', date: 'June 21, 2024', status: 'Cancelled', total: '$55.20' },
-];
+interface Order {
+    id: number;
+    order_number: string;
+    created_at: string;
+    status: OrderStatus;
+    total_amount: number;
+}
 
 export default function MyOrdersPage() {
+    const { supabase, user } = useSupabase();
+    const { toast } = useToast();
+    const [orders, setOrders] = useState<Order[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const getOrders = useCallback(async () => {
+        if (!user) return;
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            toast({ variant: "destructive", title: "Error", description: "Could not fetch your orders." });
+        } else {
+            setOrders(data);
+        }
+        setLoading(false);
+    }, [user, supabase, toast]);
+
+    useEffect(() => {
+        getOrders();
+    }, [getOrders]);
+    
+    const getStatusVariant = (status: OrderStatus) => {
+        switch (status) {
+            case 'Delivered': return 'secondary';
+            case 'Cancelled': return 'destructive';
+            default: return 'default';
+        }
+    };
+
     return (
         <div className="bg-muted/20 min-h-screen">
           <Header />
@@ -30,61 +72,65 @@ export default function MyOrdersPage() {
                         <CardTitle>My Orders</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {/* Desktop View */}
-                        <div className="hidden md:block">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Order ID</TableHead>
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Total</TableHead>
-                                        <TableHead>Action</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
+                        {loading ? (
+                            <p>Loading your orders...</p>
+                        ) : orders.length === 0 ? (
+                            <p className="text-muted-foreground">You have not placed any orders yet.</p>
+                        ) : (
+                            <>
+                                {/* Desktop View */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Order ID</TableHead>
+                                                <TableHead>Date</TableHead>
+                                                <TableHead>Status</TableHead>
+                                                <TableHead>Total</TableHead>
+                                                <TableHead>Action</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {orders.map(order => (
+                                                <TableRow key={order.id}>
+                                                    <TableCell className="font-medium">{order.order_number}</TableCell>
+                                                    <TableCell>{format(new Date(order.created_at), 'PP')}</TableCell>
+                                                    <TableCell>
+                                                        <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
+                                                    </TableCell>
+                                                    <TableCell>${order.total_amount}</TableCell>
+                                                    <TableCell>
+                                                        <Button variant="outline" size="sm" asChild>
+                                                            <Link href={`/profile/my-orders/${order.order_number}`}>View Details</Link>
+                                                        </Button>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                                {/* Mobile View */}
+                                <div className="block md:hidden space-y-4">
                                     {orders.map(order => (
-                                        <TableRow key={order.id}>
-                                            <TableCell className="font-medium">{order.id}</TableCell>
-                                            <TableCell>{order.date}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={
-                                                    order.status === 'Delivered' ? 'secondary' :
-                                                    order.status === 'Cancelled' ? 'destructive' :
-                                                    'default'
-                                                }>{order.status}</Badge>
-                                            </TableCell>
-                                            <TableCell>{order.total}</TableCell>
-                                            <TableCell>
-                                                <Button variant="outline" size="sm">View Details</Button>
-                                            </TableCell>
-                                        </TableRow>
+                                        <Card key={order.id}>
+                                            <CardHeader>
+                                                <CardTitle className="text-base">{order.order_number}</CardTitle>
+                                                <p className="text-sm text-muted-foreground">{format(new Date(order.created_at), 'PP')}</p>
+                                            </CardHeader>
+                                            <CardContent className="flex justify-between items-center">
+                                                <div>
+                                                    <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
+                                                    <p className="font-semibold mt-2">${order.total_amount}</p>
+                                                </div>
+                                                <Button variant="outline" size="sm" asChild>
+                                                    <Link href={`/profile/my-orders/${order.order_number}`}>View Details</Link>
+                                                </Button>
+                                            </CardContent>
+                                        </Card>
                                     ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                        {/* Mobile View */}
-                        <div className="block md:hidden space-y-4">
-                            {orders.map(order => (
-                                <Card key={order.id}>
-                                    <CardHeader>
-                                        <CardTitle className="text-base">{order.id}</CardTitle>
-                                        <p className="text-sm text-muted-foreground">{order.date}</p>
-                                    </CardHeader>
-                                    <CardContent className="flex justify-between items-center">
-                                        <div>
-                                            <Badge variant={
-                                                order.status === 'Delivered' ? 'secondary' :
-                                                order.status === 'Cancelled' ? 'destructive' :
-                                                'default'
-                                            }>{order.status}</Badge>
-                                            <p className="font-semibold mt-2">{order.total}</p>
-                                        </div>
-                                        <Button variant="outline" size="sm">View Details</Button>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
+                                </div>
+                            </>
+                        )}
                     </CardContent>
                 </Card>
             </div>

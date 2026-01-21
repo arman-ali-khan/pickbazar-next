@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,6 +17,8 @@ import { CreditCard, Landmark, Smartphone, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
+import { useSupabase } from '@/lib/supabase/provider';
+import { useToast } from '@/hooks/use-toast';
 
 interface ShippingInfo {
   firstName: string;
@@ -30,35 +33,65 @@ interface ShippingInfo {
 export default function PaymentPage() {
     const router = useRouter();
     const dispatch = useAppDispatch();
+    const { supabase, user } = useSupabase();
+    const { toast } = useToast();
+
     const cartItems = useAppSelector(selectCartItems);
     const subtotal = useAppSelector(selectSubtotal);
     const shippingCost = 5.00;
     const total = subtotal + shippingCost;
+    
     const [selectedMethod, setSelectedMethod] = useState('card');
     const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
     useEffect(() => {
-        // Load shipping info from localStorage
         const savedInfo = localStorage.getItem('shippingInfo');
         if (savedInfo) {
             setShippingInfo(JSON.parse(savedInfo));
-        } else {
-            // If no info, redirect back to checkout start
+        } else if (cartItems.length > 0) {
             router.push('/checkout');
         }
-    }, [router]);
+    }, [router, cartItems]);
     
-    const handlePayment = () => {
-        const orderData = {
-            items: cartItems,
-            total,
-            orderId: `ORD-${Date.now()}`
-        };
-        const query = encodeURIComponent(JSON.stringify(orderData));
-        router.push(`/checkout/success?data=${query}`);
+    const handlePayment = async () => {
+        if (!user || !shippingInfo) {
+            toast({
+                variant: 'destructive',
+                title: 'Error',
+                description: 'User or shipping information is missing.',
+            });
+            return;
+        }
+
+        setIsProcessing(true);
+
+        const orderItems = cartItems.map(item => ({
+            product_id: item.id,
+            quantity: item.quantity,
+            price: item.price,
+        }));
+        
+        const { data: orderNumber, error } = await supabase.rpc('create_order', {
+            p_total_amount: total,
+            p_shipping_details: shippingInfo,
+            p_items: orderItems,
+        });
+
+        if (error) {
+            toast({
+                variant: 'destructive',
+                title: 'Order Failed',
+                description: error.message,
+            });
+            setIsProcessing(false);
+            return;
+        }
+
         dispatch(clearCart());
-        // Clean up localStorage
         localStorage.removeItem('shippingInfo');
+        
+        router.push(`/checkout/success?order_number=${orderNumber}`);
     };
 
   return (
@@ -173,8 +206,8 @@ export default function PaymentPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                 <Button onClick={handlePayment} className="w-full h-12 text-lg">
-                    Pay ${total.toFixed(2)}
+                 <Button onClick={handlePayment} className="w-full h-12 text-lg" disabled={isProcessing}>
+                    {isProcessing ? 'Processing...' : `Pay $${total.toFixed(2)}`}
                 </Button>
               </CardFooter>
             </Card>

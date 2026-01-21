@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -28,34 +29,44 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { orders as allOrdersData } from "@/lib/data";
 import { Search, MoreHorizontal, File, ListFilter, Trash2, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
+import { useSupabase } from "@/lib/supabase/provider";
+import { useToast } from "@/hooks/use-toast";
+import type { OrderStatus } from '@/lib/data';
 
-type Order = (typeof allOrdersData)[0];
+type OrderWithCustomer = {
+    id: number;
+    order_number: string;
+    created_at: string;
+    total_amount: number;
+    status: OrderStatus;
+    shipping_details: {
+        email: string;
+        firstName: string;
+        lastName: string;
+    };
+    profiles: {
+        avatar_url: string | null;
+    } | null;
+}
 
-const getStatusVariant = (status: Order['status']) => {
+const getStatusVariant = (status: OrderStatus) => {
     switch (status) {
-        case 'Delivered':
-            return 'secondary';
-        case 'Cancelled':
-            return 'destructive';
-        case 'Pending':
-            return 'default';
-        case 'Processing':
-            return 'outline';
-        case 'Shipped':
-            return 'default'; // Or another color
-        default:
-            return 'default';
+        case 'Delivered': return 'secondary';
+        case 'Cancelled': return 'destructive';
+        case 'Pending': return 'default';
+        case 'Processing': return 'outline';
+        case 'Shipped': return 'default';
+        default: return 'default';
     }
 };
 
-const OrderList = ({ orders }: { orders: Order[] }) => {
+const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
     if (orders.length === 0) {
         return (
             <div className="text-center py-20">
@@ -67,18 +78,18 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
     return (
         <>
             {/* Mobile View */}
-            <div className="grid grid-cols-2 gap-1 sm:gap-4 md:hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
                 {orders.map((order) => (
                     <Card key={order.id} className="overflow-hidden">
                         <CardHeader className="flex flex-row items-center justify-between p-4">
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarImage src={order.customer.avatar.imageUrl} alt={order.customer.name} data-ai-hint={order.customer.avatar.imageHint} />
-                                    <AvatarFallback>{order.customer.name.charAt(0)}</AvatarFallback>
+                                    <AvatarImage src={order.profiles?.avatar_url || undefined} alt={order.shipping_details.firstName} />
+                                    <AvatarFallback>{order.shipping_details.firstName.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold">{order.customer.name}</p>
-                                    <p className="text-xs text-muted-foreground">{order.id}</p>
+                                    <p className="font-semibold">{order.shipping_details.firstName} {order.shipping_details.lastName}</p>
+                                    <p className="text-xs text-muted-foreground">{order.order_number}</p>
                                 </div>
                             </div>
                             <DropdownMenu>
@@ -89,11 +100,8 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem asChild>
-                                        <Link href={`/admin/orders/${order.id}`} className='w-full'>
-                                            <div className="flex items-center w-full">
-                                                <Eye className="mr-2 h-4 w-4" />
-                                                <span>View Details</span>
-                                            </div>
+                                        <Link href={`/admin/orders/${order.order_number}`} className='w-full'>
+                                            <div className="flex items-center w-full"><Eye className="mr-2 h-4 w-4" /><span>View Details</span></div>
                                         </Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
@@ -103,11 +111,11 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
                         <CardContent className="p-4 pt-0 space-y-2">
                              <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Total</span>
-                                <span className="font-bold">${order.total.toFixed(2)}</span>
+                                <span className="font-bold">${order.total_amount}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Date</span>
-                                <span suppressHydrationWarning>{format(new Date(order.date), 'PP')}</span>
+                                <span suppressHydrationWarning>{format(new Date(order.created_at), 'PP')}</span>
                             </div>
                              <div className="flex justify-between items-center text-sm">
                                  <span className="text-muted-foreground">Status</span>
@@ -123,11 +131,10 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
                  <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Order ID</TableHead>
+                            <TableHead>Order</TableHead>
                             <TableHead>Customer</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead>Total</TableHead>
-                            <TableHead>Payment</TableHead>
                             <TableHead>Status</TableHead>
                             <TableHead><span className="sr-only">Actions</span></TableHead>
                         </TableRow>
@@ -135,22 +142,21 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
                     <TableBody>
                         {orders.map((order) => (
                             <TableRow key={order.id}>
-                                <TableCell className="font-medium">{order.id}</TableCell>
+                                <TableCell className="font-medium">{order.order_number}</TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={order.customer.avatar.imageUrl} alt={order.customer.name} data-ai-hint={order.customer.avatar.imageHint} />
-                                            <AvatarFallback>{order.customer.name.charAt(0)}</AvatarFallback>
+                                            <AvatarImage src={order.profiles?.avatar_url || undefined} alt={order.shipping_details.firstName} />
+                                            <AvatarFallback>{order.shipping_details.firstName.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-medium">{order.customer.name}</p>
-                                            <p className="text-xs text-muted-foreground">{order.customer.email}</p>
+                                            <p className="font-medium">{order.shipping_details.firstName} {order.shipping_details.lastName}</p>
+                                            <p className="text-xs text-muted-foreground">{order.shipping_details.email}</p>
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell suppressHydrationWarning>{format(new Date(order.date), 'PP')}</TableCell>
-                                <TableCell>${order.total.toFixed(2)}</TableCell>
-                                <TableCell>{order.paymentMethod}</TableCell>
+                                <TableCell suppressHydrationWarning>{format(new Date(order.created_at), 'PP')}</TableCell>
+                                <TableCell>${order.total_amount}</TableCell>
                                 <TableCell>
                                     <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
                                 </TableCell>
@@ -163,9 +169,8 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem asChild>
-                                                <Link href={`/admin/orders/${order.id}`}>View Details</Link>
+                                                <Link href={`/admin/orders/${order.order_number}`}>View Details</Link>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem>Update Status</DropdownMenuItem>
                                             <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
@@ -180,37 +185,64 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
 };
 
 export default function AdminOrdersPage() {
+    const { supabase } = useSupabase();
+    const { toast } = useToast();
+    const [allOrders, setAllOrders] = useState<OrderWithCustomer[]>([]);
+    const [loading, setLoading] = useState(true);
+
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('all');
     const [currentPage, setCurrentPage] = useState(1);
     const ORDERS_PER_PAGE = 10;
 
-    const filterAndSearch = (status?: string) => {
-        let filtered = allOrdersData;
-        if (status && status !== 'all') {
-            filtered = filtered.filter(order => order.status === status);
+    const fetchOrders = useCallback(async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+            .from('orders')
+            .select(`
+                id, order_number, created_at, total_amount, status, shipping_details,
+                profiles ( avatar_url )
+            `)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error fetching orders', description: error.message });
+        } else {
+            setAllOrders(data as OrderWithCustomer[]);
+        }
+        setLoading(false);
+    }, [supabase, toast]);
+
+    useEffect(() => {
+        fetchOrders();
+    }, [fetchOrders]);
+    
+
+    const filteredAndSearchedOrders = useMemo(() => {
+        let filtered = allOrders;
+        if (activeTab !== 'all') {
+            filtered = filtered.filter(order => order.status === activeTab);
         }
         if (searchTerm) {
+            const lowercasedTerm = searchTerm.toLowerCase();
             filtered = filtered.filter(order =>
-                order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.customer.email.toLowerCase().includes(searchTerm.toLowerCase())
+                order.order_number.toLowerCase().includes(lowercasedTerm) ||
+                `${order.shipping_details.firstName} ${order.shipping_details.lastName}`.toLowerCase().includes(lowercasedTerm) ||
+                order.shipping_details.email.toLowerCase().includes(lowercasedTerm)
             );
         }
         return filtered;
-    };
+    }, [allOrders, activeTab, searchTerm]);
 
     const handleTabChange = (value: string) => {
-        if (!value) return;
         setActiveTab(value);
         setCurrentPage(1);
     };
 
-    const tabs: (Order['status'] | 'all')[] = ['all', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+    const tabs: (OrderStatus | 'all')[] = ['all', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
     
-    const currentOrderList = filterAndSearch(activeTab);
-    const totalPages = Math.ceil(currentOrderList.length / ORDERS_PER_PAGE);
-    const paginatedOrders = currentOrderList.slice(
+    const totalPages = Math.ceil(filteredAndSearchedOrders.length / ORDERS_PER_PAGE);
+    const paginatedOrders = filteredAndSearchedOrders.slice(
         (currentPage - 1) * ORDERS_PER_PAGE,
         currentPage * ORDERS_PER_PAGE
     );
@@ -260,12 +292,12 @@ export default function AdminOrdersPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <OrderList orders={paginatedOrders} />
+                    {loading ? <p>Loading orders...</p> : <OrderList orders={paginatedOrders} />}
                 </CardContent>
                 <CardFooter>
                     <div className="flex items-center justify-between w-full">
                         <div className="text-xs text-muted-foreground">
-                            Showing <strong>{(currentPage - 1) * ORDERS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ORDERS_PER_PAGE, currentOrderList.length)}</strong> of <strong>{currentOrderList.length}</strong> orders
+                            Showing <strong>{Math.min((currentPage - 1) * ORDERS_PER_PAGE + 1, filteredAndSearchedOrders.length)}</strong> to <strong>{Math.min(currentPage * ORDERS_PER_PAGE, filteredAndSearchedOrders.length)}</strong> of <strong>{filteredAndSearchedOrders.length}</strong> orders
                         </div>
                         <div className="flex items-center space-x-2">
                             <Button
