@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import { useRouter, notFound } from 'next/navigation';
+import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
 const initialTags = [
@@ -19,8 +19,9 @@ const initialTags = [
     { id: 6, name: 'New', slug: 'new', productCount: 10 },
 ];
 
-export default function EditTagPage({ params }: { params: { id: string } }) {
+export default function EditTagPage() {
     const router = useRouter();
+    const params = useParams<{ id: string }>();
     const { toast } = useToast();
     const tagId = parseInt(params.id, 10);
     

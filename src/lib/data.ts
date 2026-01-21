@@ -267,6 +267,33 @@ export const transactions = [
     { id: 'TRN-005', orderId: 'ORD-005', date: '2024-07-28T11:00:00.000Z', amount: 45.75, paymentMethod: 'Credit Card', status: 'Failed' as const },
 ];
 
+export const admins = [
+  {
+    id: 1,
+    name: 'John Doe',
+    email: 'john.doe@pickbazar.com',
+    role: 'Admin',
+    avatar: getImage('avatar_1'),
+    status: 'active' as const,
+  },
+  {
+    id: 2,
+    name: 'Jane Smith',
+    email: 'jane.smith@pickbazar.com',
+    role: 'Super Admin',
+    avatar: getImage('avatar_2'),
+    status: 'active' as const,
+  },
+  {
+    id: 3,
+    name: 'Peter Jones',
+    email: 'peter.jones@pickbazar.com',
+    role: 'Manager',
+    avatar: getImage('avatar_3'),
+    status: 'inactive' as const,
+  },
+];
+
 
 export type Product = (typeof products)[0] & { originalPrice?: number, rating?: number };
 export type RelatedProduct = typeof relatedProducts[0];
@@ -274,3 +301,4 @@ export type Review = typeof product.reviews[0];
 export type Question = typeof product.questions[0];
 export type Order = typeof orders[0];
 export type Transaction = typeof transactions[0];
+export type Admin = typeof admins[0];

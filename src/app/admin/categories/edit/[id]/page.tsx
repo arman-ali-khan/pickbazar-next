@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import { useRouter, notFound } from 'next/navigation';
+import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 
 // Mock data - in a real app, this would come from an API
@@ -20,8 +20,9 @@ const initialCategories = [
     { id: 6, name: 'Dairy', slug: 'dairy', description: 'Milk, cheese, yogurt', productCount: 18, subcategories: ['Milk', 'Cheese', 'Yogurt'] },
 ];
 
-export default function EditCategoryPage({ params }: { params: { id: string } }) {
+export default function EditCategoryPage() {
     const router = useRouter();
+    const params = useParams<{ id: string }>();
     const { toast } = useToast();
     const categoryId = parseInt(params.id, 10);
     
