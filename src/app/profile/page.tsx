@@ -106,22 +106,25 @@ export default function ProfilePage() {
       const { error } = await supabase
         .from('profiles')
         .upsert({
-          id: user.id, // Primary key
+          id: user.id,
           full_name: profile.full_name,
           bio: profile.bio,
+          email: user.email, // Keep email in sync
         })
         .select();
 
       if (error) {
-        // This will now throw the specific error from Supabase,
-        // which will be caught and displayed in the toast.
+        console.error('Supabase error:', error);
         throw error;
       }
       
       toast({ title: 'Profile Updated', description: 'Your profile information has been saved.' });
     } catch (error: any) {
-      // The toast will now show the detailed RLS error message.
-      toast({ variant: 'destructive', title: 'Error updating profile', description: error.message });
+      toast({ 
+        variant: 'destructive', 
+        title: 'Error updating profile', 
+        description: `Error: ${error.message}. Please check database policies.`
+      });
     } finally {
       setLoading(false);
     }
