@@ -102,15 +102,25 @@ export default function ProfilePage() {
 
     try {
       setLoading(true);
-      const { error } = await supabase.from('profiles').upsert({
-        id: user.id,
-        full_name: profile.full_name,
-        bio: profile.bio,
-      }, { onConflict: 'id' });
 
-      if (error) throw error;
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id, // Primary key
+          full_name: profile.full_name,
+          bio: profile.bio,
+        })
+        .select();
+
+      if (error) {
+        // This will now throw the specific error from Supabase,
+        // which will be caught and displayed in the toast.
+        throw error;
+      }
+      
       toast({ title: 'Profile Updated', description: 'Your profile information has been saved.' });
     } catch (error: any) {
+      // The toast will now show the detailed RLS error message.
       toast({ variant: 'destructive', title: 'Error updating profile', description: error.message });
     } finally {
       setLoading(false);
@@ -141,7 +151,7 @@ export default function ProfilePage() {
       const { error: updateError } = await supabase.from('profiles').upsert({
           id: user.id,
           avatar_url: data.publicUrl,
-      }, { onConflict: 'id' })
+      })
 
       if (updateError) throw updateError;
       
@@ -194,7 +204,7 @@ export default function ProfilePage() {
         const { error } = await supabase.from('profiles').upsert({
             id: user.id,
             contact_number: newContact,
-        }, { onConflict: 'id' });
+        });
         if (error) throw error;
         setProfile(prev => ({...prev, contact_number: newContact}));
     } catch (error: any) {
