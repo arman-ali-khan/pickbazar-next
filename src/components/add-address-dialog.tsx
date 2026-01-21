@@ -102,7 +102,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
               <FormItem>
                 <FormLabel>Title</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input {...field} placeholder="e.g. Home, Office" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -116,7 +116,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
                 <FormItem>
                   <FormLabel>Country</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} placeholder="USA" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -129,7 +129,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
                 <FormItem>
                   <FormLabel>City</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} placeholder="New York" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -144,7 +144,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
                 <FormItem>
                   <FormLabel>State</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} placeholder="NY" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -157,7 +157,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
                 <FormItem>
                   <FormLabel>ZIP</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} placeholder="10001" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -171,7 +171,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
               <FormItem>
                 <FormLabel>Street Address</FormLabel>
                 <FormControl>
-                  <Textarea {...field} />
+                  <Textarea {...field} placeholder="123 Main St" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -179,7 +179,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
           />
           <DialogFooter>
             <DialogClose asChild>
-                <Button type="submit" className="w-full">Update Address</Button>
+                <Button type="submit" className="w-full">Save Address</Button>
             </DialogClose>
           </DialogFooter>
         </form>

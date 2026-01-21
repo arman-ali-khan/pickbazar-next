@@ -2,106 +2,207 @@
 
 import { useSupabase } from '@/lib/supabase/provider';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import CartDrawer from '@/components/cart-drawer';
 import ProfileSidebar from '@/components/profile-sidebar';
-import { UploadCloud, Plus } from 'lucide-react';
+import { UploadCloud, Plus, Trash2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { AddAddressDialog, type AddressFormValues } from '@/components/add-address-dialog';
 import { UpdateContactDialog } from '@/components/update-contact-dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+
+interface Profile {
+  full_name: string;
+  bio: string;
+  contact_number: string;
+  avatar_url: string;
+}
 
 interface Address extends AddressFormValues {
   id: number;
 }
 
-const initialAddresses = [
-    {
-        id: 1,
-        type: 'shipping' as const,
-        title: 'Irure Elit Fugiat S',
-        country: 'USA',
-        city: 'New York',
-        state: 'NY',
-        zip: '10001',
-        streetAddress: 'Temporibus sunt ist, Enim magni ratione p, Aperiam rem sint cor, 87067, Quisquam non atque v',
-    },
-    {
-        id: 2,
-        type: 'billing' as const,
-        title: 'Bjk',
-        country: 'USA',
-        city: 'Los Angeles',
-        state: 'CA',
-        zip: '90001',
-        streetAddress: 'fjjbj, mymjf, ufjc, 234578, ba',
-    },
-];
-
 export default function ProfilePage() {
-  const { user, loading, supabase } = useSupabase();
+  const { user, supabase } = useSupabase();
   const router = useRouter();
   const { toast } = useToast();
-  const [name, setName] = useState('');
-  const [bio, setBio] = useState('');
-  const [addresses, setAddresses] = useState<Address[]>(initialAddresses);
-  const [contactNumber, setContactNumber] = useState('+1 (936) 514-1641');
+  
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState<Profile>({ full_name: '', bio: '', contact_number: '', avatar_url: '' });
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [uploading, setUploading] = useState(false);
 
+  const getAddresses = useCallback(async () => {
+    if (!user) return;
+    try {
+        const { data, error } = await supabase
+            .from('addresses')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        if (data) {
+            setAddresses(data.map(addr => ({ ...addr, type: addr.address_type, streetAddress: addr.street_address } as Address)));
+        }
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error fetching addresses', description: error.message });
+    }
+  }, [user, supabase, toast]);
+
+
+  const getProfile = useCallback(async () => {
+    if (!user) return;
+    try {
+      setLoading(true);
+      const { data, error, status } = await supabase
+        .from('profiles')
+        .select(`full_name, bio, contact_number, avatar_url`)
+        .eq('id', user.id)
+        .single();
+
+      if (error && status !== 406) {
+        throw error;
+      }
+
+      if (data) {
+        setProfile({
+            full_name: data.full_name || user.user_metadata.full_name || '',
+            bio: data.bio || '',
+            contact_number: data.contact_number || '',
+            avatar_url: data.avatar_url || user.user_metadata.avatar_url || ''
+        });
+      }
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error fetching profile', description: error.message });
+    } finally {
+      setLoading(false);
+    }
+  }, [user, supabase, toast]);
 
   useEffect(() => {
-    if (!loading && !user) {
-      router.push('/');
+    if (user) {
+      getProfile();
+      getAddresses();
     }
-     if (user) {
-        setName(user.user_metadata.full_name || user.user_metadata.name || '');
-        setBio(user.user_metadata.bio || '');
-    }
-  }, [user, loading, router]);
+  }, [user, getProfile, getAddresses]);
 
-  const handleProfileUpdate = async (e: React.FormEvent) => {
+  async function handleProfileUpdate(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.auth.updateUser({
-        data: { full_name: name, bio: bio }
-    });
+    if (!user) return;
 
-    if (error) {
-        toast({
-            variant: "destructive",
-            title: "Error Updating Profile",
-            description: error.message,
-        });
-    } else {
-        toast({
-            title: "Profile Updated",
-            description: "Your profile information has been saved.",
-        });
-        router.refresh();
+    try {
+      setLoading(true);
+      const { error } = await supabase.from('profiles').upsert({
+        id: user.id,
+        full_name: profile.full_name,
+        bio: profile.bio,
+      }, { onConflict: 'id' });
+
+      if (error) throw error;
+      toast({ title: 'Profile Updated', description: 'Your profile information has been saved.' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error updating profile', description: error.message });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function uploadAvatar(event: React.ChangeEvent<HTMLInputElement>) {
+    if (!user) return;
+
+    try {
+      setUploading(true);
+      if (!event.target.files || event.target.files.length === 0) {
+        throw new Error('You must select an image to upload.');
+      }
+
+      const file = event.target.files[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+      
+      const { data } = supabase.storage.from('avatars').getPublicUrl(filePath);
+
+      const { error: updateError } = await supabase.from('profiles').upsert({
+          id: user.id,
+          avatar_url: data.publicUrl,
+      }, { onConflict: 'id' })
+
+      if (updateError) throw updateError;
+      
+      setProfile(prev => ({...prev, avatar_url: data.publicUrl}));
+      toast({ title: 'Avatar updated!' });
+    } catch (error: any) {
+      toast({ variant: 'destructive', title: 'Error uploading avatar', description: error.message });
+    } finally {
+      setUploading(false);
     }
   }
   
-  const handleAddAddress = (data: AddressFormValues) => {
-    const newAddress = { ...data, id: Date.now() };
-    setAddresses(prev => [...prev, newAddress]);
-    toast({
-      title: "Address Added",
-      description: "Your new address has been saved.",
-    });
+  async function handleAddAddress(data: AddressFormValues) {
+    if (!user) return;
+    try {
+        const { error } = await supabase.from('addresses').insert({
+            user_id: user.id,
+            address_type: data.type,
+            title: data.title,
+            country: data.country,
+            city: data.city,
+            state: data.state,
+            zip: data.zip,
+            street_address: data.streetAddress,
+        });
+
+        if (error) throw error;
+        getAddresses(); // Re-fetch addresses
+        toast({ title: 'Address Added', description: 'Your new address has been saved.' });
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error adding address', description: error.message });
+    }
   };
 
-  const handleUpdateContact = (newContact: string) => {
-    setContactNumber(newContact);
+  async function handleDeleteAddress(addressId: number) {
+      if (!user) return;
+      try {
+          const { error } = await supabase.from('addresses').delete().eq('id', addressId);
+          if (error) throw error;
+          setAddresses(prev => prev.filter(addr => addr.id !== addressId));
+          toast({ title: 'Address Removed', description: 'The address has been deleted.' });
+      } catch (error: any) {
+          toast({ variant: 'destructive', title: 'Error deleting address', description: error.message });
+      }
+  }
+
+  async function handleUpdateContact(newContact: string) {
+    if (!user) return;
+    try {
+        const { error } = await supabase.from('profiles').upsert({
+            id: user.id,
+            contact_number: newContact,
+        }, { onConflict: 'id' });
+        if (error) throw error;
+        setProfile(prev => ({...prev, contact_number: newContact}));
+    } catch (error: any) {
+        toast({ variant: 'destructive', title: 'Error updating contact', description: error.message });
+    }
   };
 
-  const userAvatar = user?.user_metadata?.avatar_url;
-  const userNameForAvatar = name || user?.email;
+  const userNameForAvatar = profile.full_name || user?.email;
 
   if (loading || !user) {
     return (
@@ -127,17 +228,18 @@ export default function ProfilePage() {
                         <CardTitle>Profile</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="flex flex-col items-center gap-6 p-6 border-2 border-dashed rounded-lg">
+                        <label htmlFor="avatar-upload" className="flex flex-col items-center gap-6 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50">
                             <UploadCloud className="h-12 w-12 text-muted-foreground" />
                             <div className="text-center">
-                                <p className="font-semibold text-primary">Upload an image <span className="text-muted-foreground font-normal">or drag and drop</span></p>
-                                <p className="text-xs text-muted-foreground">PNG, JPG</p>
+                                <p className="font-semibold text-primary">{uploading ? 'Uploading...' : 'Upload an image'} <span className="text-muted-foreground font-normal">or drag and drop</span></p>
+                                <p className="text-xs text-muted-foreground">PNG, JPG up to 1MB</p>
                             </div>
-                        </div>
+                            <input id="avatar-upload" type="file" className="hidden" accept="image/*" onChange={uploadAvatar} disabled={uploading} />
+                        </label>
 
                         <div className="relative w-28 h-28 -mt-20 ml-8">
                             <Avatar className="h-full w-full border-4 border-background">
-                                <AvatarImage src={userAvatar || 'https://picsum.photos/seed/profile/200'} alt={userNameForAvatar || 'User'} data-ai-hint="person face" />
+                                <AvatarImage src={profile.avatar_url || 'https://picsum.photos/seed/profile/200'} alt={userNameForAvatar || 'User'} data-ai-hint="person face" />
                                 <AvatarFallback>{userNameForAvatar?.[0].toUpperCase()}</AvatarFallback>
                             </Avatar>
                         </div>
@@ -145,14 +247,14 @@ export default function ProfilePage() {
                         <form onSubmit={handleProfileUpdate} className="space-y-4">
                             <div>
                                 <Label htmlFor="name">Name</Label>
-                                <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+                                <Input id="name" value={profile.full_name} onChange={(e) => setProfile({...profile, full_name: e.target.value})} />
                             </div>
                             <div>
                                 <Label htmlFor="bio">Bio</Label>
-                                <Textarea id="bio" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell us about yourself" />
+                                <Textarea id="bio" value={profile.bio || ''} onChange={(e) => setProfile({...profile, bio: e.target.value})} placeholder="Tell us about yourself" />
                             </div>
                             <div className="flex justify-end">
-                                <Button type="submit">Save</Button>
+                                <Button type="submit" disabled={loading}>Save</Button>
                             </div>
                         </form>
                     </CardContent>
@@ -163,11 +265,8 @@ export default function ProfilePage() {
                     <CardHeader>
                         <CardTitle>Email</CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
+                    <CardContent>
                          <Input id="email" defaultValue={user.email || ''} disabled />
-                         <div className="flex justify-end">
-                            <Button>Update</Button>
-                         </div>
                     </CardContent>
                 </Card>
 
@@ -179,11 +278,11 @@ export default function ProfilePage() {
                             <DialogTrigger asChild>
                                 <Button variant="link" className="p-0 h-auto text-primary">+ Update</Button>
                             </DialogTrigger>
-                            <UpdateContactDialog currentContact={contactNumber} onUpdateContact={handleUpdateContact} />
+                            <UpdateContactDialog currentContact={profile.contact_number} onUpdateContact={handleUpdateContact} />
                         </Dialog>
                     </CardHeader>
                     <CardContent>
-                         <Input id="contact" value={contactNumber} readOnly />
+                         <Input id="contact" value={profile.contact_number || ''} placeholder="No contact number added" readOnly />
                     </CardContent>
                 </Card>
 
@@ -204,14 +303,32 @@ export default function ProfilePage() {
                     <CardContent className="grid sm:grid-cols-2 gap-4">
                         {addresses.map((address) => (
                              <Card key={address.id}>
-                                <CardHeader>
+                                <CardHeader className="flex-row justify-between items-start">
                                     <CardTitle className="text-base">{address.title}</CardTitle>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>This action cannot be undone. This will permanently delete this address.</AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteAddress(address.id)}>Delete</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </CardHeader>
                                 <CardContent>
                                     <p className="text-sm text-muted-foreground">{address.streetAddress}, {address.city}, {address.state} {address.zip}, {address.country}</p>
                                 </CardContent>
                             </Card>
                         ))}
+                         {addresses.length === 0 && <p className="text-sm text-muted-foreground col-span-2 text-center py-8">No addresses added yet.</p>}
                     </CardContent>
                 </Card>
             </div>
