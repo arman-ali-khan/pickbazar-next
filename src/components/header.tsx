@@ -23,9 +23,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { categoryData as categories } from '@/lib/category-data';
 import { cn } from '@/lib/utils';
-import { useUser } from '@/firebase';
-import { useAuth } from '@/firebase';
-import { signOut } from 'firebase/auth';
+import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -108,8 +106,7 @@ export default function Header() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState('');
   const [isScrolled, setIsScrolled] = useState(false);
-  const { user } = useUser();
-  const auth = useAuth();
+  const { user, supabase } = useSupabase();
   const { toast } = useToast();
   const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
 
@@ -130,8 +127,10 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
       router.push('/');
+      router.refresh();
        toast({
         title: 'Logged Out',
         description: 'You have been successfully logged out.',
@@ -154,6 +153,9 @@ export default function Header() {
       setSearchTerm('');
     }
   };
+
+  const userName = user?.user_metadata?.full_name || user?.user_metadata?.name;
+  const userAvatar = user?.user_metadata?.avatar_url;
 
 
   return (
@@ -233,8 +235,8 @@ export default function Header() {
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                         <Avatar>
-                          <AvatarImage src={user.photoURL || 'https://picsum.photos/seed/profile/200'} alt={user.displayName || 'User'} />
-                          <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+                          <AvatarImage src={userAvatar || 'https://picsum.photos/seed/profile/200'} alt={userName || 'User'} />
+                          <AvatarFallback>{userName ? userName[0].toUpperCase() : user.email?.[0].toUpperCase()}</AvatarFallback>
                         </Avatar>
                         {hasNewNotification && <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />}
                       </Button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@/firebase';
+import { useSupabase } from '@/lib/supabase/provider';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import Header from '@/components/header';
@@ -47,7 +47,7 @@ const initialAddresses = [
 ];
 
 export default function ProfilePage() {
-  const { user, loading } = useUser();
+  const { user, loading, supabase } = useSupabase();
   const router = useRouter();
   const { toast } = useToast();
   const [name, setName] = useState('');
@@ -61,18 +61,30 @@ export default function ProfilePage() {
       router.push('/');
     }
      if (user) {
-        setName(user.displayName || '');
+        setName(user.user_metadata.full_name || user.user_metadata.name || '');
+        setBio(user.user_metadata.bio || '');
     }
   }, [user, loading, router]);
 
-  const handleProfileUpdate = (e: React.FormEvent) => {
+  const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically update the user's profile in Firebase
-    console.log({ name, bio });
-    toast({
-        title: "Profile Updated",
-        description: "Your profile information has been saved.",
+    const { error } = await supabase.auth.updateUser({
+        data: { full_name: name, bio: bio }
     });
+
+    if (error) {
+        toast({
+            variant: "destructive",
+            title: "Error Updating Profile",
+            description: error.message,
+        });
+    } else {
+        toast({
+            title: "Profile Updated",
+            description: "Your profile information has been saved.",
+        });
+        router.refresh();
+    }
   }
   
   const handleAddAddress = (data: AddressFormValues) => {
@@ -88,6 +100,8 @@ export default function ProfilePage() {
     setContactNumber(newContact);
   };
 
+  const userAvatar = user?.user_metadata?.avatar_url;
+  const userNameForAvatar = name || user?.email;
 
   if (loading || !user) {
     return (
@@ -123,8 +137,8 @@ export default function ProfilePage() {
 
                         <div className="relative w-28 h-28 -mt-20 ml-8">
                             <Avatar className="h-full w-full border-4 border-background">
-                                <AvatarImage src={user.photoURL || 'https://picsum.photos/seed/profile/200'} alt={user.displayName || 'User'} data-ai-hint="person face" />
-                                <AvatarFallback>{user.email?.[0].toUpperCase()}</AvatarFallback>
+                                <AvatarImage src={userAvatar || 'https://picsum.photos/seed/profile/200'} alt={userNameForAvatar || 'User'} data-ai-hint="person face" />
+                                <AvatarFallback>{userNameForAvatar?.[0].toUpperCase()}</AvatarFallback>
                             </Avatar>
                         </div>
 

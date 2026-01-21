@@ -13,12 +13,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
-import { useUser } from '@/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { toggleSearch } from '@/lib/redux/slices/uiSlice';
 import { openCart, selectTotalItems } from '@/lib/redux/slices/cartSlice';
 import ProfileSidebar from './profile-sidebar';
+import { useSupabase } from '@/lib/supabase/provider';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
     <Link
@@ -44,7 +44,7 @@ const categories = [
 const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
 
 function PagesDrawer() {
-    const { user } = useUser();
+    const { user } = useSupabase();
     return (
         <Sheet>
             <SheetTrigger asChild>
@@ -128,7 +128,7 @@ function PagesDrawer() {
 export default function BottomNavbar() {
     const dispatch = useAppDispatch();
     const totalItems = useAppSelector(selectTotalItems);
-    const { user } = useUser();
+    const { user } = useSupabase();
     const router = useRouter();
     const pathname = usePathname();
     const isProfilePage = pathname.startsWith('/profile');

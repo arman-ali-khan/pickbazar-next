@@ -13,17 +13,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Leaf, Eye, EyeOff, Smartphone } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/firebase';
 import { useRouter } from 'next/navigation';
 import { useToast } from "@/hooks/use-toast";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  sendPasswordResetEmail,
-  updateProfile,
-} from 'firebase/auth';
+import { useSupabase } from '@/lib/supabase/provider';
+
 
 type View = 'login' | 'register' | 'forgotPassword';
 
@@ -45,7 +38,7 @@ export function LoginDialog() {
   const [name, setName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const auth = useAuth();
+  const { supabase } = useSupabase();
   const router = useRouter();
   const { toast } = useToast();
 
@@ -54,68 +47,51 @@ export function LoginDialog() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      toast({ variant: "destructive", title: "Login Failed", description: error.message });
+    } else {
       toast({ title: 'Login Successful', description: "Welcome back!" });
       router.push('/profile');
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Login Failed", description: error.message });
-    } finally {
-      setIsSubmitting(false);
+      router.refresh();
     }
+    setIsSubmitting(false);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      
-      await updateProfile(userCredential.user, {
-        displayName: name
-      });
-
-      const response = await fetch('/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          full_name: name,
         },
-        body: JSON.stringify({ email, fullName: name }),
-      });
+      },
+    });
 
-      if (!response.ok) {
-        const data = await response.json();
-        const errorMessage = data.error || data.message || 'Failed to save user data to database.';
-        throw new Error(errorMessage);
-      }
-
-      toast({ title: 'Registration Successful', description: "Welcome to Pickbazar!" });
-      router.push('/profile');
-    } catch (error: any) {
-      let description = error.message;
-      if (error.code === 'auth/email-already-in-use') {
-        description = 'An account with this email already exists. Please login instead.';
-      } else if (error.code === 'auth/weak-password') {
-        description = 'The password is too weak. Please use at least 6 characters.';
-      }
-      toast({ variant: "destructive", title: "Registration Failed", description });
-    } finally {
-      setIsSubmitting(false);
+    if (error) {
+      toast({ variant: "destructive", title: "Registration Failed", description: error.message });
+    } else {
+      toast({ title: 'Registration Pending', description: "Please check your email to confirm your account." });
+      setView('login');
     }
+    setIsSubmitting(false);
   };
 
   const handleGoogleLogin = async () => {
-    const provider = new GoogleAuthProvider();
     setIsSubmitting(true);
-    try {
-      await signInWithPopup(auth, provider);
-      toast({ title: 'Login Successful', description: "Welcome!" });
-      router.push('/profile');
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Google Login Failed", description: error.message });
-    } finally {
-        setIsSubmitting(false);
+    const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: `${location.origin}/auth/callback`,
+        }
+    });
+    if (error) {
+        toast({ variant: "destructive", title: "Google Login Failed", description: error.message });
     }
+    setIsSubmitting(false);
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -125,15 +101,16 @@ export function LoginDialog() {
       return;
     }
     setIsSubmitting(true);
-    try {
-      await sendPasswordResetEmail(auth, email);
-      toast({ title: "Password Reset Email Sent", description: "Check your inbox for a link to reset your password." });
-      setView('login');
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message });
-    } finally {
-      setIsSubmitting(false);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${location.origin}/auth/callback?next=/profile/change-password`,
+    });
+    if (error) {
+        toast({ variant: "destructive", title: "Error", description: error.message });
+    } else {
+        toast({ title: "Password Reset Email Sent", description: "Check your inbox for a link to reset your password." });
+        setView('login');
     }
+    setIsSubmitting(false);
   };
 
   const headerContent: Record<View, {title: string, description: React.ReactNode}> = {

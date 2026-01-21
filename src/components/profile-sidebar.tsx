@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   User,
   KeyRound,
@@ -16,10 +16,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { signOut } from 'firebase/auth';
-import { useAuth } from '@/firebase';
-import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabase } from '@/lib/supabase/provider';
 
 
 const navItems = [
@@ -55,14 +53,16 @@ const ProfileNavLink = ({ href, icon: Icon, label }: typeof navItems[0]) => {
 };
 
 export default function ProfileSidebar() {
-    const auth = useAuth();
+    const { supabase } = useSupabase();
     const router = useRouter();
     const { toast } = useToast();
 
     const handleLogout = async () => {
         try {
-          await signOut(auth);
+          const { error } = await supabase.auth.signOut();
+          if (error) throw error;
           router.push('/');
+          router.refresh();
           toast({
             title: 'Logged Out',
             description: 'You have been successfully logged out.',

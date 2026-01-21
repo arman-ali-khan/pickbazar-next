@@ -4,8 +4,8 @@ import './globals.css';
 import { Inter } from 'next/font/google'
 import FlyToCartAnimation from '@/components/fly-to-cart-animation';
 import BottomNavbar from '@/components/bottom-navbar';
-import { FirebaseClientProvider } from '@/firebase/client-provider';
 import { ReduxProvider } from '@/lib/redux/provider';
+import SupabaseProvider from '@/lib/supabase/provider';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
@@ -23,14 +23,14 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} light`}>
       <body className="font-body antialiased pb-16 md:pb-0">
-        <FirebaseClientProvider>
+        <SupabaseProvider>
           <ReduxProvider>
             {children}
             <Toaster />
             <FlyToCartAnimation />
             <BottomNavbar />
           </ReduxProvider>
-        </FirebaseClientProvider>
+        </SupabaseProvider>
       </body>
     </html>
   );
