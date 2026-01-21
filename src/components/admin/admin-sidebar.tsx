@@ -77,10 +77,8 @@ export default function AdminSidebar() {
             <Leaf className="h-6 w-6 text-primary" />
             <Link href="/" className="font-bold text-lg">Pickbazar</Link>
         </div>
-        <SidebarTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-                <ChevronLeft />
-            </Button>
+        <SidebarTrigger className="h-8 w-8">
+            <ChevronLeft />
         </SidebarTrigger>
       </SidebarHeader>
 
