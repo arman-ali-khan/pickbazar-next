@@ -4,12 +4,12 @@ import { useState, useMemo, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UploadCloud, Image as ImageIcon, Video, X, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import TiptapEditor from '@/components/tiptap-editor';
 
 const categories = [
     { name: 'Fruits & Vegetables', sub: ['Fruits', 'Vegetables'] },
@@ -21,6 +21,7 @@ const allTags = ['fresh', 'organic', 'sale', 'healthy', 'frozen'];
 
 export default function CreateProductPage() {
     const [name, setName] = useState('');
+    const [description, setDescription] = useState('');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([]);
     const [tags, setTags] = useState<string[]>([]);
@@ -102,7 +103,10 @@ export default function CreateProductPage() {
                                 </div>
                                 <div>
                                     <Label htmlFor="product-description">Description</Label>
-                                    <Textarea id="product-description" placeholder="Provide a detailed description of the product..." className="min-h-32" />
+                                    <TiptapEditor
+                                        content={description}
+                                        onChange={(newContent) => setDescription(newContent)}
+                                    />
                                 </div>
                             </CardContent>
                         </Card>
