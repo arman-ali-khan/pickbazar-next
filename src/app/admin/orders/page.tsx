@@ -67,7 +67,7 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
     return (
         <>
             {/* Mobile View */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
+            <div className="grid grid-cols-2 gap-4 md:hidden">
                 {orders.map((order) => (
                     <Card key={order.id} className="overflow-hidden">
                         <CardHeader className="flex flex-row items-center justify-between p-4">
