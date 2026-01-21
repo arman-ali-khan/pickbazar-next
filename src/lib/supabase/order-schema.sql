@@ -1,126 +1,97 @@
--- Clean up old objects first with CASCADE to handle dependencies
-DROP FUNCTION IF EXISTS public.create_order(uuid,numeric,jsonb,jsonb) CASCADE;
-DROP FUNCTION IF EXISTS public.create_order(uuid,numeric,jsonb) CASCADE;
-DROP FUNCTION IF EXISTS public.create_order(uuid,numeric,jsonb,public.order_item_input[]) CASCADE;
-DROP FUNCTION IF EXISTS public.create_order(uuid,numeric,jsonb,json) CASCADE;
-DROP FUNCTION IF EXISTS public.create_order(uuid, numeric, jsonb, jsonb, text) CASCADE;
-DROP FUNCTION IF EXISTS public.create_order(p_user_id uuid, p_total_amount numeric, p_shipping_details jsonb, p_items jsonb) CASCADE;
-DROP FUNCTION IF EXISTS public.create_order(p_user_id uuid, p_total numeric, p_shipping_details jsonb, p_items jsonb) CASCADE;
+-- This script is designed to be idempotent and safe to run multiple times.
 
+-- Section 1: Profiles Table Configuration
+-- Creates the profiles table if it doesn't exist and ensures it has a 'role' column.
 
-DROP TYPE IF EXISTS public.order_item_input CASCADE;
-DROP TYPE IF EXISTS public.order_status CASCADE;
-
--- Create an ENUM type for order status
-CREATE TYPE public.order_status AS ENUM (
-    'Pending',
-    'Processing',
-    'Shipped',
-    'Delivered',
-    'Cancelled'
+create table if not exists public.profiles (
+  id uuid not null references auth.users on delete cascade,
+  full_name text,
+  avatar_url text,
+  bio text,
+  contact_number text,
+  primary key (id)
 );
 
--- Recreate tables with the correct schema
--- Drop tables if they exist to ensure a clean slate, using CASCADE
-DROP TABLE IF EXISTS public.order_items CASCADE;
-DROP TABLE IF EXISTS public.orders CASCADE;
-
--- Create the orders table
-CREATE TABLE public.orders (
-    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    status public.order_status DEFAULT 'Pending'::public.order_status NOT NULL,
-    total_amount numeric(10, 2) NOT NULL,
-    shipping_details jsonb,
-    order_number text UNIQUE
-);
-
--- Create the order_items table
-CREATE TABLE public.order_items (
-    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    order_id bigint REFERENCES public.orders(id) ON DELETE CASCADE NOT NULL,
-    product_id integer REFERENCES public.products(id) ON DELETE SET NULL,
-    quantity integer NOT NULL,
-    price_at_purchase numeric(10, 2) NOT NULL
-);
-
--- Enable RLS and define policies
-ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
-
--- Policies for orders
-CREATE POLICY "Allow individual user to read their own orders"
-    ON public.orders FOR SELECT
-    USING (auth.uid() = user_id);
-
-CREATE POLICY "Allow individual user to create their own orders"
-    ON public.orders FOR INSERT
-    WITH CHECK (auth.uid() = user_id);
-
--- Policies for order_items
-CREATE POLICY "Allow individual user to read their own order items"
-    ON public.order_items FOR SELECT
-    USING (
-      auth.uid() = (
-        SELECT user_id FROM public.orders WHERE id = order_items.order_id
-      )
-    );
-
-CREATE POLICY "Allow individual user to create their own order items"
-    ON public.order_items FOR INSERT
-    WITH CHECK (
-      auth.uid() = (
-        SELECT user_id FROM public.orders WHERE id = order_items.order_id
-      )
-    );
-    
--- Allow admin full access
-CREATE POLICY "Allow admin full access on orders" ON public.orders FOR ALL
-USING (true)
-WITH CHECK (true);
-
-CREATE POLICY "Allow admin full access on order_items" ON public.order_items FOR ALL
-USING (true)
-WITH CHECK (true);
-
--- Create the function to create an order
-CREATE OR REPLACE FUNCTION public.create_order(
-    p_user_id uuid,
-    p_total_amount numeric,
-    p_shipping_details jsonb,
-    p_items jsonb
-)
-RETURNS text
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-DECLARE
-    new_order_id bigint;
-    new_order_number text;
-    item jsonb;
+DO $$
 BEGIN
-    -- Generate a unique order number
-    new_order_number := 'ORD-' || to_char(now(), 'YYMMDD') || '-' || upper(substring(md5(random()::text) for 8));
-
-    -- Insert the order
-    INSERT INTO public.orders (user_id, total_amount, shipping_details, order_number)
-    VALUES (p_user_id, p_total_amount, p_shipping_details, new_order_number)
-    RETURNING id INTO new_order_id;
-
-    -- Loop through the items and insert them
-    FOR item IN SELECT * FROM jsonb_array_elements(p_items)
-    LOOP
-        INSERT INTO public.order_items (order_id, product_id, quantity, price_at_purchase)
-        VALUES (
-            new_order_id,
-            (item->>'product_id')::integer,
-            (item->>'quantity')::integer,
-            (item->>'price')::numeric
-        );
-    END LOOP;
-
-    -- Return the new order number
-    RETURN new_order_number;
+    IF NOT EXISTS (
+        SELECT 1
+        FROM   information_schema.columns
+        WHERE  table_name = 'profiles'
+        AND    column_name = 'role'
+    ) THEN
+        ALTER TABLE public.profiles ADD COLUMN role text DEFAULT 'customer';
+    END IF;
 END;
 $$;
+
+-- Set up Row Level Security (RLS) for the profiles table
+alter table public.profiles enable row level security;
+
+drop policy if exists "Public profiles are viewable by everyone." on public.profiles;
+create policy "Public profiles are viewable by everyone." on public.profiles
+  for select using (true);
+
+drop policy if exists "Users can insert their own profile." on public.profiles;
+create policy "Users can insert their own profile." on public.profiles
+  for insert with check (auth.uid() = id);
+
+drop policy if exists "Users can update own profile." on public.profiles;
+create policy "Users can update own profile." on public.profiles
+  for update using (auth.uid() = id);
+
+
+-- Section 2: Helper Function to Get User Role
+-- This function securely retrieves a user's role from the profiles table.
+create or replace function get_user_role(p_user_id uuid)
+returns text
+language plpgsql
+security definer
+as $$
+begin
+  return (
+    select role from public.profiles where id = p_user_id limit 1
+  );
+end;
+$$;
+
+
+-- Section 3: Orders and Order Items Table Security
+-- This section enables RLS and creates policies for admins and users.
+
+-- Enable RLS on orders and order_items tables
+alter table public.orders enable row level security;
+alter table public.order_items enable row level security;
+
+
+-- RLS Policies for 'orders' table
+-- Policy for Admins: Allows users with specified admin roles to view all orders.
+drop policy if exists "Allow admin read access" on public.orders;
+create policy "Allow admin read access"
+on public.orders for select
+using (get_user_role(auth.uid()) IN ('Admin', 'Manager', 'Super Admin'));
+
+-- Policy for Users: Allows individual users to view their own orders.
+drop policy if exists "Allow individual user read access" on public.orders;
+create policy "Allow individual user read access"
+on public.orders for select
+using (auth.uid() = user_id);
+
+
+-- RLS Policies for 'order_items' table
+-- Policy for Admins: Allows admin users to view all order items.
+drop policy if exists "Allow admin read access on order items" on public.order_items;
+create policy "Allow admin read access on order items"
+on public.order_items for select
+using (get_user_role(auth.uid()) IN ('Admin', 'Manager', 'Super Admin'));
+
+-- Policy for Users: Allows individual users to view items from their own orders.
+drop policy if exists "Allow individual user read access on order items" on public.order_items;
+create policy "Allow individual user read access on order items"
+on public.order_items for select
+using (
+  exists (
+    select 1 from public.orders
+    where orders.id = order_items.order_id and orders.user_id = auth.uid()
+  )
+);
