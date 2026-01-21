@@ -45,9 +45,9 @@ export default function EditProductPage() {
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [unit, setUnit] = useState('');
-    const [price, setPrice] = useState(0);
+    const [price, setPrice] = useState<number | null>(null);
     const [originalPrice, setOriginalPrice] = useState<number | null>(null);
-    const [stock, setStock] = useState(0);
+    const [stock, setStock] = useState<number | null>(null);
     const [status, setStatus] = useState('draft');
     const [categoryId, setCategoryId] = useState<string | null>(null);
     const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
@@ -197,7 +197,14 @@ export default function EditProductPage() {
             const { error: productError } = await supabase
                 .from('products')
                 .update({
-                    name, slug, description, unit, price, original_price: originalPrice, stock, status, category_id: Number(categoryId), featured_image_url: final_featured_image_url, gallery_urls: final_gallery_urls
+                    name, slug, description, unit, 
+                    price: price || 0,
+                    original_price: originalPrice, 
+                    stock: stock || 0,
+                    status, 
+                    category_id: Number(categoryId), 
+                    featured_image_url: final_featured_image_url, 
+                    gallery_urls: final_gallery_urls
                 })
                 .eq('id', productId);
             
@@ -275,7 +282,7 @@ export default function EditProductPage() {
                                             {galleryImagePreviews.map((preview, i) => (
                                                 <div key={i} className="relative w-full aspect-square">
                                                     <Image src={preview} alt={`Gallery ${i}`} fill className="object-cover rounded-md" />
-                                                    <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={() => handleRemoveGalleryImage(i, preview)}>
+                                                    <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={() => handleRemoveGalleryImage(i)}>
                                                         <X className="h-4 w-4" />
                                                     </Button>
                                                 </div>
@@ -294,9 +301,9 @@ export default function EditProductPage() {
                             <Card>
                                 <CardHeader><CardTitle>Pricing & Stock</CardTitle></CardHeader>
                                 <CardContent className="grid md:grid-cols-2 gap-4">
-                                    <div><Label>Price</Label><Input type="number" value={price} onChange={(e) => setPrice(parseFloat(e.target.value))} required /></div>
+                                    <div><Label>Price</Label><Input type="number" value={price ?? ''} onChange={(e) => setPrice(e.target.value ? parseFloat(e.target.value) : null)} required /></div>
                                     <div><Label>Original Price (Optional)</Label><Input type="number" value={originalPrice ?? ''} onChange={(e) => setOriginalPrice(e.target.value ? parseFloat(e.target.value) : null)} /></div>
-                                    <div><Label>Stock</Label><Input type="number" value={stock} onChange={(e) => setStock(parseInt(e.target.value))} /></div>
+                                    <div><Label>Stock</Label><Input type="number" value={stock ?? ''} onChange={(e) => setStock(e.target.value ? parseInt(e.target.value, 10) : null)} /></div>
                                 </CardContent>
                             </Card>
                         </div>
@@ -346,7 +353,7 @@ export default function EditProductPage() {
                                             {selectedTags.map(tag => (
                                                 <Badge key={tag.id} variant="secondary">
                                                     {tag.name}
-                                                    <button onClick={() => handleTagSelection(tag)} className="ml-2"><X className="h-3 w-3"/></button>
+                                                    <button type="button" onClick={() => handleTagSelection(tag)} className="ml-2"><X className="h-3 w-3"/></button>
                                                 </Badge>
                                             ))}
                                         </div>
