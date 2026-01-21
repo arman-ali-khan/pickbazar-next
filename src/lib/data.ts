@@ -294,6 +294,73 @@ export const admins = [
   },
 ];
 
+export const reviewsForAdmin = [
+    {
+      id: 1,
+      author: {
+        name: 'Customer 1',
+        avatar: getImage('avatar_1'),
+      },
+      product: {
+          id: 1,
+          name: 'Apples',
+          image: getImage('apple_main')
+      },
+      rating: 4.0,
+      date: '2024-07-28T10:00:00.000Z',
+      text: 'Good not yummy. A bit sour but overall okay for the price. Would probably buy again if on sale.',
+      status: 'Approved' as const,
+    },
+    {
+      id: 2,
+      author: {
+        name: 'Customer 2',
+        avatar: getImage('avatar_2'),
+      },
+      product: {
+          id: 2,
+          name: 'Baby Spinach',
+          image: getImage('related_prod_1')
+      },
+      rating: 5.0,
+      date: '2024-07-27T15:30:00.000Z',
+      text: 'Good quality and fresh spinach. Perfect for my morning smoothies. Highly recommend!',
+      status: 'Pending' as const,
+    },
+    {
+      id: 3,
+      author: {
+        name: 'Customer 3',
+        avatar: getImage('avatar_3'),
+      },
+      product: {
+          id: 3,
+          name: 'Blueberries',
+          image: getImage('related_prod_2')
+      },
+      rating: 5.0,
+      date: '2024-07-26T09:00:00.000Z',
+      text: 'Excellent and tasty blueberries. Sweet and juicy, great for snacks or in yogurt.',
+      status: 'Approved' as const,
+    },
+     {
+      id: 4,
+      author: {
+        name: 'Mary Johnson',
+        avatar: getImage('avatar_1'),
+      },
+      product: {
+          id: 4,
+          name: 'Brussels Sprout',
+          image: getImage('related_prod_3')
+      },
+      rating: 2.0,
+      date: '2024-07-25T11:45:00.000Z',
+      text: 'They were a bit bitter for my taste. Packaging was good though.',
+      status: 'Hidden' as const,
+    }
+];
+
 
 export type Product = (typeof products)[0] & { originalPrice?: number, rating?: number };
 export type RelatedProduct = typeof relatedProducts[0];
@@ -302,3 +369,4 @@ export type Question = typeof product.questions[0];
 export type Order = typeof orders[0];
 export type Transaction = typeof transactions[0];
 export type Admin = typeof admins[0];
+export type AdminReview = typeof reviewsForAdmin[0];
