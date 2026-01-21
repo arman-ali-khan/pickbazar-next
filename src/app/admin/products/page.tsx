@@ -210,6 +210,9 @@ export default function AdminProductsPage() {
         price: { min: null, max: null },
         stock: { min: null, max: null },
     });
+    const [activeTab, setActiveTab] = useState('all');
+    const [currentPage, setCurrentPage] = useState(1);
+    const PRODUCTS_PER_PAGE = 8;
 
     const uniqueCategories = [...new Set(productsWithStatus.map(p => p.category))];
     
@@ -253,14 +256,28 @@ export default function AdminProductsPage() {
         });
     }
 
-    const allProducts = filterAndSearch();
-    const activeProducts = filterAndSearch('active');
-    const draftProducts = filterAndSearch('draft');
-    const archivedProducts = filterAndSearch('archived');
+    const handleTabChange = (value: string) => {
+        setActiveTab(value);
+        setCurrentPage(1);
+    };
+
+    const productsMap = {
+        all: filterAndSearch(),
+        active: filterAndSearch('active'),
+        draft: filterAndSearch('draft'),
+        archived: filterAndSearch('archived'),
+    };
+    
+    const currentProductList = productsMap[activeTab as keyof typeof productsMap] || [];
+    const totalPages = Math.ceil(currentProductList.length / PRODUCTS_PER_PAGE);
+    const paginatedProducts = currentProductList.slice(
+        (currentPage - 1) * PRODUCTS_PER_PAGE,
+        currentPage * PRODUCTS_PER_PAGE
+    );
     
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
-        <Tabs defaultValue="all">
+        <Tabs defaultValue="all" onValueChange={handleTabChange}>
             <div className="flex items-center">
                  <TabsList>
                     <TabsTrigger value="all">All</TabsTrigger>
@@ -372,22 +389,31 @@ export default function AdminProductsPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    <TabsContent value="all">
-                        <ProductList products={allProducts} />
-                    </TabsContent>
-                     <TabsContent value="active">
-                        <ProductList products={activeProducts} />
-                    </TabsContent>
-                     <TabsContent value="draft">
-                        <ProductList products={draftProducts} />
-                    </TabsContent>
-                     <TabsContent value="archived">
-                        <ProductList products={archivedProducts} />
-                    </TabsContent>
+                   <ProductList products={paginatedProducts} />
                 </CardContent>
                 <CardFooter>
-                    <div className="text-xs text-muted-foreground">
-                        Showing <strong>{allProducts.length}</strong> of <strong>{productsWithStatus.length}</strong> products
+                    <div className="flex items-center justify-between w-full">
+                        <div className="text-xs text-muted-foreground">
+                            Showing <strong>{currentProductList.length > 0 ? (currentPage - 1) * PRODUCTS_PER_PAGE + 1 : 0}</strong> to <strong>{Math.min(currentPage * PRODUCTS_PER_PAGE, currentProductList.length)}</strong> of <strong>{currentProductList.length}</strong> products
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage >= totalPages || totalPages === 0}
+                            >
+                                Next
+                            </Button>
+                        </div>
                     </div>
                 </CardFooter>
             </Card>
