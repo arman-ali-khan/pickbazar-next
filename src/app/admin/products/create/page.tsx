@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UploadCloud, Image as ImageIcon, Video, X, PlusCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const categories = [
     { name: 'Fruits & Vegetables', sub: ['Fruits', 'Vegetables'] },
@@ -29,9 +30,23 @@ export default function CreateProductPage() {
         return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     }, [name]);
 
+    const handleCategoryChange = (category: string) => {
+        setSelectedCategories(prev =>
+          prev.includes(category)
+            ? prev.filter(c => c !== category)
+            : [...prev, category]
+        );
+    };
+
     const availableSubcategories = useMemo(() => {
         return categories.filter(c => selectedCategories.includes(c.name)).flatMap(c => c.sub);
     }, [selectedCategories]);
+    
+    useEffect(() => {
+        if (selectedSubCategory && !availableSubcategories.includes(selectedSubCategory)) {
+            setSelectedSubCategory(null);
+        }
+    }, [selectedCategories, availableSubcategories, selectedSubCategory]);
 
     const handleAddTag = () => {
         if (newTag && !tags.includes(newTag)) {
@@ -185,19 +200,23 @@ export default function CreateProductPage() {
                             <CardContent className="space-y-4">
                                 <div>
                                     <Label>Category</Label>
-                                    <Select onValueChange={(value) => setSelectedCategories([value])}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select a category" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {categories.map(c => <SelectItem key={c.name} value={c.name}>{c.name}</SelectItem>)}
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="space-y-2 pt-2">
+                                        {categories.map(category => (
+                                            <div key={category.name} className="flex items-center space-x-2">
+                                            <Checkbox
+                                                id={`category-${category.name}`}
+                                                checked={selectedCategories.includes(category.name)}
+                                                onCheckedChange={() => handleCategoryChange(category.name)}
+                                            />
+                                            <Label htmlFor={`category-${category.name}`} className="font-normal">{category.name}</Label>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                                 {availableSubcategories.length > 0 && (
                                     <div>
                                         <Label>Sub-category</Label>
-                                        <Select onValueChange={(value) => setSelectedSubCategory(value)}>
+                                        <Select value={selectedSubCategory || ''} onValueChange={(value) => setSelectedSubCategory(value)}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Select sub-category" />
                                             </SelectTrigger>
