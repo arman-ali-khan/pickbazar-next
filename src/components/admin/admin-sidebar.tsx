@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -78,8 +77,8 @@ export default function AdminSidebar() {
             <Leaf className="h-6 w-6 text-primary" />
             <Link href="/" className="font-bold text-lg">Pickbazar</Link>
         </div>
-        <SidebarTrigger asChild>
-            <Button variant="ghost" size="icon"><ChevronLeft /></Button>
+        <SidebarTrigger>
+            <ChevronLeft />
         </SidebarTrigger>
       </SidebarHeader>
 
