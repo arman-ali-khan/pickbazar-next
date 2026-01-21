@@ -36,6 +36,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import React from 'react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const navItems = [
   { href: '/admin', icon: LayoutGrid, label: 'Dashboard' },
@@ -82,6 +83,39 @@ const SettingsAccordion = () => {
     const currentTab = searchParams.get('tab') || 'general';
     const isSettingsPage = pathname.startsWith('/admin/settings');
     const { state } = useSidebar();
+
+    if (state === 'collapsed') {
+        return (
+            <SidebarMenuItem>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                         <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                                "h-8 w-8 p-2 justify-center w-full",
+                                isSettingsPage && "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                            )}
+                        >
+                            <Settings className="h-5 w-5 shrink-0" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="right" align="start">
+                        {settingsNavItems.map(item => {
+                            const isActive = isSettingsPage && currentTab === item.tab;
+                            return (
+                                <DropdownMenuItem key={item.href} asChild className={cn(isActive && 'bg-accent')}>
+                                    <Link href={item.href}>
+                                        {item.label}
+                                    </Link>
+                                </DropdownMenuItem>
+                            )
+                        })}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </SidebarMenuItem>
+        )
+    }
     
     return (
         <SidebarMenuItem>
@@ -91,15 +125,14 @@ const SettingsAccordion = () => {
                         className={cn(
                             "flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left text-sm outline-none ring-sidebar-ring transition-all hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground",
                             "h-8 justify-start hover:no-underline",
-                            isSettingsPage && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
-                            state === 'collapsed' && "h-8 w-8 p-2 justify-center"
+                            isSettingsPage && "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
                         )}
                     >
                        <Settings className="h-5 w-5 shrink-0" />
-                       <span className={cn("truncate flex-1 text-left", state === 'collapsed' && 'hidden')}>Settings</span>
-                        <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform duration-200", state === 'collapsed' && 'hidden', 'data-[state=open]:-rotate-180')} />
+                       <span className="truncate flex-1 text-left">Settings</span>
+                        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 data-[state=open]:-rotate-180" />
                     </AccordionTrigger>
-                    <AccordionContent className={cn("pt-1", state === 'collapsed' ? 'hidden' : 'block')}>
+                    <AccordionContent className="pt-1">
                         <SidebarMenu className="pl-6">
                             {settingsNavItems.map(item => {
                                 const isActive = isSettingsPage && currentTab === item.tab;
