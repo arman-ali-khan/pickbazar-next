@@ -6,7 +6,6 @@ import {
     CardTitle,
     CardContent,
     CardDescription,
-    CardFooter,
 } from "@/components/ui/card";
 import {
     Table,
@@ -24,28 +23,53 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from 'next/link';
+import { useSupabase } from "@/lib/supabase/provider";
+import { useToast } from "@/hooks/use-toast";
 
-
-const initialTags = [
-    { id: 1, name: 'Fresh', slug: 'fresh', productCount: 50 },
-    { id: 2, name: 'Organic', slug: 'organic', productCount: 30 },
-    { id: 3, name: 'Sale', slug: 'sale', productCount: 15 },
-    { id: 4, name: 'Healthy', slug: 'healthy', productCount: 75 },
-    { id: 5, name: 'Frozen', slug: 'frozen', productCount: 20 },
-    { id: 6, name: 'New', slug: 'new', productCount: 10 },
-];
-
-type Tag = typeof initialTags[0];
-
+interface Tag {
+  id: number;
+  name: string;
+  slug: string;
+}
 
 export default function AdminTagsPage() {
-    const [tags, setTags] = useState(initialTags);
+    const { supabase } = useSupabase();
+    const { toast } = useToast();
+    const [tags, setTags] = useState<Tag[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const handleDelete = (id: number) => {
-        setTags(tags.filter(c => c.id !== id));
+    const getTags = useCallback(async () => {
+        setLoading(true);
+        const { data, error } = await supabase.from('tags').select('*').order('name');
+        
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error fetching tags', description: error.message });
+            setTags([]);
+        } else {
+            setTags(data);
+        }
+        setLoading(false);
+    }, [supabase, toast]);
+
+    useEffect(() => {
+        getTags();
+    }, [getTags]);
+
+    const handleDelete = async (id: number) => {
+        const { error } = await supabase.from('tags').delete().eq('id', id);
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error deleting tag', description: error.message });
+        } else {
+            toast({ title: 'Tag Deleted' });
+            getTags(); // Refresh list
+        }
     };
+    
+    if (loading) {
+        return <p>Loading tags...</p>
+    }
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
@@ -72,7 +96,6 @@ export default function AdminTagsPage() {
                                 <TableRow>
                                     <TableHead>Name</TableHead>
                                     <TableHead>Slug</TableHead>
-                                    <TableHead className="text-right">Products</TableHead>
                                     <TableHead><span className="sr-only">Actions</span></TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -81,7 +104,6 @@ export default function AdminTagsPage() {
                                     <TableRow key={tag.id}>
                                         <TableCell className="font-medium">{tag.name}</TableCell>
                                         <TableCell>{tag.slug}</TableCell>
-                                        <TableCell className="text-right">{tag.productCount}</TableCell>
                                         <TableCell>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
@@ -135,9 +157,6 @@ export default function AdminTagsPage() {
                                 <CardContent>
                                     <p className="text-sm text-muted-foreground mb-2"><span className="font-semibold">Slug:</span> {tag.slug}</p>
                                 </CardContent>
-                                <CardFooter>
-                                    <p className="text-sm text-muted-foreground">{tag.productCount} products</p>
-                                </CardFooter>
                             </Card>
                         ))}
                     </div>

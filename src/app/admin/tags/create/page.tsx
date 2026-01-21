@@ -9,10 +9,13 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabase } from '@/lib/supabase/provider';
 
 export default function CreateTagPage() {
     const [name, setName] = useState('');
     const [slug, setSlug] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { supabase } = useSupabase();
     const router = useRouter();
     const { toast } = useToast();
 
@@ -22,15 +25,27 @@ export default function CreateTagPage() {
         setSlug(newName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        // Here you would typically save the new tag
-        console.log({ name, slug });
-        toast({
-            title: "Tag Created",
-            description: `The tag "${name}" has been successfully created.`,
-        });
-        router.push('/admin/tags');
+        setLoading(true);
+
+        const { error } = await supabase.from('tags').insert({ name, slug });
+
+        setLoading(false);
+
+        if (error) {
+            toast({
+                variant: 'destructive',
+                title: "Error Creating Tag",
+                description: error.message,
+            });
+        } else {
+            toast({
+                title: "Tag Created",
+                description: `The tag "${name}" has been successfully created.`,
+            });
+            router.push('/admin/tags');
+        }
     };
 
     return (
@@ -79,7 +94,7 @@ export default function CreateTagPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end border-t pt-6">
-                        <Button type="submit">Save Tag</Button>
+                        <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Tag'}</Button>
                     </CardFooter>
                 </Card>
             </form>

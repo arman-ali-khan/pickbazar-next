@@ -9,52 +9,74 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-
-const initialTags = [
-    { id: 1, name: 'Fresh', slug: 'fresh', productCount: 50 },
-    { id: 2, name: 'Organic', slug: 'organic', productCount: 30 },
-    { id: 3, name: 'Sale', slug: 'sale', productCount: 15 },
-    { id: 4, name: 'Healthy', slug: 'healthy', productCount: 75 },
-    { id: 5, name: 'Frozen', slug: 'frozen', productCount: 20 },
-    { id: 6, name: 'New', slug: 'new', productCount: 10 },
-];
+import { useSupabase } from '@/lib/supabase/provider';
 
 export default function EditTagPage() {
     const router = useRouter();
     const params = useParams<{ id: string }>();
     const { toast } = useToast();
+    const { supabase } = useSupabase();
     const tagId = parseInt(params.id, 10);
     
-    const [tag, setTag] = useState(() => initialTags.find(t => t.id === tagId));
-    
-    const [name, setName] = useState(tag?.name || '');
-    const [slug, setSlug] = useState(tag?.slug || '');
+    const [name, setName] = useState('');
+    const [slug, setSlug] = useState('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const foundTag = initialTags.find(t => t.id === tagId);
-        if (foundTag) {
-            setTag(foundTag);
-            setName(foundTag.name);
-            setSlug(foundTag.slug);
-        } else {
-            notFound();
-        }
-    }, [tagId]);
+        const fetchTag = async () => {
+            if (isNaN(tagId)) {
+                notFound();
+                return;
+            }
 
+            const { data, error } = await supabase
+                .from('tags')
+                .select('*')
+                .eq('id', tagId)
+                .single();
 
-    if (!tag) {
-        return null; 
-    }
+            if (error || !data) {
+                toast({ variant: 'destructive', title: 'Error', description: 'Tag not found.' });
+                notFound();
+                return;
+            }
+
+            setName(data.name);
+            setSlug(data.slug);
+            setLoading(false);
+        };
+        fetchTag();
+    }, [tagId, supabase, toast]);
     
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log({ id: tag.id, name, slug });
-        toast({
-            title: "Tag Updated",
-            description: `The tag "${name}" has been successfully updated.`,
-        });
-        router.push('/admin/tags');
+        setLoading(true);
+
+        const { error } = await supabase
+            .from('tags')
+            .update({ name, slug })
+            .eq('id', tagId);
+        
+        setLoading(false);
+
+        if (error) {
+            toast({
+                variant: 'destructive',
+                title: "Error Updating Tag",
+                description: error.message,
+            });
+        } else {
+             toast({
+                title: "Tag Updated",
+                description: `The tag "${name}" has been successfully updated.`,
+            });
+            router.push('/admin/tags');
+        }
     };
+
+    if (loading) {
+        return <p>Loading tag...</p>
+    }
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
@@ -102,7 +124,7 @@ export default function EditTagPage() {
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end border-t pt-6">
-                        <Button type="submit">Update Tag</Button>
+                        <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Update Tag'}</Button>
                     </CardFooter>
                 </Card>
             </form>
