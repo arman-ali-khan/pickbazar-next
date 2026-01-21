@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
@@ -11,16 +11,34 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabase } from '@/lib/supabase/provider';
+import { useRouter } from 'next/navigation';
 
 export default function ChangePasswordPage() {
-    const { supabase } = useSupabase();
+    const { supabase, user, loading: authLoading } = useSupabase();
+    const router = useRouter();
     const { toast } = useToast();
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    useEffect(() => {
+        if (!authLoading && !user) {
+            router.push('/');
+        }
+    }, [user, authLoading, router]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        if (!user) {
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Error',
+                description: 'You must be logged in to change your password.',
+            });
+            return;
+        }
+
         if (newPassword !== confirmPassword) {
             toast({
                 variant: 'destructive',
@@ -59,6 +77,21 @@ export default function ChangePasswordPage() {
         }
 
         setIsSubmitting(false);
+    }
+    
+    if (authLoading) {
+        return (
+            <div className="bg-muted/20 min-h-screen">
+                <Header />
+                <main className="container py-12">
+                    <div className="flex justify-center items-center">
+                        <p>Loading...</p>
+                    </div>
+                </main>
+                <Footer />
+                <CartDrawer />
+            </div>
+        );
     }
 
     return (
