@@ -67,7 +67,7 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
     return (
         <>
             {/* Mobile View */}
-            <div className="grid grid-cols-2 gap-4 md:hidden">
+            <div className="grid grid-cols-2 gap-1 sm:gap-4 md:hidden">
                 {orders.map((order) => (
                     <Card key={order.id} className="overflow-hidden">
                         <CardHeader className="flex flex-row items-center justify-between p-4">
@@ -88,7 +88,14 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                    <DropdownMenuItem><Eye className="mr-2 h-4 w-4" />View Details</DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
+                                        <Link href={`/admin/orders/${order.id}`} className='w-full'>
+                                            <div className="flex items-center w-full">
+                                                <Eye className="mr-2 h-4 w-4" />
+                                                <span>View Details</span>
+                                            </div>
+                                        </Link>
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -155,7 +162,9 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/admin/orders/${order.id}`}>View Details</Link>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem>Update Status</DropdownMenuItem>
                                             <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
                                         </DropdownMenuContent>

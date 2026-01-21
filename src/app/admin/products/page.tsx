@@ -61,7 +61,7 @@ const ProductList = ({ products }: { products: ProductWithStatus[] }) => {
     return (
         <>
             {/* Card View for mobile */}
-            <div className="grid grid-cols-2 gap-4 md:hidden">
+            <div className="grid grid-cols-2 gap-1 gap-4 md:hidden">
                 {products.map((product) => (
                     <Card key={product.id} className="flex flex-col overflow-hidden">
                         <CardHeader className="p-0">
