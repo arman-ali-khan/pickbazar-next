@@ -23,12 +23,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Trash2 } from "lucide-react";
+import { MoreHorizontal, Trash2, Eye, Pencil } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from 'date-fns';
+import Link from 'next/link';
 
 interface User {
     id: string;
@@ -122,6 +123,16 @@ export default function AdminUsersPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href={`/admin/users/view/${user.id}`}>
+                                                            <Eye className="mr-2 h-4 w-4" /> View
+                                                        </Link>
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem asChild>
+                                                        <Link href={`/admin/users/edit/${user.id}`}>
+                                                            <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                        </Link>
+                                                    </DropdownMenuItem>
                                                     <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user.id)}>
                                                         <Trash2 className="mr-2 h-4 w-4" /> Delete
                                                     </DropdownMenuItem>
@@ -153,6 +164,16 @@ export default function AdminUsersPage() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/admin/users/view/${user.id}`}>
+                                                    <Eye className="mr-2 h-4 w-4" /> View
+                                                </Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/admin/users/edit/${user.id}`}>
+                                                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                                                </Link>
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user.id)}>
                                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                                             </DropdownMenuItem>
