@@ -7,17 +7,18 @@ import CartDrawer from '@/components/cart-drawer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useAppSelector, useAppDispatch } from '@/lib/redux/hooks';
-import { selectSubtotal, selectCartItems, clearCart } from '@/lib/redux/slices/cartSlice';
+import { selectSubtotal, selectCartItems, clearCart, removeFromCart } from '@/lib/redux/slices/cartSlice';
 import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from '@/components/ui/input';
-import { CreditCard, Landmark, Smartphone, ShieldCheck } from 'lucide-react';
+import { CreditCard, Landmark, Smartphone, ShieldCheck, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
 
 interface ShippingInfo {
   firstName: string;
@@ -117,6 +118,33 @@ export default function PaymentPage() {
                     ) : (
                         <p className="text-sm text-muted-foreground">Loading shipping details...</p>
                     )}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Items in Your Order</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {cartItems.map(item => (
+                    <div key={item.id} className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="relative h-16 w-16 rounded-md overflow-hidden border">
+                          <Image src={item.image.imageUrl} alt={item.name} data-ai-hint={item.image.imageHint} fill className="object-contain p-1" />
+                        </div>
+                        <div>
+                          <p className="font-semibold">{item.name}</p>
+                          <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => dispatch(removeFromCart(item.id))}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </CardContent>
             </Card>
 
