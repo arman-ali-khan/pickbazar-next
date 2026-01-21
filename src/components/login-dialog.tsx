@@ -85,7 +85,8 @@ export function LoginDialog() {
 
       if (!response.ok) {
         const data = await response.json();
-        throw new Error(data.message || 'Failed to save user data to database.');
+        const errorMessage = data.error || data.message || 'Failed to save user data to database.';
+        throw new Error(errorMessage);
       }
 
       toast({ title: 'Registration Successful', description: "Welcome to Pickbazar!" });
