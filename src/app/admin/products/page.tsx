@@ -33,7 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { products as allProductsData } from "@/lib/data";
 import Image from "next/image";
-import { File, PlusCircle, Search, ListFilter, Pencil, Trash2, Power, PowerOff, MoreHorizontal } from "lucide-react";
+import { PlusCircle, Search, ListFilter, Pencil, Trash2, Power, PowerOff, MoreHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import Link from "next/link";
@@ -231,12 +231,6 @@ export default function AdminProductsPage() {
                       <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                         Filter
                       </span>
-                    </Button>
-                    <Button size="sm" variant="outline" className="h-8 gap-1">
-                        <File className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                            Export
-                        </span>
                     </Button>
                     <Button size="sm" className="h-8 gap-1" asChild>
                         <Link href="/admin/products/create">
