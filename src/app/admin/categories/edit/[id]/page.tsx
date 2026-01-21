@@ -150,12 +150,12 @@ export default function EditCategoryPage() {
                             </div>
                             <div className="grid gap-3">
                                 <Label htmlFor="parent">Parent Category</Label>
-                                <Select onValueChange={(value) => setParentId(value || null)} value={parentId || ''}>
+                                <Select onValueChange={(value) => setParentId(value === 'none' ? null : value)} value={parentId ?? ''}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Select a parent category (optional)" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">None (Top-level category)</SelectItem>
+                                        <SelectItem value="none">None (Top-level category)</SelectItem>
                                         {parentCategories.map(cat => (
                                             <SelectItem key={cat.id} value={String(cat.id)}>
                                                 {cat.name}
