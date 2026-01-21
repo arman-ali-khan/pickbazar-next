@@ -71,13 +71,13 @@ export default function AdminSidebar() {
   const { state } = useSidebar();
   
   return (
-    <Sidebar collapsible="icon" className="border-r bg-card">
+    <Sidebar collapsible="icon" className="border-r bg-card hidden md:flex">
        <SidebarHeader className="flex items-center justify-between p-4">
         <div className={cn("flex items-center gap-2 overflow-hidden transition-all duration-300", state === 'expanded' ? 'w-auto' : 'w-0')}>
             <Leaf className="h-6 w-6 text-primary" />
             <Link href="/" className="font-bold text-lg">Pickbazar</Link>
         </div>
-        <SidebarTrigger className="h-8 w-8">
+        <SidebarTrigger className="hidden md:flex">
             <ChevronLeft />
         </SidebarTrigger>
       </SidebarHeader>
