@@ -37,6 +37,9 @@ import { PlusCircle, Search, ListFilter, Pencil, Trash2, Power, PowerOff, MoreHo
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import Link from "next/link";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const productsWithStatus = allProductsData.map((p, i) => ({
     ...p,
@@ -198,16 +201,56 @@ const ProductList = ({ products }: { products: ProductWithStatus[] }) => {
 
 export default function AdminProductsPage() {
     const [searchTerm, setSearchTerm] = useState('');
+    const [filters, setFilters] = useState<{
+        categories: string[];
+        price: { min: number | null; max: number | null };
+        stock: { min: number | null; max: number | null };
+    }>({
+        categories: [],
+        price: { min: null, max: null },
+        stock: { min: null, max: null },
+    });
+
+    const uniqueCategories = [...new Set(productsWithStatus.map(p => p.category))];
     
     const filterAndSearch = (status?: 'active' | 'draft' | 'archived') => {
         let filtered = productsWithStatus;
+
         if (status) {
             filtered = filtered.filter(p => p.status === status);
         }
+
         if (searchTerm) {
             filtered = filtered.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
         }
+
+        if (filters.categories.length > 0) {
+            filtered = filtered.filter(p => filters.categories.includes(p.category));
+        }
+
+        if (filters.price.min !== null) {
+            filtered = filtered.filter(p => p.price >= filters.price.min!);
+        }
+        if (filters.price.max !== null) {
+            filtered = filtered.filter(p => p.price <= filters.price.max!);
+        }
+
+        if (filters.stock.min !== null) {
+            filtered = filtered.filter(p => p.stock >= filters.stock.min!);
+        }
+        if (filters.stock.max !== null) {
+            filtered = filtered.filter(p => p.stock <= filters.stock.max!);
+        }
+        
         return filtered;
+    }
+
+    const clearFilters = () => {
+        setFilters({
+            categories: [],
+            price: { min: null, max: null },
+            stock: { min: null, max: null },
+        });
     }
 
     const allProducts = filterAndSearch();
@@ -226,12 +269,81 @@ export default function AdminProductsPage() {
                     <TabsTrigger value="archived" className="hidden sm:flex">Archived</TabsTrigger>
                 </TabsList>
                 <div className="ml-auto flex items-center gap-2">
-                    <Button variant="outline" size="sm" className="h-8 gap-1">
-                      <ListFilter className="h-3.5 w-3.5" />
-                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Filter
-                      </span>
-                    </Button>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-8 gap-1">
+                            <ListFilter className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                                Filter
+                            </span>
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-80" align="end">
+                            <div className="grid gap-4">
+                                <div className="space-y-2">
+                                    <h4 className="font-medium leading-none">Filters</h4>
+                                    <p className="text-sm text-muted-foreground">Set your product filters.</p>
+                                </div>
+                                <div className="grid gap-4">
+                                    <div className="space-y-2">
+                                        <Label className="font-semibold">Category</Label>
+                                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                                            {uniqueCategories.map(category => (
+                                                <div key={category} className="flex items-center gap-2">
+                                                    <Checkbox
+                                                        id={`cat-${category}`}
+                                                        checked={filters.categories.includes(category)}
+                                                        onCheckedChange={checked => {
+                                                            const newCategories = checked
+                                                                ? [...filters.categories, category]
+                                                                : filters.categories.filter(c => c !== category);
+                                                            setFilters({ ...filters, categories: newCategories });
+                                                        }}
+                                                    />
+                                                    <Label htmlFor={`cat-${category}`} className="font-normal">{category}</Label>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="font-semibold">Price Range</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                type="number"
+                                                placeholder="Min"
+                                                value={filters.price.min ?? ''}
+                                                onChange={e => setFilters({...filters, price: {...filters.price, min: e.target.value ? Number(e.target.value) : null}})}
+                                            />
+                                            <Input
+                                                type="number"
+                                                placeholder="Max"
+                                                value={filters.price.max ?? ''}
+                                                onChange={e => setFilters({...filters, price: {...filters.price, max: e.target.value ? Number(e.target.value) : null}})}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label className="font-semibold">Stock</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                type="number"
+                                                placeholder="Min"
+                                                value={filters.stock.min ?? ''}
+                                                onChange={e => setFilters({...filters, stock: {...filters.stock, min: e.target.value ? Number(e.target.value) : null}})}
+                                            />
+                                            <Input
+                                                type="number"
+                                                placeholder="Max"
+                                                value={filters.stock.max ?? ''}
+                                                onChange={e => setFilters({...filters, stock: {...filters.stock, max: e.target.value ? Number(e.target.value) : null}})}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                                <Button onClick={clearFilters} variant="ghost">Clear Filters</Button>
+                            </div>
+                        </PopoverContent>
+                    </Popover>
                     <Button size="sm" className="h-8 gap-1" asChild>
                         <Link href="/admin/products/create">
                             <PlusCircle className="h-3.5 w-3.5" />
