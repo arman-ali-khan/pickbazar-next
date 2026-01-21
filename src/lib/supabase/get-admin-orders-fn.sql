@@ -2,7 +2,7 @@ DROP FUNCTION IF EXISTS get_admin_orders();
 
 CREATE OR REPLACE FUNCTION get_admin_orders()
 RETURNS TABLE (
-    id int,
+    id bigint,
     order_number text,
     created_at timestamptz,
     total_amount numeric,
@@ -11,7 +11,7 @@ RETURNS TABLE (
     customer_avatar_url text
 ) AS $$
 BEGIN
-  RETURN QUERY
+    RETURN QUERY
     SELECT
         o.id,
         o.order_number,
@@ -19,10 +19,12 @@ BEGIN
         o.total_amount,
         o.status,
         o.shipping_details,
-        p.avatar_url
+        p.avatar_url AS customer_avatar_url
     FROM
-        orders AS o
-    JOIN
-        profiles AS p ON o.user_id = p.id;
+        public.orders o
+    LEFT JOIN
+        public.profiles p ON o.user_id = p.id
+    ORDER BY
+        o.created_at DESC;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
