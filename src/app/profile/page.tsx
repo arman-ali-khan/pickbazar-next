@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSupabase } from '@/lib/supabase/provider';
@@ -115,7 +116,6 @@ export default function ProfilePage() {
         bio: profile.bio,
         contact_number: profile.contact_number,
         avatar_url: profile.avatar_url,
-        updated_at: new Date(),
       };
 
       const { error } = await supabase.from('profiles').upsert(updates);
