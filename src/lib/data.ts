@@ -178,7 +178,90 @@ export const product = {
 
 export const relatedProducts = products.slice(1, 13).map(p => ({...p, id: p.id, name: p.name, price: p.price, image: p.image, weight: p.weight, tag: p.originalPrice ? `${Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}%` : undefined}));
 
+export const orders = [
+  {
+    id: 'ORD-001',
+    customer: {
+      name: 'John Doe',
+      email: 'john.doe@example.com',
+      avatar: getImage('avatar_1'),
+    },
+    date: '2024-07-28T14:48:00.000Z',
+    total: 125.50,
+    status: 'Delivered',
+    paymentMethod: 'Credit Card',
+    items: [
+      { id: 1, name: 'Apples', quantity: 2, price: 1.60 },
+      { id: 2, name: 'Baby Spinach', quantity: 1, price: 0.60 },
+    ]
+  },
+  {
+    id: 'ORD-002',
+    customer: {
+      name: 'Jane Smith',
+      email: 'jane.smith@example.com',
+      avatar: getImage('avatar_2'),
+    },
+    date: '2024-07-27T10:30:00.000Z',
+    total: 89.90,
+    status: 'Processing',
+    paymentMethod: 'PayPal',
+    items: [
+      { id: 3, name: 'Blueberries', quantity: 1, price: 3.00 },
+      { id: 4, name: 'Brussels Sprout', quantity: 2, price: 3.69 },
+    ]
+  },
+  {
+    id: 'ORD-003',
+    customer: {
+      name: 'Peter Jones',
+      email: 'peter.jones@example.com',
+      avatar: getImage('avatar_3'),
+    },
+    date: '2024-07-26T18:00:00.000Z',
+    total: 210.00,
+    status: 'Shipped',
+    paymentMethod: 'Credit Card',
+    items: [
+       { id: 5, name: 'Clementines', price: 2.50, quantity: 5 },
+    ]
+  },
+  {
+    id: 'ORD-004',
+    customer: {
+      name: 'Mary Johnson',
+      email: 'mary.johnson@example.com',
+      avatar: getImage('avatar_1'),
+    },
+    date: '2024-07-25T09:15:00.000Z',
+    total: 55.20,
+    status: 'Cancelled',
+    paymentMethod: 'Cash on Delivery',
+    items: [
+       { id: 6, name: 'Sweet Corn', price: 1.80, quantity: 10 },
+    ]
+  },
+    {
+    id: 'ORD-005',
+    customer: {
+      name: 'Chris Lee',
+      email: 'chris.lee@example.com',
+      avatar: getImage('avatar_2'),
+    },
+    date: '2024-07-28T11:00:00.000Z',
+    total: 45.75,
+    status: 'Pending',
+    paymentMethod: 'Credit Card',
+    items: [
+      { id: 7, name: 'Cucumber', quantity: 5, price: 0.75 },
+      { id: 8, name: 'Dates', quantity: 1, price: 4.50 },
+    ],
+  },
+];
+
+
 export type Product = (typeof products)[0] & { originalPrice?: number, rating?: number };
 export type RelatedProduct = typeof relatedProducts[0];
 export type Review = typeof product.reviews[0];
 export type Question = typeof product.questions[0];
+export type Order = typeof orders[0];
