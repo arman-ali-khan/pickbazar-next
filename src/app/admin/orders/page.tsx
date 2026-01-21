@@ -22,13 +22,10 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuTrigger,
+    DropdownMenuRadioGroup,
+    DropdownMenuRadioItem,
+    DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
-} from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { orders as allOrdersData } from "@/lib/data";
@@ -195,6 +192,7 @@ export default function AdminOrdersPage() {
     };
 
     const handleTabChange = (value: string) => {
+        if (!value) return;
         setActiveTab(value);
         setCurrentPage(1);
     };
@@ -210,71 +208,77 @@ export default function AdminOrdersPage() {
     
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
-            <Tabs defaultValue="all" onValueChange={handleTabChange}>
-                <div className="flex items-center">
-                    <TabsList>
-                        {tabs.map(tab => (
-                            <TabsTrigger key={tab} value={tab} className="capitalize">
-                                {tab}
-                            </TabsTrigger>
-                        ))}
-                    </TabsList>
-                    <div className="ml-auto flex items-center gap-2">
-                        <Button variant="outline" size="sm" className="h-8 gap-1">
-                            <ListFilter className="h-3.5 w-3.5" />
-                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Filter</span>
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-8 gap-1">
-                            <File className="h-3.5 w-3.5" />
-                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
-                        </Button>
-                    </div>
+            <div className="flex items-center">
+                <div className="ml-auto flex items-center gap-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" className="h-8 gap-1">
+                                <ListFilter className="h-3.5 w-3.5" />
+                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap capitalize">
+                                    Filter ({activeTab})
+                                </span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Filter by status</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuRadioGroup value={activeTab} onValueChange={handleTabChange}>
+                                {tabs.map(tab => (
+                                    <DropdownMenuRadioItem key={tab} value={tab} className="capitalize">{tab}</DropdownMenuRadioItem>
+                                ))}
+                            </DropdownMenuRadioGroup>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button size="sm" variant="outline" className="h-8 gap-1">
+                        <File className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">Export</span>
+                    </Button>
                 </div>
-                <Card className="mt-4">
-                    <CardHeader>
-                        <CardTitle>Orders</CardTitle>
-                        <CardDescription>Manage your orders and view their details.</CardDescription>
-                        <div className="relative pt-4">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                type="search"
-                                placeholder="Search orders..."
-                                className="w-full appearance-none bg-background pl-8 shadow-none md:w-1/3"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
+            </div>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Orders</CardTitle>
+                    <CardDescription>Manage your orders and view their details.</CardDescription>
+                    <div className="relative pt-4">
+                        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Search orders..."
+                            className="w-full appearance-none bg-background pl-8 shadow-none md:w-1/3"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <OrderList orders={paginatedOrders} />
+                </CardContent>
+                <CardFooter>
+                    <div className="flex items-center justify-between w-full">
+                        <div className="text-xs text-muted-foreground">
+                            Showing <strong>{(currentPage - 1) * ORDERS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ORDERS_PER_PAGE, currentOrderList.length)}</strong> of <strong>{currentOrderList.length}</strong> orders
                         </div>
-                    </CardHeader>
-                    <CardContent>
-                        <OrderList orders={paginatedOrders} />
-                    </CardContent>
-                    <CardFooter>
-                        <div className="flex items-center justify-between w-full">
-                            <div className="text-xs text-muted-foreground">
-                                Showing <strong>{(currentPage - 1) * ORDERS_PER_PAGE + 1}</strong> to <strong>{Math.min(currentPage * ORDERS_PER_PAGE, currentOrderList.length)}</strong> of <strong>{currentOrderList.length}</strong> orders
-                            </div>
-                            <div className="flex items-center space-x-2">
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                                    disabled={currentPage === 1}
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={currentPage >= totalPages}
-                                >
-                                    Next
-                                </Button>
-                            </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage >= totalPages}
+                            >
+                                Next
+                            </Button>
                         </div>
-                    </CardFooter>
-                </Card>
-            </Tabs>
+                    </div>
+                </CardFooter>
+            </Card>
         </main>
     );
 }
