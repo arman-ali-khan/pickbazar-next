@@ -36,6 +36,7 @@ import Image from "next/image";
 import { File, PlusCircle, Search, ListFilter, Pencil, Trash2, Power, PowerOff, MoreHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import Link from "next/link";
 
 const productsWithStatus = allProductsData.map((p, i) => ({
     ...p,
@@ -237,11 +238,13 @@ export default function AdminProductsPage() {
                             Export
                         </span>
                     </Button>
-                    <Button size="sm" className="h-8 gap-1">
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                            Add Product
-                        </span>
+                    <Button size="sm" className="h-8 gap-1" asChild>
+                        <Link href="/admin/products/create">
+                            <PlusCircle className="h-3.5 w-3.5" />
+                            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                                Add Product
+                            </span>
+                        </Link>
                     </Button>
                 </div>
             </div>
