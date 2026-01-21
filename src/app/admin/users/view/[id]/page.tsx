@@ -11,7 +11,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { orders as mockOrders } from '@/lib/data'; // Using mock data for now
 
 interface UserProfile {
     id: string;
@@ -31,6 +30,14 @@ interface Address {
   country: string;
 }
 
+interface Order {
+    id: number;
+    order_number: string;
+    created_at: string;
+    status: string;
+    total_amount: number;
+}
+
 export default function ViewUserPage() {
     const router = useRouter();
     const params = useParams<{ id: string }>();
@@ -39,6 +46,7 @@ export default function ViewUserPage() {
 
     const [user, setUser] = useState<UserProfile | null>(null);
     const [addresses, setAddresses] = useState<Address[]>([]);
+    const [recentOrders, setRecentOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchData = useCallback(async () => {
@@ -48,9 +56,10 @@ export default function ViewUserPage() {
         }
         setLoading(true);
 
-        const [userRes, addressesRes] = await Promise.all([
+        const [userRes, addressesRes, ordersRes] = await Promise.all([
             supabase.rpc('get_user_details', { p_user_id: userId }),
-            supabase.from('addresses').select('*').eq('user_id', userId)
+            supabase.from('addresses').select('*').eq('user_id', userId),
+            supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5)
         ]);
 
         const { data: userData, error: userError } = userRes;
@@ -63,6 +72,11 @@ export default function ViewUserPage() {
         const { data: addressesData } = addressesRes;
         if (addressesData) {
             setAddresses(addressesData);
+        }
+        
+        const { data: ordersData } = ordersRes;
+        if (ordersData) {
+            setRecentOrders(ordersData as Order[]);
         }
         
         setLoading(false);
@@ -79,8 +93,6 @@ export default function ViewUserPage() {
     if (!user) {
         return null;
     }
-
-    const recentOrders = mockOrders.slice(0, 3); // Mocking recent orders
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
@@ -169,15 +181,15 @@ export default function ViewUserPage() {
                                     {recentOrders.map(order => (
                                         <TableRow key={order.id}>
                                             <TableCell>
-                                                 <Link href={`/admin/orders/${order.id}`} className="font-medium hover:underline">{order.id}</Link>
+                                                 <Link href={`/admin/orders/${order.order_number}`} className="font-medium hover:underline">{order.order_number}</Link>
                                             </TableCell>
-                                            <TableCell suppressHydrationWarning>{format(new Date(order.date), 'PP')}</TableCell>
+                                            <TableCell suppressHydrationWarning>{format(new Date(order.created_at), 'PP')}</TableCell>
                                             <TableCell>
                                                 <Badge variant={order.status === 'Delivered' ? 'secondary' : order.status === 'Cancelled' ? 'destructive' : 'default'}>
                                                     {order.status}
                                                 </Badge>
                                             </TableCell>
-                                            <TableCell className="text-right">${order.total.toFixed(2)}</TableCell>
+                                            <TableCell className="text-right">${order.total_amount.toFixed(2)}</TableCell>
                                         </TableRow>
                                     ))}
                                 </TableBody>
