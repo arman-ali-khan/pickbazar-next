@@ -56,12 +56,12 @@ const SidebarNavLink = ({ href, icon: Icon, label }: { href: string; icon: React
 
     return (
         <SidebarMenuItem>
-             <Link href={href} legacyBehavior passHref>
-                <SidebarMenuButton isActive={isActive} className="w-full justify-start">
+            <SidebarMenuButton asChild isActive={isActive} className="w-full justify-start">
+                <Link href={href}>
                     <Icon className="h-5 w-5" />
                     <span className="truncate">{label}</span>
-                </SidebarMenuButton>
-            </Link>
+                </Link>
+            </SidebarMenuButton>
         </SidebarMenuItem>
     );
 };
@@ -77,8 +77,10 @@ export default function AdminSidebar() {
             <Leaf className="h-6 w-6 text-primary" />
             <Link href="/" className="font-bold text-lg">Pickbazar</Link>
         </div>
-        <SidebarTrigger>
-            <ChevronLeft />
+        <SidebarTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+                <ChevronLeft />
+            </Button>
         </SidebarTrigger>
       </SidebarHeader>
 
