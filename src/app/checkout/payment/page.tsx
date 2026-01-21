@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -73,6 +72,7 @@ export default function PaymentPage() {
         }));
         
         const { data: orderNumber, error } = await supabase.rpc('create_order', {
+            p_user_id: user.id,
             p_total_amount: total,
             p_shipping_details: shippingInfo,
             p_items: orderItems,
