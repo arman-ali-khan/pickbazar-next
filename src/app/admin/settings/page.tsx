@@ -124,13 +124,16 @@ export default function AdminSettingsPage() {
                                 <Switch id="cod" defaultChecked />
                             </div>
                             <div className="flex items-center justify-between p-4 border rounded-lg">
-                                <Label htmlFor="mobile-banking" className="flex flex-col gap-1">
-                                  <span>Mobile Banking</span>
-                                  <span className="font-normal text-sm text-muted-foreground">
-                                    Accept payments through mobile banking apps.
-                                  </span>
-                                </Label>
-                                <Switch id="mobile-banking" defaultChecked />
+                                <div className="flex-1 space-y-1">
+                                    <Label htmlFor="mobile-banking" className="font-medium">Mobile Banking</Label>
+                                    <p className="text-sm text-muted-foreground">
+                                        Accept payments through mobile banking apps.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline">Manager</Button>
+                                    <Switch id="mobile-banking" defaultChecked />
+                                </div>
                             </div>
                              <div className="flex items-center justify-between p-4 border rounded-lg">
                                 <Label htmlFor="card-payment" className="flex flex-col gap-1">
