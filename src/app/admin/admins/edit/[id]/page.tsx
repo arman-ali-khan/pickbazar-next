@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -91,9 +92,9 @@ export default function EditAdminPage() {
                                         <SelectValue placeholder="Select a role" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Admin">Admin</SelectItem>
-                                        <SelectItem value="Manager">Manager</SelectItem>
-                                        <SelectItem value="Super Admin">Super Admin</SelectItem>
+                                        <SelectItem value="admin">Admin</SelectItem>
+                                        <SelectItem value="manager">Manager</SelectItem>
+                                        <SelectItem value="super-admin">Super Admin</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

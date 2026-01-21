@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -32,6 +33,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const getStatusVariant = (status: Admin['status']) => {
     return status === 'active' ? 'secondary' : 'destructive';
+};
+
+const roleDisplayMap: { [key: string]: string } = {
+  'admin': 'Admin',
+  'manager': 'Manager',
+  'super-admin': 'Super Admin'
 };
 
 export default function AdminAdminsPage() {
@@ -85,7 +92,7 @@ export default function AdminAdminsPage() {
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell>{admin.role}</TableCell>
+                                        <TableCell>{roleDisplayMap[admin.role] || admin.role}</TableCell>
                                         <TableCell>
                                             <Badge variant={getStatusVariant(admin.status)} className="capitalize">{admin.status}</Badge>
                                         </TableCell>
@@ -145,7 +152,7 @@ export default function AdminAdminsPage() {
                                     </DropdownMenu>
                                 </CardHeader>
                                 <CardContent className="flex justify-between items-center text-sm">
-                                    <p className="text-muted-foreground">{admin.role}</p>
+                                    <p className="text-muted-foreground">{roleDisplayMap[admin.role] || admin.role}</p>
                                     <Badge variant={getStatusVariant(admin.status)} className="capitalize">{admin.status}</Badge>
                                 </CardContent>
                             </Card>

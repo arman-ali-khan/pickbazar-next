@@ -19,7 +19,7 @@ async function checkAdminRole() {
         .eq('id', user.id)
         .single();
     
-    const allowedRoles = ['Admin', 'Manager', 'Super Admin'];
+    const allowedRoles = ['admin', 'manager', 'super-admin'];
     return allowedRoles.includes(profile?.role || '');
 }
 
