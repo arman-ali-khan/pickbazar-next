@@ -46,7 +46,7 @@ type ProductWithCategory = {
     price: number;
     stock: number;
     featured_image_url: string;
-    categories: { name: string } | null;
+    product_categories: { categories: { name: string } | null }[];
 }
 
 const ProductList = ({ products, onDelete }: { products: ProductWithCategory[], onDelete: (id: number) => void }) => {
@@ -152,7 +152,7 @@ const ProductList = ({ products, onDelete }: { products: ProductWithCategory[], 
                                 </TableCell>
                                 <TableCell>${product.price.toFixed(2)}</TableCell>
                                 <TableCell>{product.stock}</TableCell>
-                                <TableCell>{product.categories?.name || 'N/A'}</TableCell>
+                                <TableCell>{product.product_categories?.[0]?.categories?.name || 'N/A'}</TableCell>
                                 <TableCell>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
@@ -190,13 +190,13 @@ export default function AdminProductsPage() {
         setLoading(true);
         const { data, error } = await supabase
             .from('products')
-            .select('id, name, status, price, stock, featured_image_url, categories(name)')
+            .select('id, name, status, price, stock, featured_image_url, product_categories(categories(name))')
             .order('created_at', { ascending: false });
 
         if (error) {
             toast({ variant: 'destructive', title: 'Error fetching products', description: error.message });
         } else {
-            setProducts(data as ProductWithCategory[]);
+            setProducts(data as any[] as ProductWithCategory[]);
         }
         setLoading(false);
     }, [supabase, toast]);

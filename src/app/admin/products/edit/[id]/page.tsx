@@ -15,24 +15,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
+import React from 'react';
 
-interface Category { id: number; name: string; }
+interface Category { id: number; name: string; parent_id: number | null; }
+interface CategoryWithSubcategories extends Category { subcategories: Category[]; }
 interface Tag { id: number; name: string; }
-interface Product {
-    id: number;
-    name: string;
-    slug: string;
-    description: string;
-    unit: string;
-    price: number;
-    original_price: number | null;
-    stock: number;
-    status: string;
-    category_id: number;
-    featured_image_url: string;
-    gallery_urls: string[];
-    tags: Tag[];
-}
 
 export default function EditProductPage() {
     const { supabase } = useSupabase();
@@ -49,7 +36,7 @@ export default function EditProductPage() {
     const [originalPrice, setOriginalPrice] = useState<number | null>(null);
     const [stock, setStock] = useState<number | null>(null);
     const [status, setStatus] = useState('draft');
-    const [categoryId, setCategoryId] = useState<string | null>(null);
+    const [selectedCategories, setSelectedCategories] = useState<number[]>([]);
     const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
     
     // UI State
@@ -57,7 +44,7 @@ export default function EditProductPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     
     // Data State
-    const [allCategories, setAllCategories] = useState<Category[]>([]);
+    const [allCategories, setAllCategories] = useState<CategoryWithSubcategories[]>([]);
     const [allTags, setAllTags] = useState<Tag[]>([]);
     
     // Image State
@@ -75,7 +62,7 @@ export default function EditProductPage() {
         
         const { data: productData, error: productError } = await supabase
             .from('products')
-            .select('*, tags(*)')
+            .select('*, tags(*), product_categories(category_id)')
             .eq('id', productId)
             .single();
 
@@ -86,7 +73,7 @@ export default function EditProductPage() {
         }
 
         const [categoriesRes, tagsRes] = await Promise.all([
-            supabase.from('categories').select('id, name'),
+            supabase.from('categories').select('id, name, parent_id'),
             supabase.from('tags').select('id, name'),
         ]);
 
@@ -98,12 +85,24 @@ export default function EditProductPage() {
         setOriginalPrice(productData.original_price);
         setStock(productData.stock);
         setStatus(productData.status);
-        setCategoryId(String(productData.category_id));
         setSelectedTags(productData.tags || []);
         setFeaturedImagePreview(productData.featured_image_url);
         setGalleryImagePreviews(productData.gallery_urls || []);
+        if (productData.product_categories) {
+            setSelectedCategories((productData.product_categories as any).map((pc: any) => pc.category_id));
+        }
 
-        if (categoriesRes.data) setAllCategories(categoriesRes.data);
+        if (categoriesRes.data) {
+             const fetchedCategories: Category[] = categoriesRes.data;
+            const topLevel = fetchedCategories.filter(c => !c.parent_id);
+            const children = fetchedCategories.filter(c => c.parent_id);
+
+            const hierarchical = topLevel.map(parent => ({
+                ...parent,
+                subcategories: children.filter(child => child.parent_id === parent.id)
+            }));
+            setAllCategories(hierarchical);
+        }
         if (tagsRes.data) setAllTags(tagsRes.data);
         
         setLoading(false);
@@ -115,6 +114,14 @@ export default function EditProductPage() {
         }
     }, [fetchData, productId]);
     
+    const handleCategorySelection = (categoryId: number) => {
+        setSelectedCategories(prev =>
+            prev.includes(categoryId)
+            ? prev.filter(id => id !== categoryId)
+            : [...prev, categoryId]
+        );
+    };
+
     const handleTagSelection = (tag: Tag) => {
         setSelectedTags(prev => 
             prev.find(t => t.id === tag.id) 
@@ -202,13 +209,20 @@ export default function EditProductPage() {
                     original_price: originalPrice, 
                     stock: stock || 0,
                     status, 
-                    category_id: Number(categoryId), 
                     featured_image_url: final_featured_image_url, 
                     gallery_urls: final_gallery_urls
                 })
                 .eq('id', productId);
             
             if (productError) throw productError;
+            
+            // Update categories
+            await supabase.from('product_categories').delete().eq('product_id', productId);
+            if (selectedCategories.length > 0) {
+                const productCategories = selectedCategories.map(catId => ({ product_id: productId, category_id: catId }));
+                const { error: categoriesError } = await supabase.from('product_categories').insert(productCategories);
+                if (categoriesError) throw categoriesError;
+            }
 
             // Update tags
             await supabase.from('product_tags').delete().eq('product_id', productId);
@@ -301,9 +315,9 @@ export default function EditProductPage() {
                             <Card>
                                 <CardHeader><CardTitle>Pricing & Stock</CardTitle></CardHeader>
                                 <CardContent className="grid md:grid-cols-2 gap-4">
-                                    <div><Label>Price</Label><Input type="number" value={price ?? ''} onChange={(e) => setPrice(e.target.value ? parseFloat(e.target.value) : null)} required /></div>
-                                    <div><Label>Original Price (Optional)</Label><Input type="number" value={originalPrice ?? ''} onChange={(e) => setOriginalPrice(e.target.value ? parseFloat(e.target.value) : null)} /></div>
-                                    <div><Label>Stock</Label><Input type="number" value={stock ?? ''} onChange={(e) => setStock(e.target.value ? parseInt(e.target.value, 10) : null)} /></div>
+                                    <div><Label>Price</Label><Input type="number" value={price ?? ''} onChange={(e) => setPrice(e.target.value === '' ? null : parseFloat(e.target.value))} required /></div>
+                                    <div><Label>Original Price (Optional)</Label><Input type="number" value={originalPrice ?? ''} onChange={(e) => setOriginalPrice(e.target.value === '' ? null : parseFloat(e.target.value))} /></div>
+                                    <div><Label>Stock</Label><Input type="number" value={stock ?? ''} onChange={(e) => setStock(e.target.value === '' ? null : parseInt(e.target.value, 10))} /></div>
                                 </CardContent>
                             </Card>
                         </div>
@@ -323,17 +337,45 @@ export default function EditProductPage() {
                                 </CardContent>
                             </Card>
 
-                            <Card>
+                           <Card>
                                 <CardHeader><CardTitle>Categorization</CardTitle></CardHeader>
                                 <CardContent className="space-y-4">
                                     <div>
-                                        <Label>Category</Label>
-                                        <Select value={categoryId ?? ''} onValueChange={setCategoryId} required>
-                                            <SelectTrigger><SelectValue placeholder="Select a category" /></SelectTrigger>
-                                            <SelectContent>
-                                                {allCategories.map(cat => <SelectItem key={cat.id} value={String(cat.id)}>{cat.name}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
+                                        <Label>Categories</Label>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="outline" className="w-full justify-start font-normal h-auto text-left">
+                                                    {selectedCategories.length > 0 ? `${selectedCategories.length} selected` : "Select categories"}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent className="w-64 p-2 max-h-60 overflow-y-auto" align="start">
+                                                {allCategories.map(cat => (
+                                                <React.Fragment key={cat.id}>
+                                                    <DropdownMenuCheckboxItem
+                                                    checked={selectedCategories.includes(cat.id)}
+                                                    onCheckedChange={() => handleCategorySelection(cat.id)}
+                                                    onSelect={(e) => e.preventDefault()}
+                                                    >
+                                                    {cat.name}
+                                                    </DropdownMenuCheckboxItem>
+                                                    {cat.subcategories.length > 0 && (
+                                                    <div className="pl-6">
+                                                        {cat.subcategories.map(sub => (
+                                                        <DropdownMenuCheckboxItem
+                                                            key={sub.id}
+                                                            checked={selectedCategories.includes(sub.id)}
+                                                            onCheckedChange={() => handleCategorySelection(sub.id)}
+                                                            onSelect={(e) => e.preventDefault()}
+                                                        >
+                                                            {sub.name}
+                                                        </DropdownMenuCheckboxItem>
+                                                        ))}
+                                                    </div>
+                                                    )}
+                                                </React.Fragment>
+                                                ))}
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </div>
                                     <div>
                                         <Label>Tags</Label>
