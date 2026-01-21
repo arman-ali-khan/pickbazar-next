@@ -114,7 +114,7 @@ export default function AnswerQuestionPage() {
                                 <CardTitle>Status</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <p>Current status is <Badge variant={question.status === 'Answered' ? 'secondary' : 'default'}>{question.status}</Badge>.</p>
+                                <div className="text-sm">Current status is <Badge variant={question.status === 'Answered' ? 'secondary' : 'default'}>{question.status}</Badge>.</div>
                             </CardContent>
                         </Card>
                     </div>
