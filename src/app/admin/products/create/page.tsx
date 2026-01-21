@@ -22,7 +22,7 @@ const allTags = ['fresh', 'organic', 'sale', 'healthy', 'frozen'];
 export default function CreateProductPage() {
     const [name, setName] = useState('');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-    const [selectedSubCategory, setSelectedSubCategory] = useState<string | null>(null);
+    const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([]);
     const [tags, setTags] = useState<string[]>([]);
     const [newTag, setNewTag] = useState('');
 
@@ -43,10 +43,16 @@ export default function CreateProductPage() {
     }, [selectedCategories]);
     
     useEffect(() => {
-        if (selectedSubCategory && !availableSubcategories.includes(selectedSubCategory)) {
-            setSelectedSubCategory(null);
-        }
-    }, [selectedCategories, availableSubcategories, selectedSubCategory]);
+        setSelectedSubCategories(prev => prev.filter(sub => availableSubcategories.includes(sub)));
+    }, [availableSubcategories]);
+
+    const handleSubCategoryChange = (subCategory: string) => {
+        setSelectedSubCategories(prev =>
+            prev.includes(subCategory)
+                ? prev.filter(s => s !== subCategory)
+                : [...prev, subCategory]
+        );
+    };
 
     const handleAddTag = () => {
         if (newTag && !tags.includes(newTag)) {
@@ -216,14 +222,18 @@ export default function CreateProductPage() {
                                 {availableSubcategories.length > 0 && (
                                     <div>
                                         <Label>Sub-category</Label>
-                                        <Select value={selectedSubCategory || ''} onValueChange={(value) => setSelectedSubCategory(value)}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Select sub-category" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {availableSubcategories.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
+                                        <div className="space-y-2 pt-2">
+                                            {availableSubcategories.map(sub => (
+                                                <div key={sub} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={`subcategory-${sub}`}
+                                                        checked={selectedSubCategories.includes(sub)}
+                                                        onCheckedChange={() => handleSubCategoryChange(sub)}
+                                                    />
+                                                    <Label htmlFor={`subcategory-${sub}`} className="font-normal">{sub}</Label>
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 )}
                                 <div>
