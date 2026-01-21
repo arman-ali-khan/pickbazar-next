@@ -1,36 +1,28 @@
--- Function to get all users with their profile information
--- This function is a SECURITY DEFINER, meaning it runs with the privileges of the user who defined it (the postgres role).
--- This is necessary to bypass Row Level Security on the auth.users table.
--- WARNING: Be very careful with security definer functions.
--- We've added a check to ensure only authenticated users can call it.
--- For production, you should add a role check to ensure only admins can call this.
-create or replace function get_all_users()
-returns table (
-  id uuid,
-  full_name text,
-  avatar_url text,
-  email text,
-  created_at timestamptz
-)
-language plpgsql
-security definer
-set search_path = public
-as $$
-begin
-  -- Ensure the user is authenticated before running the query
-  if auth.uid() is null then
-    raise exception 'Authentication required';
-  end if;
+-- Drop the function if it exists to ensure a clean re-creation
+DROP FUNCTION IF EXISTS public.get_all_users();
 
-  return query
-    select
-      u.id,
-      p.full_name,
-      p.avatar_url,
-      u.email,
-      u.created_at
-    from auth.users u
-    left join public.profiles p on u.id = p.id
-    order by u.created_at desc;
-end;
-$$;
+-- Create the function to get all users by joining with the profiles table
+CREATE OR REPLACE FUNCTION get_all_users()
+RETURNS TABLE (
+    id UUID,
+    full_name TEXT,
+    avatar_url TEXT,
+    email TEXT,
+    created_at TIMESTAMPTZ
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        u.id,
+        p.full_name,
+        p.avatar_url,
+        u.email,
+        u.created_at
+    FROM auth.users AS u
+    LEFT JOIN public.profiles AS p ON u.id = p.id
+    ORDER BY u.created_at DESC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Grant execute permission to the function to authenticated users
+GRANT EXECUTE ON FUNCTION get_all_users() TO authenticated;
