@@ -25,7 +25,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, PlusCircle, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -40,12 +40,12 @@ import { Label } from "@/components/ui/label"
 
 
 const initialCategories = [
-    { id: 1, name: 'Fruits & Vegetables', description: 'Fresh fruits and vegetables', productCount: 32, subcategories: ['Fruits', 'Vegetables'] },
-    { id: 2, name: 'Meat & Fish', description: 'Fresh meat and fish', productCount: 21, subcategories: ['Meat', 'Fish'] },
-    { id: 3, name: 'Snacks', description: 'Chips, chocolate, and more', productCount: 15, subcategories: ['Chips', 'Chocolate', 'Nuts'] },
-    { id: 4, name: 'Pet Care', description: 'Food and supplies for pets', productCount: 8, subcategories: ['Dog Food', 'Cat Food'] },
-    { id: 5, name: 'Home & Cleaning', description: 'Household cleaning supplies', productCount: 12, subcategories: ['Detergent', 'Cleaning Tools'] },
-    { id: 6, name: 'Dairy', description: 'Milk, cheese, yogurt', productCount: 18, subcategories: ['Milk', 'Cheese', 'Yogurt'] },
+    { id: 1, name: 'Fruits & Vegetables', slug: 'fruits-vegetables', description: 'Fresh fruits and vegetables', productCount: 32, subcategories: ['Fruits', 'Vegetables'] },
+    { id: 2, name: 'Meat & Fish', slug: 'meat-fish', description: 'Fresh meat and fish', productCount: 21, subcategories: ['Meat', 'Fish'] },
+    { id: 3, name: 'Snacks', slug: 'snacks', description: 'Chips, chocolate, and more', productCount: 15, subcategories: ['Chips', 'Chocolate', 'Nuts'] },
+    { id: 4, name: 'Pet Care', slug: 'pet-care', description: 'Food and supplies for pets', productCount: 8, subcategories: ['Dog Food', 'Cat Food'] },
+    { id: 5, name: 'Home & Cleaning', slug: 'home-cleaning', description: 'Household cleaning supplies', productCount: 12, subcategories: ['Detergent', 'Cleaning Tools'] },
+    { id: 6, name: 'Dairy', slug: 'dairy', description: 'Milk, cheese, yogurt', productCount: 18, subcategories: ['Milk', 'Cheese', 'Yogurt'] },
 ];
 
 type Category = typeof initialCategories[0];
@@ -60,14 +60,47 @@ function CategoryFormDialog({
     isOpen: boolean;
     setIsOpen: (open: boolean) => void;
     category: Category | null;
-    onSave: (data: { name: string, description: string }) => void;
+    onSave: (data: { name: string, slug: string, description: string }) => void;
 }) {
+    const [name, setName] = useState('');
+    const [slug, setSlug] = useState('');
+    const [description, setDescription] = useState('');
+    const isEditing = !!category;
+    const slugManuallyEdited = useRef(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            if (category) {
+                setName(category.name);
+                setSlug(category.slug);
+                setDescription(category.description);
+            } else {
+                setName('');
+                setSlug('');
+                setDescription('');
+                slugManuallyEdited.current = false;
+            }
+        }
+    }, [category, isOpen]);
+
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const newName = e.target.value;
+        setName(newName);
+        if (!isEditing && !slugManuallyEdited.current) {
+            setSlug(newName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''));
+        }
+    };
+    
+    const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSlug(e.target.value);
+        if (!isEditing) {
+            slugManuallyEdited.current = true;
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        const name = formData.get('name') as string;
-        const description = formData.get('description') as string;
-        onSave({ name, description });
+        onSave({ name, slug, description });
         setIsOpen(false);
     };
 
@@ -86,13 +119,19 @@ function CategoryFormDialog({
                             <Label htmlFor="name" className="text-right">
                                 Name
                             </Label>
-                            <Input id="name" name="name" defaultValue={category?.name || ''} className="col-span-3" />
+                            <Input id="name" value={name} onChange={handleNameChange} className="col-span-3" />
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="slug" className="text-right">
+                                Slug
+                            </Label>
+                            <Input id="slug" value={slug} onChange={handleSlugChange} className="col-span-3" />
                         </div>
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="description" className="text-right">
                                 Description
                             </Label>
-                            <Input id="description" name="description" defaultValue={category?.description || ''} className="col-span-3" />
+                            <Input id="description" value={description} onChange={(e) => setDescription(e.target.value)} className="col-span-3" />
                         </div>
                     </div>
                     <DialogFooter>
@@ -129,7 +168,7 @@ export default function AdminCategoriesPage() {
         setCategories(categories.filter(c => c.id !== id));
     };
 
-    const handleSave = (data: { name: string, description: string }) => {
+    const handleSave = (data: { name: string, slug: string, description: string }) => {
         if (currentCategory) { // Editing
             setCategories(categories.map(c => c.id === currentCategory.id ? { ...c, ...data } : c));
         } else { // Adding
@@ -165,6 +204,7 @@ export default function AdminCategoriesPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Name</TableHead>
+                                    <TableHead>Slug</TableHead>
                                     <TableHead>Description</TableHead>
                                     <TableHead>Sub-categories</TableHead>
                                     <TableHead className="text-right">Products</TableHead>
@@ -175,6 +215,7 @@ export default function AdminCategoriesPage() {
                                 {categories.map((category) => (
                                     <TableRow key={category.id}>
                                         <TableCell className="font-medium">{category.name}</TableCell>
+                                        <TableCell>{category.slug}</TableCell>
                                         <TableCell className="text-muted-foreground">{category.description}</TableCell>
                                         <TableCell>
                                             <div className="flex flex-wrap gap-1">
@@ -231,6 +272,7 @@ export default function AdminCategoriesPage() {
                                     <CardDescription>{category.description}</CardDescription>
                                 </CardHeader>
                                 <CardContent>
+                                    <p className="text-sm text-muted-foreground mb-2"><span className="font-semibold">Slug:</span> {category.slug}</p>
                                     <div className="flex flex-wrap gap-1">
                                         {category.subcategories.map(sub => <Badge key={sub} variant="secondary">{sub}</Badge>)}
                                     </div>
