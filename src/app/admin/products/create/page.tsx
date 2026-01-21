@@ -104,17 +104,22 @@ export default function CreateProductPage() {
     };
 
     const uploadImage = async (file: File) => {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const filePath = `${fileName}`;
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'aistudio');
 
-        const { error } = await supabase.storage.from('product_images').upload(filePath, file);
-        if (error) {
-            throw new Error(`Failed to upload image: ${error.message}`);
+        const response = await fetch('https://api.cloudinary.com/v1_1/dcckbmhft/image/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Failed to upload image to Cloudinary: ${errorData.error.message}`);
         }
-        
-        const { data } = supabase.storage.from('product_images').getPublicUrl(filePath);
-        return data.publicUrl;
+
+        const data = await response.json();
+        return data.secure_url;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {

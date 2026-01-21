@@ -115,7 +115,6 @@ export default function EditProductPage() {
         }
     }, [fetchData, productId]);
     
-    // Most handlers are identical to create page...
     const handleTagSelection = (tag: Tag) => {
         setSelectedTags(prev => 
             prev.find(t => t.id === tag.id) 
@@ -124,13 +123,57 @@ export default function EditProductPage() {
         );
     };
 
+    const handleFeaturedImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setFeaturedImageFile(file);
+            setFeaturedImagePreview(URL.createObjectURL(file));
+        }
+    };
+    
+    const handleGalleryImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files) {
+            const filesArray = Array.from(e.target.files);
+            setGalleryImageFiles(prev => [...prev, ...filesArray]);
+            const previews = filesArray.map(file => URL.createObjectURL(file));
+            setGalleryImagePreviews(prev => [...prev, ...previews]);
+        }
+    };
+    
+    const handleRemoveGalleryImage = (indexToRemove: number) => {
+        const urlToRemove = galleryImagePreviews[indexToRemove];
+        setGalleryImagePreviews(prev => prev.filter((_, i) => i !== indexToRemove));
+
+        if(urlToRemove.startsWith('blob:')) {
+            // This was a new file, find and remove it from galleryImageFiles
+            // This assumes order is maintained, which it should be in this logic
+            let blobCount = -1;
+            for(let i=0; i<indexToRemove+1; i++) {
+                if(galleryImagePreviews[i].startsWith('blob:')) {
+                    blobCount++;
+                }
+            }
+            setGalleryImageFiles(prev => prev.filter((_, i) => i !== blobCount));
+        }
+    };
+
     const uploadImage = async (file: File) => {
-        const fileExt = file.name.split('.').pop();
-        const fileName = `${Math.random()}.${fileExt}`;
-        const { error } = await supabase.storage.from('product_images').upload(fileName, file);
-        if (error) throw new Error(`Failed to upload image: ${error.message}`);
-        const { data } = supabase.storage.from('product_images').getPublicUrl(fileName);
-        return data.publicUrl;
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'aistudio');
+
+        const response = await fetch('https://api.cloudinary.com/v1_1/dcckbmhft/image/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Failed to upload image to Cloudinary: ${errorData.error.message}`);
+        }
+
+        const data = await response.json();
+        return data.secure_url;
     };
 
 
@@ -139,19 +182,22 @@ export default function EditProductPage() {
         setIsSubmitting(true);
 
         try {
-            let featured_image_url = featuredImagePreview;
+            let final_featured_image_url = featuredImagePreview;
             if (featuredImageFile) {
-                featured_image_url = await uploadImage(featuredImageFile);
+                final_featured_image_url = await uploadImage(featuredImageFile);
             }
 
-            // For simplicity, we just add new gallery images. A full implementation might handle deletions.
-            const newGalleryUrls = await Promise.all(galleryImageFiles.map(file => uploadImage(file)));
-            const gallery_urls = [...(galleryImagePreviews || []), ...newGalleryUrls];
+            const newGalleryUrls = await Promise.all(
+                galleryImageFiles.map(file => uploadImage(file))
+            );
+
+            const existingUrls = galleryImagePreviews.filter(url => !url.startsWith('blob:'));
+            const final_gallery_urls = [...existingUrls, ...newGalleryUrls];
 
             const { error: productError } = await supabase
                 .from('products')
                 .update({
-                    name, slug, description, unit, price, original_price: originalPrice, stock, status, category_id: Number(categoryId), featured_image_url, gallery_urls
+                    name, slug, description, unit, price, original_price: originalPrice, stock, status, category_id: Number(categoryId), featured_image_url: final_featured_image_url, gallery_urls: final_gallery_urls
                 })
                 .eq('id', productId);
             
@@ -213,18 +259,33 @@ export default function EditProductPage() {
                              <Card>
                                 <CardHeader><CardTitle>Media</CardTitle></CardHeader>
                                 <CardContent className="space-y-6">
-                                     <div className="space-y-2">
+                                    <div className="space-y-2">
                                         <Label>Featured Image</Label>
-                                         <div className="relative w-40 h-40">
+                                        <div className="relative w-40 h-40">
                                             <Image src={featuredImagePreview || 'https://picsum.photos/seed/placeholder/200'} alt="Featured" fill className="object-cover rounded-md" />
                                         </div>
+                                         <label htmlFor="featured-image-upload" className="cursor-pointer text-sm text-primary hover:underline">
+                                            Change image
+                                            <Input id="featured-image-upload" type="file" className="hidden" onChange={handleFeaturedImageChange} />
+                                        </label>
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Gallery</Label>
                                         <div className="grid grid-cols-3 sm:grid-cols-5 gap-4">
                                             {galleryImagePreviews.map((preview, i) => (
-                                                <div key={i} className="relative w-full aspect-square"><Image src={preview} alt={`Gallery ${i}`} fill className="object-cover rounded-md" /></div>
+                                                <div key={i} className="relative w-full aspect-square">
+                                                    <Image src={preview} alt={`Gallery ${i}`} fill className="object-cover rounded-md" />
+                                                    <Button type="button" variant="destructive" size="icon" className="absolute top-1 right-1 h-6 w-6" onClick={() => handleRemoveGalleryImage(i, preview)}>
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             ))}
+                                             <label htmlFor="gallery-images-upload" className="flex flex-col items-center justify-center w-full aspect-square border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/70">
+                                                <div className="flex flex-col items-center justify-center">
+                                                    <ImageIcon className="w-6 h-6 text-muted-foreground" />
+                                                </div>
+                                                <Input id="gallery-images-upload" type="file" multiple className="hidden" onChange={handleGalleryImageChange} />
+                                            </label>
                                         </div>
                                     </div>
                                 </CardContent>
