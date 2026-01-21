@@ -5,7 +5,7 @@ import ProductPageContent from "@/components/product-page-content";
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
-import type { Product, RelatedProduct, Review, Question } from '@/lib/data';
+import type { RelatedProduct, Review, Question } from '@/lib/data';
 
 // A mock to get avatar images. In a real app, this would come from user profiles.
 const getImage = (id: string): ImagePlaceholder => {
@@ -30,13 +30,18 @@ export default async function ProductPage({ params }: { params: { id: string } }
     notFound();
   }
 
+  // Increment view count (fire-and-forget)
+  supabase.rpc('increment_product_view', { product_id_to_inc: productId }).then(({ error }) => {
+    if (error) console.error('Error incrementing view count:', error);
+  });
+
   // 1. Fetch main product details from Supabase
   const { data: productData, error: productError } = await supabase
     .from('products')
     .select(`
       *,
-      categories ( name ),
-      tags ( name )
+      product_categories(categories(name)),
+      product_tags(tags(name))
     `)
     .eq('id', productId)
     .single();
@@ -47,12 +52,10 @@ export default async function ProductPage({ params }: { params: { id: string } }
   }
 
   // 2. Fetch related products from Supabase
-  const { data: relatedProductsData } = await supabase
-    .from('products')
-    .select('*')
-    .eq('category_id', productData.category_id)
-    .not('id', 'eq', productId)
-    .limit(6);
+  const { data: relatedProductsData } = await supabase.rpc('get_related_products', {
+    p_id: productId,
+    p_limit: 6,
+  });
   
   // 3. Prepare data for the `ProductPageContent` component
   // In a real app, reviews, questions, and ratings would also be fetched from the database.
@@ -68,7 +71,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
       { rating: 5, count: 20 }, { rating: 4, count: 10 }, { rating: 3, count: 2 }, { rating: 2, count: 1 }, { rating: 1, count: 0 }
   ];
 
-  const relatedProducts: RelatedProduct[] = (relatedProductsData || []).map(p => ({
+  const relatedProducts: RelatedProduct[] = (relatedProductsData || []).map((p: any) => ({
     id: p.id,
     name: p.name,
     price: p.price,
@@ -82,6 +85,14 @@ export default async function ProductPage({ params }: { params: { id: string } }
     weight: p.unit,
     tag: p.original_price && p.price < p.original_price ? `${Math.round(((p.original_price - p.price) / p.original_price) * 100)}%` : undefined,
   }));
+
+  const categoryNames = Array.isArray(productData.product_categories) 
+      ? productData.product_categories.map((pc: any) => pc.categories.name).join(', ')
+      : 'N/A';
+  
+  const tagNames = Array.isArray(productData.product_tags)
+      ? productData.product_tags.map((pt: any) => pt.tags.name)
+      : [];
   
   const productToShow = {
     // Required base product fields
@@ -106,8 +117,8 @@ export default async function ProductPage({ params }: { params: { id: string } }
             id: `gallery-${productData.id}-${index}`, imageUrl: url, imageHint: 'gallery image', description: `Gallery image ${index + 1}`
         }))
     ],
-    category: (productData.categories as { name: string })?.name || 'N/A',
-    tags: (productData.tags as { name: string }[])?.map(t => t.name) || [],
+    category: categoryNames,
+    tags: tagNames,
     sku: `SKU-${productData.id}`,
     // Mocked data for display
     rating: 4.5,

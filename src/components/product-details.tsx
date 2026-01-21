@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Plus, Minus } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Product } from '@/lib/data';
-import { product as detailedProduct, relatedProducts } from '@/lib/data';
 import ProductQuickView from './product-quick-view';
 import { useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
@@ -19,12 +18,6 @@ export default function ProductCard({ product }: { product: Product }) {
 
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
-
-    const productForQuickView = {
-        ...detailedProduct,
-        ...product,
-        relatedProducts: relatedProducts.filter(p => p.id !== product.id),
-    };
 
     const handleAddToCart = () => {
         dispatch(addToCart({ product }));
@@ -46,7 +39,7 @@ export default function ProductCard({ product }: { product: Product }) {
     return (
         <Card className="w-full overflow-hidden group border rounded-lg hover:shadow-md transition-shadow duration-200 bg-white flex flex-col">
             <CardContent className="p-4 flex flex-col flex-grow">
-                <ProductQuickView product={productForQuickView}>
+                <ProductQuickView product={product}>
                     <div ref={imageRef} className="bg-gray-50 rounded-md overflow-hidden aspect-[3/2] relative mb-4 cursor-pointer">
                         {hasDiscount && (
                             <Badge className="absolute top-3 right-3 z-10 bg-yellow-400 text-yellow-900 rounded-md px-2 text-xs font-semibold border-none">
