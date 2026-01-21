@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { UploadCloud, Image as ImageIcon, X, PlusCircle, ChevronLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import TiptapEditor from '@/components/tiptap-editor';
