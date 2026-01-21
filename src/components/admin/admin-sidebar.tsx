@@ -27,7 +27,8 @@ import {
   LogOut,
   ChevronLeft,
   Leaf,
-  ChevronDown
+  ChevronDown,
+  LayoutTemplate
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -44,6 +45,7 @@ const navItems = [
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
   { href: '/admin/categories', icon: LayoutGrid, label: 'Categories' },
   { href: '/admin/tags', icon: Tag, label: 'Tags' },
+  { href: '/admin/home-sections', icon: LayoutTemplate, label: 'Home Sections' },
   { href: '/admin/refunds', icon: RefreshCcw, label: 'Refunds' },
   { href: '/admin/transactions', icon: Banknote, label: 'Transactions' },
   { href: '/admin/admins', icon: Users, label: 'Admins' },
