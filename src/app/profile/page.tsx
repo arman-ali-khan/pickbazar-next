@@ -32,11 +32,11 @@ interface Address extends AddressFormValues {
 }
 
 export default function ProfilePage() {
-  const { user, supabase } = useSupabase();
+  const { user, supabase, loading: authLoading } = useSupabase();
   const router = useRouter();
   const { toast } = useToast();
   
-  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [profile, setProfile] = useState<Profile>({ full_name: '', bio: '', contact_number: '', avatar_url: '' });
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -63,7 +63,7 @@ export default function ProfilePage() {
   const getProfile = useCallback(async () => {
     if (!user) return;
     try {
-      setLoading(true);
+      setProfileLoading(true);
       const { data, error, status } = await supabase
         .from('profiles')
         .select(`full_name, bio, contact_number, avatar_url`)
@@ -85,9 +85,15 @@ export default function ProfilePage() {
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error fetching profile', description: error.message });
     } finally {
-      setLoading(false);
+      setProfileLoading(false);
     }
   }, [user, supabase, toast]);
+
+  useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/');
+    }
+  }, [user, authLoading, router]);
 
   useEffect(() => {
     if (user) {
@@ -101,22 +107,18 @@ export default function ProfilePage() {
     if (!user) return;
 
     try {
-      setLoading(true);
+      setProfileLoading(true);
 
-      const profileData = {
-        id: user.id, // This is the primary key
+      const updates = {
+        id: user.id,
         full_name: profile.full_name,
         bio: profile.bio,
         contact_number: profile.contact_number,
         avatar_url: profile.avatar_url,
-        email: user.email,
+        updated_at: new Date(),
       };
 
-      const { error } = await supabase
-        .from('profiles')
-        .upsert(profileData)
-        .select()
-        .single();
+      const { error } = await supabase.from('profiles').upsert(updates);
 
       if (error) {
         console.error('Supabase error during profile update:', JSON.stringify(error, null, 2));
@@ -131,7 +133,7 @@ export default function ProfilePage() {
         description: error.message || 'An unknown error occurred. Please check database policies.'
       });
     } finally {
-      setLoading(false);
+      setProfileLoading(false);
     }
   }
 
@@ -146,7 +148,7 @@ export default function ProfilePage() {
 
       const file = event.target.files[0];
       const fileExt = file.name.split('.').pop();
-      const filePath = `${user.id}-${Math.random()}.${fileExt}`;
+      const filePath = `${user.id}/${Math.random()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage.from('avatars').upload(filePath, file);
 
@@ -215,19 +217,32 @@ export default function ProfilePage() {
         });
         if (error) throw error;
         setProfile(prev => ({...prev, contact_number: newContact}));
+        toast({ title: "Contact Updated", description: "Your contact number has been saved." });
     } catch (error: any) {
         toast({ variant: 'destructive', title: 'Error updating contact', description: error.message });
     }
   };
 
   const userNameForAvatar = profile.full_name || user?.email;
-
-  if (loading || !user) {
+  
+  if (authLoading || profileLoading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <p>Loading...</p>
-      </div>
+        <div className="bg-muted/20 min-h-screen">
+            <Header />
+            <main className="container py-12">
+                <div className="flex justify-center items-center">
+                    <p>Loading your profile...</p>
+                </div>
+            </main>
+            <Footer />
+            <CartDrawer />
+        </div>
     );
+  }
+
+  if (!user) {
+    // This will be caught by the useEffect and redirect, but as a fallback
+    return null;
   }
 
   return (
@@ -272,7 +287,7 @@ export default function ProfilePage() {
                                 <Textarea id="bio" value={profile.bio || ''} onChange={(e) => setProfile({...profile, bio: e.target.value})} placeholder="Tell us about yourself" />
                             </div>
                             <div className="flex justify-end">
-                                <Button type="submit" disabled={loading}>Save</Button>
+                                <Button type="submit" disabled={profileLoading}>Save</Button>
                             </div>
                         </form>
                     </CardContent>
