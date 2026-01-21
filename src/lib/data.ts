@@ -475,6 +475,49 @@ export const offers = [
   },
 ];
 
+export const messages = [
+  {
+    id: 1,
+    senderName: 'Alice',
+    senderEmail: 'alice@example.com',
+    subject: 'Question about my order',
+    message: 'Hi, I have a question about my recent order #ORD-001. Can you please help me with the tracking information?',
+    date: '2024-07-29T10:00:00.000Z',
+    status: 'unread' as const,
+    avatar: getImage('avatar_1'),
+  },
+  {
+    id: 2,
+    senderName: 'Bob',
+    senderEmail: 'bob@example.com',
+    subject: 'Feedback on product',
+    message: 'Just wanted to say I love the fresh apples! They were delicious.',
+    date: '2024-07-28T15:30:00.000Z',
+    status: 'read' as const,
+    avatar: getImage('avatar_2'),
+  },
+  {
+    id: 3,
+    senderName: 'Charlie',
+    senderEmail: 'charlie@example.com',
+    subject: 'Partnership inquiry',
+    message: 'Hello, I am interested in partnering with Pickbazar. Who can I talk to about this?',
+    date: '2024-07-28T09:00:00.000Z',
+    status: 'read' as const,
+    avatar: getImage('avatar_3'),
+  },
+   {
+    id: 4,
+    senderName: 'Diana',
+    senderEmail: 'diana@example.com',
+    subject: 'Issue with delivery',
+    message: 'My order was marked as delivered, but I have not received it. Order ID is ORD-003.',
+    date: '2024-07-29T11:45:00.000Z',
+    status: 'unread' as const,
+    avatar: getImage('avatar_1'),
+  }
+];
+
 
 export type Product = (typeof products)[0] & { originalPrice?: number, rating?: number };
 export type RelatedProduct = typeof relatedProducts[0];
@@ -486,3 +529,4 @@ export type Admin = typeof admins[0];
 export type AdminReview = typeof reviewsForAdmin[0];
 export type AdminQuestion = typeof questionsForAdmin[0];
 export type Offer = typeof offers[0];
+export type Message = typeof messages[0];
