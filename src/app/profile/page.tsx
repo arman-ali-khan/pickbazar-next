@@ -103,18 +103,23 @@ export default function ProfilePage() {
     try {
       setLoading(true);
 
+      const profileData = {
+        id: user.id, // This is the primary key
+        full_name: profile.full_name,
+        bio: profile.bio,
+        contact_number: profile.contact_number,
+        avatar_url: profile.avatar_url,
+        email: user.email,
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: profile.full_name,
-          bio: profile.bio,
-          email: user.email, // Keep email in sync
-        })
-        .select();
+        .upsert(profileData)
+        .select()
+        .single();
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Supabase error during profile update:', JSON.stringify(error, null, 2));
         throw error;
       }
       
@@ -122,8 +127,8 @@ export default function ProfilePage() {
     } catch (error: any) {
       toast({ 
         variant: 'destructive', 
-        title: 'Error updating profile', 
-        description: `Error: ${error.message}. Please check database policies.`
+        title: 'Error Updating Profile', 
+        description: error.message || 'An unknown error occurred. Please check database policies.'
       });
     } finally {
       setLoading(false);
