@@ -197,18 +197,23 @@ export default function AdminOrdersPage() {
 
     const fetchOrders = useCallback(async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .from('orders')
-            .select(`
-                id, order_number, created_at, total_amount, status, shipping_details,
-                profiles ( avatar_url )
-            `)
-            .order('created_at', { ascending: false });
+        const { data, error } = await supabase.rpc('get_admin_orders');
 
         if (error) {
             toast({ variant: 'destructive', title: 'Error fetching orders', description: error.message });
-        } else {
-            setAllOrders(data as OrderWithCustomer[]);
+        } else if (data) {
+            const transformedData = data.map((order: any) => ({
+                id: order.id,
+                order_number: order.order_number,
+                created_at: order.created_at,
+                total_amount: order.total_amount,
+                status: order.status,
+                shipping_details: order.shipping_details,
+                profiles: {
+                    avatar_url: order.customer_avatar_url
+                }
+            }));
+            setAllOrders(transformedData as OrderWithCustomer[]);
         }
         setLoading(false);
     }, [supabase, toast]);
