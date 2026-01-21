@@ -9,6 +9,21 @@ import {
     CardFooter
 } from "@/components/ui/card";
 import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
     Tabs,
     TabsContent,
     TabsList,
@@ -18,7 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { products as allProductsData } from "@/lib/data";
 import Image from "next/image";
-import { File, PlusCircle, Search, ListFilter, Pencil, Trash2, Power, PowerOff } from "lucide-react";
+import { File, PlusCircle, Search, ListFilter, Pencil, Trash2, Power, PowerOff, MoreHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
@@ -28,7 +43,9 @@ const productsWithStatus = allProductsData.map((p, i) => ({
     status: ['active', 'draft', 'archived'][i % 3] as 'active' | 'draft' | 'archived',
 }));
 
-const ProductList = ({ products }: { products: typeof productsWithStatus }) => {
+type ProductWithStatus = (typeof productsWithStatus)[0];
+
+const ProductList = ({ products }: { products: ProductWithStatus[] }) => {
     if (products.length === 0) {
         return (
             <div className="text-center py-20">
@@ -36,57 +53,147 @@ const ProductList = ({ products }: { products: typeof productsWithStatus }) => {
             </div>
         )
     }
-    return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {products.map((product) => (
-                <Card key={product.id} className="flex flex-col overflow-hidden">
-                    <CardHeader className="p-0">
-                        <div className="relative aspect-video bg-muted">
-                            <Image
-                                src={product.image.imageUrl}
-                                alt={product.name}
-                                data-ai-hint={product.image.imageHint}
-                                fill
-                                className="object-contain p-4"
-                            />
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-4 flex-grow space-y-2">
-                        <div className="flex justify-between items-start gap-2">
-                            <h3 className="font-semibold text-lg leading-tight">{product.name}</h3>
-                            <Badge variant={product.status === 'active' ? 'secondary' : product.status === 'draft' ? 'outline' : 'destructive'}>
-                                {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
-                            </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">{product.category}</p>
-                        <div className="flex justify-between items-center pt-2">
-                            <span className="font-bold text-xl">${product.price.toFixed(2)}</span>
-                            <span className="text-sm text-muted-foreground">Stock: {product.stock}</span>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="p-4 pt-0 grid grid-cols-3 gap-2">
-                        <Button variant="outline" size="sm" className="gap-1.5">
-                            <Pencil className="h-3.5 w-3.5" /> Edit
-                        </Button>
-                        <Button variant="outline" size="sm" className="text-destructive hover:text-destructive gap-1.5">
-                            <Trash2 className="h-3.5 w-3.5" /> Delete
-                        </Button>
-                        {product.status === 'active' ? (
-                            <Button variant="outline" size="sm" className="gap-1.5">
-                                <PowerOff className="h-3.5 w-3.5" /> Deactivate
-                            </Button>
-                        ) : (
-                            <Button variant="outline" size="sm" className="gap-1.5">
-                                <Power className="h-3.5 w-3.5" /> Activate
-                            </Button>
-                        )}
-                    </CardFooter>
-                </Card>
-            ))}
-        </div>
-    )
-};
 
+    return (
+        <>
+            {/* Card View for mobile */}
+            <div className="grid grid-cols-2 gap-4 md:hidden">
+                {products.map((product) => (
+                    <Card key={product.id} className="flex flex-col overflow-hidden">
+                        <CardHeader className="p-0">
+                            <div className="relative aspect-square bg-muted">
+                                <Image
+                                    src={product.image.imageUrl}
+                                    alt={product.name}
+                                    data-ai-hint={product.image.imageHint}
+                                    fill
+                                    className="object-contain p-2"
+                                />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-3 flex-grow space-y-2">
+                            <h3 className="font-semibold text-sm leading-tight truncate">{product.name}</h3>
+                             <div className="flex justify-between items-center">
+                                <span className="font-bold text-md">${product.price.toFixed(2)}</span>
+                                <Badge variant={product.status === 'active' ? 'secondary' : product.status === 'draft' ? 'outline' : 'destructive'} className="text-xs">
+                                    {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
+                                </Badge>
+                            </div>
+                        </CardContent>
+                         <CardFooter className="p-2 pt-0 flex justify-end">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                        <span className="sr-only">Open menu</span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuItem>
+                                        <Pencil className="mr-2 h-4 w-4" /> Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-destructive">
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </DropdownMenuItem>
+                                    {product.status === 'active' ? (
+                                        <DropdownMenuItem>
+                                            <PowerOff className="mr-2 h-4 w-4" /> Deactivate
+                                        </DropdownMenuItem>
+                                    ) : (
+                                        <DropdownMenuItem>
+                                            <Power className="mr-2 h-4 w-4" /> Activate
+                                        </DropdownMenuItem>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
+
+            {/* Table View for desktop */}
+            <div className="hidden md:block">
+                 <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead className="hidden w-[100px] sm:table-cell">
+                                <span className="sr-only">Image</span>
+                            </TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Price</TableHead>
+                            <TableHead className="hidden md:table-cell">
+                                Stock
+                            </TableHead>
+                             <TableHead className="hidden md:table-cell">
+                                Category
+                            </TableHead>
+                            <TableHead>
+                                <span className="sr-only">Actions</span>
+                            </TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {products.map((product) => (
+                            <TableRow key={product.id}>
+                                <TableCell className="hidden sm:table-cell">
+                                    <Image
+                                        alt={product.name}
+                                        className="aspect-square rounded-md object-contain"
+                                        height="64"
+                                        src={product.image.imageUrl}
+                                        data-ai-hint={product.image.imageHint}
+                                        width="64"
+                                    />
+                                </TableCell>
+                                <TableCell className="font-medium">
+                                    {product.name}
+                                </TableCell>
+                                <TableCell>
+                                    <Badge variant={product.status === 'active' ? 'secondary' : product.status === 'draft' ? 'outline' : 'destructive'}>
+                                        {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell>${product.price.toFixed(2)}</TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                    {product.stock}
+                                </TableCell>
+                                <TableCell className="hidden md:table-cell">
+                                    {product.category}
+                                </TableCell>
+                                <TableCell>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                aria-haspopup="true"
+                                                size="icon"
+                                                variant="ghost"
+                                            >
+                                                <MoreHorizontal className="h-4 w-4" />
+                                                <span className="sr-only">Toggle menu</span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                            <DropdownMenuItem>Edit</DropdownMenuItem>
+                                            <DropdownMenuItem>Delete</DropdownMenuItem>
+                                            {product.status === 'active' ? (
+                                                <DropdownMenuItem>Deactivate</DropdownMenuItem>
+                                            ) : (
+                                                <DropdownMenuItem>Activate</DropdownMenuItem>
+                                            )}
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </div>
+        </>
+    )
+}
 
 export default function AdminProductsPage() {
     const [searchTerm, setSearchTerm] = useState('');
