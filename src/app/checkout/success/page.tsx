@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -17,7 +16,7 @@ import { useSupabase } from '@/lib/supabase/provider';
 interface OrderItem {
     id: number;
     quantity: number;
-    price: number;
+    price_at_purchase: number;
     products: {
         name: string;
         featured_image_url: string;
@@ -52,7 +51,7 @@ function SuccessContent() {
                 order_items (
                     id,
                     quantity,
-                    price,
+                    price_at_purchase,
                     products (
                         name,
                         featured_image_url
@@ -115,7 +114,7 @@ function SuccessContent() {
                                         <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                                     </div>
                                 </div>
-                                <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                                <p className="font-semibold">${(item.price_at_purchase * item.quantity).toFixed(2)}</p>
                             </div>
                         ))}
                     </div>

@@ -22,7 +22,7 @@ import type { OrderStatus } from '@/lib/data';
 interface OrderItem {
     id: number;
     quantity: number;
-    price: number;
+    price_at_purchase: number;
     products: { name: string; featured_image_url: string; } | null;
 }
 
@@ -66,7 +66,7 @@ export default function MyOrderDetailsPage() {
             .from('orders')
             .select(`
                 *,
-                order_items ( id, quantity, price, products ( name, featured_image_url ) )
+                order_items ( id, quantity, price_at_purchase, products ( name, featured_image_url ) )
             `)
             .eq('user_id', user.id)
             .eq('order_number', orderNumber)
@@ -93,7 +93,7 @@ export default function MyOrderDetailsPage() {
         return null;
     }
 
-    const subtotal = order.order_items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const subtotal = order.order_items.reduce((acc, item) => acc + item.price_at_purchase * item.quantity, 0);
     const shipping = Number(order.total_amount) - subtotal;
 
     return (
@@ -138,7 +138,7 @@ export default function MyOrderDetailsPage() {
                                             <p className="font-semibold">{item.products?.name}</p>
                                             <p className="text-sm text-muted-foreground">Qty: {item.quantity}</p>
                                         </div>
-                                        <p className="font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                                        <p className="font-semibold">${(item.price_at_purchase * item.quantity).toFixed(2)}</p>
                                     </div>
                                 ))}
                             </div>
