@@ -34,6 +34,7 @@ import Link from 'next/link';
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 interface Category {
   id: number;
@@ -52,6 +53,8 @@ export default function AdminCategoriesPage() {
     const { toast } = useToast();
     const [categories, setCategories] = useState<CategoryWithSubcategories[]>([]);
     const [loading, setLoading] = useState(true);
+    const [newSubCategoryNames, setNewSubCategoryNames] = useState<{ [key: number]: string }>({});
+    const [addingSubCategoryId, setAddingSubCategoryId] = useState<number | null>(null);
 
     const getCategories = useCallback(async () => {
         setLoading(true);
@@ -84,6 +87,34 @@ export default function AdminCategoriesPage() {
             toast({ variant: 'destructive', title: 'Error deleting category', description: error.message });
         } else {
             toast({ title: 'Category Deleted' });
+            getCategories(); // Refresh list
+        }
+    };
+
+    const handleAddSubcategory = async (e: React.FormEvent, parentId: number) => {
+        e.preventDefault();
+        const name = newSubCategoryNames[parentId];
+        if (!name || !name.trim()) {
+            toast({ variant: 'destructive', title: 'Name is required' });
+            return;
+        }
+        setAddingSubCategoryId(parentId);
+
+        const slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+
+        const { error } = await supabase.from('categories').insert({
+            name: name.trim(),
+            slug,
+            parent_id: parentId,
+        });
+
+        setAddingSubCategoryId(null);
+
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error adding sub-category', description: error.message });
+        } else {
+            toast({ title: 'Sub-category Added' });
+            setNewSubCategoryNames(prev => ({ ...prev, [parentId]: '' }));
             getCategories(); // Refresh list
         }
     };
@@ -141,10 +172,10 @@ export default function AdminCategoriesPage() {
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </div>
-                                {category.subcategories.length > 0 && (
-                                    <AccordionContent className="px-4 pt-0 pb-4">
-                                        <div className="border-t mt-2 pt-4">
-                                            <h4 className="font-semibold text-sm mb-2">Sub-categories</h4>
+                                <AccordionContent className="px-4 pt-0 pb-4">
+                                    <div className="border-t mt-2 pt-4">
+                                        <h4 className="font-semibold text-sm mb-2">Sub-categories</h4>
+                                        {category.subcategories.length > 0 ? (
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow>
@@ -181,9 +212,23 @@ export default function AdminCategoriesPage() {
                                                 ))}
                                                 </TableBody>
                                             </Table>
-                                        </div>
-                                    </AccordionContent>
-                                )}
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground text-center py-4">No sub-categories yet.</p>
+                                        )}
+                                        <form onSubmit={(e) => handleAddSubcategory(e, category.id)} className="mt-4">
+                                            <div className="flex items-center gap-2">
+                                                <Input
+                                                    placeholder="New sub-category name"
+                                                    value={newSubCategoryNames[category.id] || ''}
+                                                    onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [category.id]: e.target.value }))}
+                                                />
+                                                <Button type="submit" disabled={addingSubCategoryId === category.id}>
+                                                    {addingSubCategoryId === category.id ? "Adding..." : "Add"}
+                                                </Button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </AccordionContent>
                             </AccordionItem>
                         ))}
                     </Accordion>
