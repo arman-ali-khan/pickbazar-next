@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { UploadCloud } from "lucide-react";
+import { UploadCloud, Settings as SettingsIcon, Search, CreditCard, Wrench, Megaphone } from "lucide-react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense } from "react";
 
@@ -24,12 +24,27 @@ function SettingsContent() {
 
     return (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="seo">SEO</TabsTrigger>
-                <TabsTrigger value="payments">Payments</TabsTrigger>
-                <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
-                <TabsTrigger value="promo">Promotions</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="general" className="flex items-center gap-2">
+                    <SettingsIcon className="h-4 w-4" />
+                    <span className="hidden md:inline">General</span>
+                </TabsTrigger>
+                <TabsTrigger value="seo" className="flex items-center gap-2">
+                    <Search className="h-4 w-4" />
+                    <span className="hidden md:inline">SEO</span>
+                </TabsTrigger>
+                <TabsTrigger value="payments" className="flex items-center gap-2">
+                    <CreditCard className="h-4 w-4" />
+                    <span className="hidden md:inline">Payments</span>
+                </TabsTrigger>
+                <TabsTrigger value="maintenance" className="flex items-center gap-2">
+                    <Wrench className="h-4 w-4" />
+                    <span className="hidden md:inline">Maintenance</span>
+                </TabsTrigger>
+                <TabsTrigger value="promo" className="flex items-center gap-2">
+                    <Megaphone className="h-4 w-4" />
+                    <span className="hidden md:inline">Promotions</span>
+                </TabsTrigger>
             </TabsList>
             
             <TabsContent value="general">
