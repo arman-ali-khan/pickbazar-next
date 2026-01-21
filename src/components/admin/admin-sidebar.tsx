@@ -158,7 +158,7 @@ export default function AdminSidebar() {
   
   return (
     <Sidebar collapsible="icon" className="border-r bg-card hidden md:flex">
-       <SidebarHeader className="flex items-center justify-between p-4">
+       <SidebarHeader className={cn("flex items-center justify-between  p-4", state === 'expanded' ? 'flex-row-reverse' : '')}>
         <div className={cn("flex items-center gap-2 overflow-hidden transition-all duration-300", state === 'expanded' ? 'w-auto' : 'w-0')}>
             <Leaf className="h-6 w-6 text-primary" />
             <Link href="/" className="font-bold text-lg">Pickbazar</Link>
