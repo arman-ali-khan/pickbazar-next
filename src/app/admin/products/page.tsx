@@ -32,7 +32,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
-import { PlusCircle, Search, Pencil, Trash2, MoreHorizontal } from "lucide-react";
+import { PlusCircle, Search, Pencil, Trash2, MoreHorizontal, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
@@ -101,6 +101,9 @@ const ProductList = ({ products, onDelete }: { products: ProductWithCategory[], 
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem asChild>
+                                        <Link href={`/products/${product.id}`} target="_blank"><Eye className="mr-2 h-4 w-4" /> Preview</Link>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem asChild>
                                         <Link href={`/admin/products/edit/${product.id}`}><Pencil className="mr-2 h-4 w-4" /> Edit</Link>
                                     </DropdownMenuItem>
                                     <DropdownMenuItem className="text-destructive" onClick={() => onDelete(product.id)}>
@@ -157,9 +160,12 @@ const ProductList = ({ products, onDelete }: { products: ProductWithCategory[], 
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem asChild>
-                                                <Link href={`/admin/products/edit/${product.id}`}>Edit</Link>
+                                                <Link href={`/products/${product.id}`} target="_blank"><Eye className="mr-2 h-4 w-4" /> Preview</Link>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => onDelete(product.id)}>Delete</DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/admin/products/edit/${product.id}`}><Pencil className="mr-2 h-4 w-4" /> Edit</Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem className="text-destructive" onClick={() => onDelete(product.id)}><Trash2 className="mr-2 h-4 w-4" /> Delete</DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableCell>
