@@ -188,7 +188,7 @@ export const orders = [
     },
     date: '2024-07-28T14:48:00.000Z',
     total: 125.50,
-    status: 'Delivered',
+    status: 'Delivered' as const,
     paymentMethod: 'Credit Card',
     items: [
       { id: 1, name: 'Apples', quantity: 2, price: 1.60 },
@@ -204,7 +204,7 @@ export const orders = [
     },
     date: '2024-07-27T10:30:00.000Z',
     total: 89.90,
-    status: 'Processing',
+    status: 'Processing' as const,
     paymentMethod: 'PayPal',
     items: [
       { id: 3, name: 'Blueberries', quantity: 1, price: 3.00 },
@@ -220,7 +220,7 @@ export const orders = [
     },
     date: '2024-07-26T18:00:00.000Z',
     total: 210.00,
-    status: 'Shipped',
+    status: 'Shipped' as const,
     paymentMethod: 'Credit Card',
     items: [
        { id: 5, name: 'Clementines', price: 2.50, quantity: 5 },
@@ -235,7 +235,7 @@ export const orders = [
     },
     date: '2024-07-25T09:15:00.000Z',
     total: 55.20,
-    status: 'Cancelled',
+    status: 'Cancelled' as const,
     paymentMethod: 'Cash on Delivery',
     items: [
        { id: 6, name: 'Sweet Corn', price: 1.80, quantity: 10 },
@@ -250,7 +250,7 @@ export const orders = [
     },
     date: '2024-07-28T11:00:00.000Z',
     total: 45.75,
-    status: 'Pending',
+    status: 'Pending' as const,
     paymentMethod: 'Credit Card',
     items: [
       { id: 7, name: 'Cucumber', quantity: 5, price: 0.75 },
@@ -259,9 +259,18 @@ export const orders = [
   },
 ];
 
+export const transactions = [
+    { id: 'TRN-001', orderId: 'ORD-001', date: '2024-07-28T14:48:00.000Z', amount: 125.50, paymentMethod: 'Credit Card', status: 'Completed' as const },
+    { id: 'TRN-002', orderId: 'ORD-002', date: '2024-07-27T10:30:00.000Z', amount: 89.90, paymentMethod: 'PayPal', status: 'Completed' as const },
+    { id: 'TRN-003', orderId: 'ORD-003', date: '2024-07-26T18:00:00.000Z', amount: 210.00, paymentMethod: 'Credit Card', status: 'Completed' as const },
+    { id: 'TRN-004', orderId: 'ORD-004', date: '2024-07-25T09:15:00.000Z', amount: 55.20, paymentMethod: 'Cash on Delivery', status: 'Pending' as const },
+    { id: 'TRN-005', orderId: 'ORD-005', date: '2024-07-28T11:00:00.000Z', amount: 45.75, paymentMethod: 'Credit Card', status: 'Failed' as const },
+];
+
 
 export type Product = (typeof products)[0] & { originalPrice?: number, rating?: number };
 export type RelatedProduct = typeof relatedProducts[0];
 export type Review = typeof product.reviews[0];
 export type Question = typeof product.questions[0];
 export type Order = typeof orders[0];
+export type Transaction = typeof transactions[0];
