@@ -9,41 +9,26 @@ import {
     CardFooter
 } from "@/components/ui/card";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import {
     Tabs,
     TabsContent,
     TabsList,
     TabsTrigger,
 } from "@/components/ui/tabs"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { products as allProducts } from "@/lib/data";
 import Image from "next/image";
-import { File, PlusCircle, MoreHorizontal, Search, ListFilter } from "lucide-react";
+import { File, PlusCircle, Search, ListFilter, Edit, Trash, Power, PowerOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 
-const productsWithStatus = allProducts.map((p, i) => ({
-    ...p,
-    stock: Math.floor(Math.random() * 100),
-    status: ['active', 'draft', 'archived'][i % 3] as 'active' | 'draft' | 'archived',
-}));
+type ProductWithStatus = (typeof allProducts)[0] & {
+    stock: number;
+    status: 'active' | 'draft' | 'archived';
+};
 
-const ProductList = ({ products }: { products: typeof productsWithStatus }) => {
+
+const ProductList = ({ products, onStatusChange }: { products: ProductWithStatus[], onStatusChange: (productId: number, newStatus: 'active' | 'draft' | 'archived') => void }) => {
     if (products.length === 0) {
         return (
             <div className="text-center py-10">
@@ -52,118 +37,83 @@ const ProductList = ({ products }: { products: typeof productsWithStatus }) => {
         )
     }
     return (
-    <>
-        {/* Desktop View */}
-        <div className="hidden md:block">
-             <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead className="w-[80px]">Image</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Price</TableHead>
-                        <TableHead className="w-[100px]">Stock</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>
-                            <span className="sr-only">Actions</span>
-                        </TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {products.map((product) => (
-                        <TableRow key={product.id}>
-                            <TableCell>
-                                <div className="relative h-16 w-16">
-                                <Image
-                                    src={product.image.imageUrl}
-                                    alt={product.name}
-                                    data-ai-hint={product.image.imageHint}
-                                    fill
-                                    className="rounded-md object-contain"
-                                />
-                                </div>
-                            </TableCell>
-                            <TableCell className="font-medium">{product.name}</TableCell>
-                            <TableCell>
-                                <Badge variant={product.status === 'active' ? 'secondary' : product.status === 'draft' ? 'outline' : 'destructive'}>
-                                    {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
-                                </Badge>
-                            </TableCell>
-                            <TableCell>${product.price.toFixed(2)}</TableCell>
-                            <TableCell>{product.stock}</TableCell>
-                            <TableCell>{product.category}</TableCell>
-                            <TableCell>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                            <span className="sr-only">Toggle menu</span>
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                                        <DropdownMenuItem>Delete</DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </div>
-        {/* Mobile View */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {products.map((product) => (
                 <Card key={product.id}>
-                    <CardHeader className="p-2">
-                        <div className="relative h-32 w-full">
+                    <CardHeader className="flex flex-row items-start gap-4">
+                        <div className="relative h-20 w-20 flex-shrink-0">
                             <Image
                                 src={product.image.imageUrl}
                                 alt={product.name}
                                 data-ai-hint={product.image.imageHint}
                                 fill
-                                className="rounded-md object-contain p-2"
+                                className="rounded-md object-contain"
                             />
                         </div>
-                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost" className="absolute top-2 right-2">
-                                    <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Toggle menu</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                <DropdownMenuItem>Delete</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                        <h3 className="font-semibold">{product.name}</h3>
-                        <p className="text-sm text-muted-foreground">{product.category}</p>
-                        <div className="flex justify-between items-center mt-2">
-                            <span className="font-bold text-lg">${product.price.toFixed(2)}</span>
-                             <Badge variant={product.status === 'active' ? 'secondary' : product.status === 'draft' ? 'outline' : 'destructive'}>
+                        <div className="flex-grow">
+                            <CardTitle className="text-lg">{product.name}</CardTitle>
+                             <p className="text-sm text-muted-foreground">{product.category}</p>
+                             <Badge variant={product.status === 'active' ? 'secondary' : product.status === 'draft' ? 'outline' : 'destructive'} className="mt-2">
                                 {product.status.charAt(0).toUpperCase() + product.status.slice(1)}
                             </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">Stock: {product.stock}</p>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p className="text-muted-foreground">Price</p>
+                            <p className="font-semibold">${product.price.toFixed(2)}</p>
+                        </div>
+                         <div>
+                            <p className="text-muted-foreground">Stock</p>
+                            <p className="font-semibold">{product.stock}</p>
+                        </div>
                     </CardContent>
+                    <CardFooter className="flex justify-start gap-2">
+                        <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4 mr-2" />
+                            Edit
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => onStatusChange(product.id, product.status === 'active' ? 'draft' : 'active')}>
+                            {product.status === 'active' ? (
+                                <>
+                                <PowerOff className="h-4 w-4 mr-2" />
+                                Deactivate
+                                </>
+                             ) : (
+                                 <>
+                                <Power className="h-4 w-4 mr-2" />
+                                Activate
+                                </>
+                             )}
+                        </Button>
+                        <Button variant="destructive" size="sm">
+                            <Trash className="h-4 w-4 mr-2" />
+                            Delete
+                        </Button>
+                    </CardFooter>
                 </Card>
             ))}
         </div>
-    </>
     )
 };
 
 
 export default function AdminProductsPage() {
+    const [products, setProducts] = useState<ProductWithStatus[]>(() => 
+        allProducts.map((p, i) => ({
+            ...p,
+            stock: Math.floor(Math.random() * 100),
+            status: ['active', 'draft', 'archived'][i % 3] as 'active' | 'draft' | 'archived',
+        }))
+    );
     const [searchTerm, setSearchTerm] = useState('');
+
+    const handleStatusChange = (productId: number, newStatus: 'active' | 'draft' | 'archived') => {
+        setProducts(currentProducts => currentProducts.map(p => p.id === productId ? { ...p, status: newStatus } : p));
+    };
     
     const filterAndSearch = (status?: 'active' | 'draft' | 'archived') => {
-        let filtered = productsWithStatus;
+        let filtered = products;
         if (status) {
             filtered = filtered.filter(p => p.status === status);
         }
@@ -173,7 +123,7 @@ export default function AdminProductsPage() {
         return filtered;
     }
 
-    const allProducts = filterAndSearch();
+    const allProductsFiltered = filterAndSearch();
     const activeProducts = filterAndSearch('active');
     const draftProducts = filterAndSearch('draft');
     const archivedProducts = filterAndSearch('archived');
@@ -228,21 +178,21 @@ export default function AdminProductsPage() {
                 </CardHeader>
                 <CardContent>
                     <TabsContent value="all">
-                        <ProductList products={allProducts} />
+                        <ProductList products={allProductsFiltered} onStatusChange={handleStatusChange} />
                     </TabsContent>
                      <TabsContent value="active">
-                        <ProductList products={activeProducts} />
+                        <ProductList products={activeProducts} onStatusChange={handleStatusChange} />
                     </TabsContent>
                      <TabsContent value="draft">
-                        <ProductList products={draftProducts} />
+                        <ProductList products={draftProducts} onStatusChange={handleStatusChange} />
                     </TabsContent>
                      <TabsContent value="archived">
-                        <ProductList products={archivedProducts} />
+                        <ProductList products={archivedProducts} onStatusChange={handleStatusChange} />
                     </TabsContent>
                 </CardContent>
                 <CardFooter>
                     <div className="text-xs text-muted-foreground">
-                        Showing <strong>1-{allProducts.length}</strong> of <strong>{productsWithStatus.length}</strong> products
+                        Showing <strong>1-{allProductsFiltered.length}</strong> of <strong>{products.length}</strong> products
                     </div>
                 </CardFooter>
             </Card>
