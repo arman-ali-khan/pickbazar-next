@@ -12,7 +12,7 @@ export default function TermsAndConditionsPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-3xl">Terms and Conditions</CardTitle>
-              <p className="text-sm text-muted-foreground">Last updated: {new Date().toLocaleDateString()}</p>
+              <p className="text-sm text-muted-foreground" suppressHydrationWarning>Last updated: {new Date().toLocaleDateString()}</p>
             </CardHeader>
             <CardContent className="space-y-6 text-muted-foreground leading-relaxed">
               <section>

@@ -100,7 +100,7 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Date</span>
-                                <span>{format(new Date(order.date), 'PP')}</span>
+                                <span suppressHydrationWarning>{format(new Date(order.date), 'PP')}</span>
                             </div>
                              <div className="flex justify-between items-center text-sm">
                                  <span className="text-muted-foreground">Status</span>
@@ -141,7 +141,7 @@ const OrderList = ({ orders }: { orders: Order[] }) => {
                                         </div>
                                     </div>
                                 </TableCell>
-                                <TableCell>{format(new Date(order.date), 'PP')}</TableCell>
+                                <TableCell suppressHydrationWarning>{format(new Date(order.date), 'PP')}</TableCell>
                                 <TableCell>${order.total.toFixed(2)}</TableCell>
                                 <TableCell>{order.paymentMethod}</TableCell>
                                 <TableCell>
