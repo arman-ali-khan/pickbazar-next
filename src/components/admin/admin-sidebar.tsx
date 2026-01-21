@@ -35,7 +35,7 @@ import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import React from 'react';
+import React, { Suspense } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const navItems = [
@@ -173,7 +173,9 @@ export default function AdminSidebar() {
             {navItems.map(item => (
                 <SidebarNavLink key={item.href} {...item} />
             ))}
-            <SettingsAccordion />
+            <Suspense fallback={null}>
+              <SettingsAccordion />
+            </Suspense>
         </SidebarMenu>
       </SidebarContent>
 
