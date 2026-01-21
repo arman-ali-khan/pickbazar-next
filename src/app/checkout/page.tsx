@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
@@ -11,13 +12,92 @@ import { useAppSelector } from '@/lib/redux/hooks';
 import { selectSubtotal, selectCartItems } from '@/lib/redux/slices/cartSlice';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
-import Link from 'next/link';
+import { useSupabase } from '@/lib/supabase/provider';
+import { useRouter } from 'next/navigation';
+
+interface ShippingInfo {
+  firstName: string;
+  lastName: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  email: string;
+}
 
 export default function CheckoutPage() {
     const cartItems = useAppSelector(selectCartItems);
     const subtotal = useAppSelector(selectSubtotal);
     const shippingCost = 5.00;
     const total = subtotal + shippingCost;
+    
+    const { supabase, user } = useSupabase();
+    const router = useRouter();
+
+    const [shippingInfo, setShippingInfo] = useState<ShippingInfo>({
+      firstName: '',
+      lastName: '',
+      address: '',
+      city: '',
+      state: '',
+      zip: '',
+      email: '',
+    });
+
+    useEffect(() => {
+        if (user) {
+            // Pre-fill email from auth user
+            setShippingInfo(prev => ({ ...prev, email: user.email || '' }));
+
+            // Fetch profile and address from database
+            const fetchUserData = async () => {
+                const { data: profileData, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('full_name')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (profileData) {
+                    const [firstName, ...lastNameParts] = (profileData.full_name || '').split(' ');
+                    setShippingInfo(prev => ({
+                        ...prev,
+                        firstName: firstName || '',
+                        lastName: lastNameParts.join(' ') || '',
+                    }));
+                }
+
+                const { data: addressData, error: addressError } = await supabase
+                    .from('addresses')
+                    .select('*')
+                    .eq('user_id', user.id)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (addressData) {
+                    setShippingInfo(prev => ({
+                        ...prev,
+                        address: addressData.street_address || '',
+                        city: addressData.city || '',
+                        state: addressData.state || '',
+                        zip: addressData.zip || '',
+                    }));
+                }
+            };
+            fetchUserData();
+        }
+    }, [user, supabase]);
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setShippingInfo(prev => ({ ...prev, [id]: value }));
+    };
+    
+    const handleProceedToPayment = () => {
+        // Save shipping info to localStorage to pass to next step
+        localStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
+        router.push('/checkout/payment');
+    };
 
   return (
     <div className="bg-muted/20 min-h-screen">
@@ -35,35 +115,35 @@ export default function CheckoutPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="first-name">First Name</Label>
-                        <Input id="first-name" placeholder="John" />
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input id="firstName" placeholder="John" value={shippingInfo.firstName} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="last-name">Last Name</Label>
-                        <Input id="last-name" placeholder="Doe" />
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input id="lastName" placeholder="Doe" value={shippingInfo.lastName} onChange={handleInputChange} />
                     </div>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="address">Address</Label>
-                    <Input id="address" placeholder="123 Market St" />
+                    <Input id="address" placeholder="123 Market St" value={shippingInfo.address} onChange={handleInputChange} />
                 </div>
                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="city">City</Label>
-                        <Input id="city" placeholder="San Francisco" />
+                        <Input id="city" placeholder="San Francisco" value={shippingInfo.city} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="state">State</Label>
-                        <Input id="state" placeholder="CA" />
+                        <Input id="state" placeholder="CA" value={shippingInfo.state} onChange={handleInputChange} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="zip">ZIP Code</Label>
-                        <Input id="zip" placeholder="94103" />
+                        <Input id="zip" placeholder="94103" value={shippingInfo.zip} onChange={handleInputChange} />
                     </div>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="you@example.com" />
+                    <Input id="email" type="email" placeholder="you@example.com" value={shippingInfo.email} onChange={handleInputChange} />
                 </div>
               </CardContent>
             </Card>
@@ -106,8 +186,8 @@ export default function CheckoutPage() {
                         <p>${total.toFixed(2)}</p>
                     </div>
                 </div>
-                 <Button asChild className="w-full mt-6 h-12">
-                    <Link href="/checkout/payment">Proceed to Payment</Link>
+                 <Button onClick={handleProceedToPayment} className="w-full mt-6 h-12">
+                    Proceed to Payment
                 </Button>
               </CardContent>
             </Card>

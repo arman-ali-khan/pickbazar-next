@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
@@ -15,6 +15,17 @@ import { Input } from '@/components/ui/input';
 import { CreditCard, Landmark, Smartphone, ShieldCheck } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
+
+interface ShippingInfo {
+  firstName: string;
+  lastName: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  email: string;
+}
 
 export default function PaymentPage() {
     const router = useRouter();
@@ -24,6 +35,18 @@ export default function PaymentPage() {
     const shippingCost = 5.00;
     const total = subtotal + shippingCost;
     const [selectedMethod, setSelectedMethod] = useState('card');
+    const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
+
+    useEffect(() => {
+        // Load shipping info from localStorage
+        const savedInfo = localStorage.getItem('shippingInfo');
+        if (savedInfo) {
+            setShippingInfo(JSON.parse(savedInfo));
+        } else {
+            // If no info, redirect back to checkout start
+            router.push('/checkout');
+        }
+    }, [router]);
     
     const handlePayment = () => {
         const orderData = {
@@ -34,13 +57,36 @@ export default function PaymentPage() {
         const query = encodeURIComponent(JSON.stringify(orderData));
         router.push(`/checkout/success?data=${query}`);
         dispatch(clearCart());
+        // Clean up localStorage
+        localStorage.removeItem('shippingInfo');
     };
 
   return (
     <div className="bg-muted/20 min-h-screen">
       <Header />
       <main className="container py-12">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-2xl mx-auto space-y-8">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle>Shipping To</CardTitle>
+                    <Button variant="link" asChild className="p-0 h-auto">
+                        <Link href="/checkout">Change</Link>
+                    </Button>
+                </CardHeader>
+                <CardContent>
+                    {shippingInfo ? (
+                         <div className="text-sm text-muted-foreground">
+                            <p className="font-semibold text-foreground">{shippingInfo.firstName} {shippingInfo.lastName}</p>
+                            <p>{shippingInfo.address}</p>
+                            <p>{shippingInfo.city}, {shippingInfo.state} {shippingInfo.zip}</p>
+                            <p>{shippingInfo.email}</p>
+                         </div>
+                    ) : (
+                        <p className="text-sm text-muted-foreground">Loading shipping details...</p>
+                    )}
+                </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-center text-2xl">Choose Payment Method</CardTitle>
