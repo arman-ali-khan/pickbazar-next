@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { orders as allOrdersData, products as allProducts } from '@/lib/data';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -33,7 +33,8 @@ const getStatusVariant = (status: Order['status']) => {
 };
 
 
-export default function OrderDetailsPage({ params }: { params: { id: string } }) {
+export default function OrderDetailsPage() {
+    const params = useParams<{ id: string }>();
     const order = allOrdersData.find(o => o.id === params.id);
     const { toast } = useToast();
     
