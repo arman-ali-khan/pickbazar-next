@@ -1,8 +1,15 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { DollarSign, ShoppingCart, Users, Box } from "lucide-react";
+import { createClient } from '@/lib/supabase/server';
+import RecentReviews from '@/components/admin/recent-reviews';
+import type { AdminReview } from "@/lib/data";
 
-export default function AdminDashboardPage() {
+export default async function AdminDashboardPage() {
+    const supabase = createClient();
+    const { data: allReviewsData } = await supabase.rpc('get_admin_reviews');
+    const pendingReviews = (allReviewsData || []).filter((review: AdminReview) => review.status === 'Pending').slice(0, 5);
+
     return (
         <div>
             <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
@@ -47,6 +54,11 @@ export default function AdminDashboardPage() {
                         <p className="text-xs text-muted-foreground">201 active</p>
                     </CardContent>
                 </Card>
+            </div>
+            <div className="grid gap-6 mt-6 lg:grid-cols-2">
+                <div className="lg:col-span-1">
+                    <RecentReviews reviews={pendingReviews} />
+                </div>
             </div>
         </div>
     );
