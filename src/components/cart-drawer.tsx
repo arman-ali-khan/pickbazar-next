@@ -50,11 +50,6 @@ export default function CartDrawer() {
               <ShoppingBag className="h-6 w-6" />
               <span className="text-lg font-semibold text-gray-800">{totalItems} Items</span>
             </SheetTitle>
-            <SheetClose asChild>
-              <Button variant="ghost" size="icon" className="rounded-full bg-gray-100 w-8 h-8">
-                <X className="h-5 w-5 text-gray-500" />
-              </Button>
-            </SheetClose>
           </div>
           
           <div className="flex-1 overflow-y-auto">
@@ -96,8 +91,8 @@ export default function CartDrawer() {
               )}
           </div>
           
-          <SheetFooter className="p-6 bg-white border-t mt-auto">
-              <Button className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 text-base font-semibold relative" asChild>
+          <SheetFooter className="p-6 bg-white border-t mt-auto sm:flex-col sm:justify-center sm:space-x-0 sm:gap-2">
+              <Button disabled={cartItems.length === 0} className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 text-base font-semibold relative" asChild>
                   <Link href="/checkout" className="flex items-center justify-center text-white">
                       Checkout
                       <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-primary rounded-full px-5 py-2.5 text-sm font-bold">
@@ -105,6 +100,11 @@ export default function CartDrawer() {
                       </span>
                   </Link>
               </Button>
+              <SheetClose asChild>
+                <Button variant="ghost" className="w-full text-muted-foreground">
+                    <X className="h-4 w-4 mr-2" /> Close
+                </Button>
+              </SheetClose>
           </SheetFooter>
         </SheetContent>
       </Sheet>
