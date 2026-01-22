@@ -32,10 +32,10 @@ function ShopContent() {
   const searchParams = useSearchParams();
   const { supabase } = useSupabase();
 
-  const categoryQuery = searchParams.get('category');
+  const categoriesQuery = searchParams.get('categories');
   const offerProductsQuery = searchParams.get('offer_products');
 
-  const initialCategories = useMemo(() => (categoryQuery ? [categoryQuery] : []), [categoryQuery]);
+  const initialCategories = useMemo(() => (categoriesQuery ? categoriesQuery.split(',') : []), [categoriesQuery]);
   const initialProductIds = useMemo(() => (offerProductsQuery ? offerProductsQuery.split(',').map(Number) : []), [offerProductsQuery]);
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);

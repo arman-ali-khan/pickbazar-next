@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,7 +11,7 @@ import { ChevronLeft, CalendarIcon, UploadCloud, X } from 'lucide-react';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem, DropdownMenuGroup, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
@@ -21,16 +22,8 @@ import React from 'react';
 
 type OfferStatus = 'active' | 'inactive' | 'expired';
 
-interface SelectableProduct {
-  id: number;
-  name: string;
-  categories: { id: number; name: string }[];
-}
-
-interface Category {
-  id: number;
-  name: string;
-}
+interface Category { id: number; name: string; parent_id: number | null; }
+interface HierarchicalCategory extends Category { subcategories: Category[]; }
 
 export default function EditOfferPage() {
     const router = useRouter();
@@ -49,11 +42,9 @@ export default function EditOfferPage() {
     
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-    const [allProducts, setAllProducts] = useState<SelectableProduct[]>([]);
-    const [allCategories, setAllCategories] = useState<Category[]>([]);
-    const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
-    const [productSearch, setProductSearch] = useState('');
+    
+    const [allCategories, setAllCategories] = useState<HierarchicalCategory[]>([]);
+    const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -64,7 +55,7 @@ export default function EditOfferPage() {
             return;
         }
 
-        const fetchOfferAndProducts = async () => {
+        const fetchOfferAndData = async () => {
             const { data: offerData, error: offerError } = await supabase.from('offers').select('*').eq('id', offerId).single();
             
             if (offerError || !offerData) {
@@ -73,10 +64,7 @@ export default function EditOfferPage() {
                 return;
             }
 
-            const [productsRes, categoriesRes] = await Promise.all([
-                supabase.from('products').select('id, name, product_categories(categories(id, name))'),
-                supabase.from('categories').select('id, name').order('name')
-            ]);
+            const { data: categoriesData, error: categoriesError } = await supabase.from('categories').select('id, name, parent_id').order('name');
             
             setTitle(offerData.title);
             setSubtitle(offerData.subtitle || '');
@@ -86,23 +74,23 @@ export default function EditOfferPage() {
             setStartDate(new Date(offerData.start_date));
             setEndDate(new Date(offerData.end_date));
             setImagePreview(offerData.image_url);
-            setSelectedProductIds(offerData.product_ids || []);
+            setSelectedCategoryIds(offerData.category_ids || []);
             
-            if (productsRes.data) {
-                const productsWithCategories = productsRes.data.map((p: any) => ({
-                    id: p.id,
-                    name: p.name,
-                    categories: p.product_categories.map((pc: any) => pc.categories).filter(Boolean)
+            if (categoriesData) {
+                const fetchedCategories: Category[] = categoriesData;
+                const topLevel = fetchedCategories.filter(c => !c.parent_id);
+                const children = fetchedCategories.filter(c => c.parent_id);
+
+                const hierarchical = topLevel.map(parent => ({
+                    ...parent,
+                    subcategories: children.filter(child => child.parent_id === parent.id)
                 }));
-                setAllProducts(productsWithCategories);
-            }
-            if (categoriesRes.data) {
-                setAllCategories(categoriesRes.data);
+                setAllCategories(hierarchical);
             }
 
             setLoading(false);
         };
-        fetchOfferAndProducts();
+        fetchOfferAndData();
     }, [offerId, supabase, toast]);
     
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -131,11 +119,11 @@ export default function EditOfferPage() {
         return data.secure_url;
     };
 
-    const handleProductSelection = (productId: number) => {
-        setSelectedProductIds(prev =>
-            prev.includes(productId)
-            ? prev.filter(id => id !== productId)
-            : [...prev, productId]
+    const handleCategorySelection = (categoryId: number) => {
+        setSelectedCategoryIds(prev =>
+            prev.includes(categoryId)
+            ? prev.filter(id => id !== categoryId)
+            : [...prev, categoryId]
         );
     };
     
@@ -158,7 +146,7 @@ export default function EditOfferPage() {
                 start_date: startDate?.toISOString(),
                 end_date: endDate?.toISOString(),
                 image_url: imageUrl,
-                product_ids: selectedProductIds,
+                category_ids: selectedCategoryIds,
             };
 
             const { error } = await supabase.from('offers').update(offerData).eq('id', offerId);
@@ -279,48 +267,39 @@ export default function EditOfferPage() {
                                 </Select>
                             </div>
                             <div className="grid gap-3">
-                                <Label>Link Products (Optional)</Label>
+                                <Label>Link Categories (Optional)</Label>
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                         <Button variant="outline" className="w-full justify-start font-normal h-auto text-left">
-                                            {selectedProductIds.length > 0 ? `${selectedProductIds.length} products selected` : "Select products"}
+                                            {selectedCategoryIds.length > 0 ? `${selectedCategoryIds.length} categories selected` : "Select categories"}
                                         </Button>
                                     </DropdownMenuTrigger>
-                                     <DropdownMenuContent className="w-80 p-0 max-h-72 flex flex-col" align="start">
-                                        <div className="p-2 border-b sticky top-0 bg-popover">
-                                            <Input
-                                                placeholder="Search products..."
-                                                value={productSearch}
-                                                onChange={(e) => setProductSearch(e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="overflow-y-auto">
-                                            {allCategories.map(category => {
-                                                const productsInCategory = allProducts.filter(p => 
-                                                    p.categories.some(cat => cat.id === category.id) &&
-                                                    p.name.toLowerCase().includes(productSearch.toLowerCase())
-                                                );
-
-                                                if (productsInCategory.length === 0) return null;
-
-                                                return (
-                                                    <DropdownMenuGroup key={category.id}>
-                                                        <DropdownMenuLabel className="px-2 py-1.5">{category.name}</DropdownMenuLabel>
-                                                        {productsInCategory.map(product => (
-                                                            <DropdownMenuCheckboxItem
-                                                                key={product.id}
-                                                                checked={selectedProductIds.includes(product.id)}
-                                                                onCheckedChange={() => handleProductSelection(product.id)}
-                                                                onSelect={(e) => e.preventDefault()}
-                                                                className="pl-4"
-                                                            >
-                                                                {product.name}
-                                                            </DropdownMenuCheckboxItem>
-                                                        ))}
-                                                    </DropdownMenuGroup>
-                                                )
-                                            })}
-                                        </div>
+                                    <DropdownMenuContent className="w-80 p-2 max-h-72 overflow-y-auto" align="start">
+                                         {allCategories.map(cat => (
+                                            <React.Fragment key={cat.id}>
+                                                <DropdownMenuCheckboxItem
+                                                checked={selectedCategoryIds.includes(cat.id)}
+                                                onCheckedChange={() => handleCategorySelection(cat.id)}
+                                                onSelect={(e) => e.preventDefault()}
+                                                >
+                                                {cat.name}
+                                                </DropdownMenuCheckboxItem>
+                                                {cat.subcategories.length > 0 && (
+                                                <div className="pl-6">
+                                                    {cat.subcategories.map(sub => (
+                                                    <DropdownMenuCheckboxItem
+                                                        key={sub.id}
+                                                        checked={selectedCategoryIds.includes(sub.id)}
+                                                        onCheckedChange={() => handleCategorySelection(sub.id)}
+                                                        onSelect={(e) => e.preventDefault()}
+                                                    >
+                                                        {sub.name}
+                                                    </DropdownMenuCheckboxItem>
+                                                    ))}
+                                                </div>
+                                                )}
+                                            </React.Fragment>
+                                            ))}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
