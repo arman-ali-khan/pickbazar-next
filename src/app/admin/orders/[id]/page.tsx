@@ -73,12 +73,13 @@ export default function OrderDetailsPage() {
         const { data, error } = await supabase
             .rpc('get_admin_order_details', { p_order_number: orderNumber });
 
-        if (error || !data) {
+        if (error || !data || data.length === 0) {
             toast({ variant: "destructive", title: "Error", description: `Order not found. ${error?.message || ''}`.trim() });
             notFound();
         } else {
-            setOrder(data as OrderDetails);
-            setStatus(data.status as OrderStatus);
+            const orderData = data[0] as OrderDetails;
+            setOrder(orderData);
+            setStatus(orderData.status as OrderStatus);
         }
         setLoading(false);
     }, [orderNumber, supabase, toast]);
@@ -87,10 +88,6 @@ export default function OrderDetailsPage() {
         fetchOrder();
     }, [fetchOrder]);
     
-    const handleStatusChange = (newStatus: OrderStatus) => {
-        setStatus(newStatus);
-    };
-
     const handleUpdate = async () => {
         if (!order) return;
         const { error } = await supabase
@@ -117,7 +114,7 @@ export default function OrderDetailsPage() {
         return null;
     }
 
-    const subtotal = order.order_items.reduce((acc, item) => acc + item.price_at_purchase * item.quantity, 0);
+    const subtotal = (order.order_items || []).reduce((acc, item) => acc + item.price_at_purchase * item.quantity, 0);
     const shipping = Number(order.total_amount) + (order.discount_amount || 0) - subtotal;
 
     return (
@@ -149,7 +146,7 @@ export default function OrderDetailsPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
-                                {order.order_items.map(item => (
+                                {(order.order_items || []).map(item => (
                                     <div key={item.id} className="flex items-center gap-4">
                                         <div className="relative h-16 w-16 rounded-md overflow-hidden border">
                                         <Image 
