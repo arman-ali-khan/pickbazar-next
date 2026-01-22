@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSupabase } from '@/lib/supabase/provider';
 import TiptapEditor from '@/components/tiptap-editor';
 import { Textarea } from '@/components/ui/textarea';
+import { Separator } from '@/components/ui/separator';
 
 type PageData = {
     slug: string;
@@ -125,7 +126,74 @@ const PageEditor = () => {
                     </div>
                 );
             case 'about':
-                return <p>Editing for the 'About Us' page requires specific fields and is not yet implemented in this generic editor.</p>;
+                const handleAboutChange = (field: string, value: string) => {
+                    setContent((prev: any) => ({ ...prev, [field]: value }));
+                };
+                const handleTeamChange = (index: number, field: 'name' | 'role' | 'bio', value: string) => {
+                    const newTeam = [...content.team];
+                    newTeam[index][field] = value;
+                    setContent({ ...content, team: newTeam });
+                };
+
+                return (
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <Label>Page Main Title</Label>
+                            <Input value={content.title || ''} onChange={(e) => handleAboutChange('title', e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Page Subtitle</Label>
+                            <Textarea value={content.subtitle || ''} onChange={(e) => handleAboutChange('subtitle', e.target.value)} />
+                        </div>
+
+                        <Separator />
+
+                        <div className="space-y-2">
+                            <Label>Mission Section Title</Label>
+                            <Input value={content.missionTitle || ''} onChange={(e) => handleAboutChange('missionTitle', e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Mission Section Text</Label>
+                            <TiptapEditor
+                                content={content.missionText || ''}
+                                onChange={(newText) => handleAboutChange('missionText', newText)}
+                            />
+                        </div>
+
+                        <Separator />
+
+                        <div className="space-y-2">
+                            <Label>Team Section Title</Label>
+                            <Input value={content.teamTitle || ''} onChange={(e) => handleAboutChange('teamTitle', e.target.value)} />
+                        </div>
+                        <div className="space-y-4">
+                            <Label>Team Members</Label>
+                            {content.team.map((member: any, index: number) => (
+                                <Card key={index} className="p-4">
+                                    <div className="space-y-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label>Name</Label>
+                                                <Input value={member.name} onChange={(e) => handleTeamChange(index, 'name', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Role</Label>
+                                                <Input value={member.role} onChange={(e) => handleTeamChange(index, 'role', e.target.value)} />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Bio</Label>
+                                            <TiptapEditor
+                                                content={member.bio}
+                                                onChange={(newBio) => handleTeamChange(index, 'bio', newBio)}
+                                            />
+                                        </div>
+                                    </div>
+                                </Card>
+                            ))}
+                        </div>
+                    </div>
+                );
             default:
                 return <p>No editor available for this page type.</p>;
         }

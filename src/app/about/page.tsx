@@ -23,21 +23,18 @@ const staticTeamMembers = [
     name: 'John Doe',
     role: 'CEO & Founder',
     avatar: { src: 'https://picsum.photos/seed/ceo/200/200', hint: 'man smiling' },
-    bio: 'John is passionate about bringing fresh, local produce to every household. His vision drives our mission.',
     social: { linkedin: '#', twitter: '#' },
   },
   {
     name: 'Jane Smith',
     role: 'Head of Operations',
     avatar: { src: 'https://picsum.photos/seed/coo/200/200', hint: 'woman portrait' },
-    bio: 'Jane ensures that from farm to your door, every step is seamless, efficient, and meets our quality standards.',
     social: { linkedin: '#', twitter: '#' },
   },
   {
     name: 'Peter Jones',
     role: 'Lead Developer',
     avatar: { src: 'https://picsum.photos/seed/dev/200/200', hint: 'man glasses' },
-    bio: 'Peter is the mastermind behind our user-friendly platform, constantly innovating to improve your shopping experience.',
     social: { linkedin: '#', twitter: '#' },
   },
 ];
@@ -89,9 +86,10 @@ export default async function AboutPage() {
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <div className="text-center text-white p-8">
                 <h2 className="text-3xl font-bold mb-4">{pageContent.missionTitle}</h2>
-                <p className="max-w-2xl mx-auto">
-                  {pageContent.missionText}
-                </p>
+                <div
+                  className="prose prose-invert max-w-2xl mx-auto"
+                  dangerouslySetInnerHTML={{ __html: pageContent.missionText }}
+                />
               </div>
             </div>
           </div>
@@ -111,7 +109,10 @@ export default async function AboutPage() {
                   <p className="text-primary font-semibold">{member.role}</p>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground mb-4">{member.bio}</p>
+                  <div
+                    className="prose prose-sm dark:prose-invert text-muted-foreground mb-4 max-w-none"
+                    dangerouslySetInnerHTML={{ __html: member.bio }}
+                  />
                   <div className="flex justify-center gap-4">
                     <Button variant="ghost" size="icon" asChild>
                       <a href={member.social.linkedin}><Linkedin className="h-5 w-5 text-muted-foreground" /></a>
