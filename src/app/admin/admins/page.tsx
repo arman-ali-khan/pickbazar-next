@@ -48,7 +48,7 @@ type Admin = {
     id: string;
     full_name: string;
     email: string;
-    role: 'admin' | 'manager' | 'super-admin';
+    role: string;
     avatar_url: string;
 }
 
