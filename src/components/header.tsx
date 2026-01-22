@@ -9,10 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuPortal,
-  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
@@ -111,11 +107,6 @@ export default function Header() {
   const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
 
   const [hasNewNotification, setHasNewNotification] = useState(true);
-  const notifications = [
-    { id: 1, text: 'Your order #12345 has been shipped.' },
-    { id: 2, text: 'A new promotion on fresh vegetables is available.' },
-    { id: 3, text: 'Your password was changed successfully.' },
-  ];
 
   useEffect(() => {
     const handleScroll = () => {
@@ -260,18 +251,13 @@ export default function Header() {
                           <span>My Wishlist</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuSub>
-                        <DropdownMenuSubTrigger onFocus={() => setHasNewNotification(false)}>
-                            <Bell className="mr-2 h-4 w-4" />
-                            <span>Notifications</span>
-                             {hasNewNotification && <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />}
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuPortal>
-                            <DropdownMenuSubContent>
-                                {notifications.map(n => <DropdownMenuItem key={n.id} className="text-xs">{n.text}</DropdownMenuItem>)}
-                            </DropdownMenuSubContent>
-                        </DropdownMenuPortal>
-                      </DropdownMenuSub>
+                      <DropdownMenuItem asChild onSelect={() => setHasNewNotification(false)}>
+                        <Link href="/profile/notifications">
+                          <Bell className="mr-2 h-4 w-4" />
+                          <span>Notifications</span>
+                          {hasNewNotification && <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />}
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleLogout}>
                         Logout
