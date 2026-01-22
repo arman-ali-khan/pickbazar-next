@@ -11,17 +11,27 @@ import { ChevronLeft, CalendarIcon, UploadCloud, X } from 'lucide-react';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem, DropdownMenuGroup, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Image from 'next/image';
 import { useSupabase } from '@/lib/supabase/provider';
-import type { Product } from '@/lib/data';
 import React from 'react';
 
 type OfferStatus = 'active' | 'inactive' | 'expired';
+
+interface SelectableProduct {
+  id: number;
+  name: string;
+  categories: { id: number; name: string }[];
+}
+
+interface Category {
+  id: number;
+  name: string;
+}
 
 export default function EditOfferPage() {
     const router = useRouter();
@@ -41,7 +51,8 @@ export default function EditOfferPage() {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-    const [allProducts, setAllProducts] = useState<Product[]>([]);
+    const [allProducts, setAllProducts] = useState<SelectableProduct[]>([]);
+    const [allCategories, setAllCategories] = useState<Category[]>([]);
     const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
 
     const [loading, setLoading] = useState(true);
@@ -62,8 +73,11 @@ export default function EditOfferPage() {
                 return;
             }
 
-            const { data: productsData, error: productsError } = await supabase.from('products').select('id, name');
-
+            const [productsRes, categoriesRes] = await Promise.all([
+                supabase.from('products').select('id, name, product_categories(categories(id, name))'),
+                supabase.from('categories').select('id, name').order('name')
+            ]);
+            
             setTitle(offerData.title);
             setSubtitle(offerData.subtitle || '');
             setCode(offerData.code);
@@ -74,8 +88,16 @@ export default function EditOfferPage() {
             setImagePreview(offerData.image_url);
             setSelectedProductIds(offerData.product_ids || []);
             
-            if (productsData) {
-                setAllProducts(productsData as any[]);
+            if (productsRes.data) {
+                const productsWithCategories = productsRes.data.map((p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                    categories: p.product_categories.map((pc: any) => pc.categories).filter(Boolean)
+                }));
+                setAllProducts(productsWithCategories);
+            }
+            if (categoriesRes.data) {
+                setAllCategories(categoriesRes.data);
             }
 
             setLoading(false);
@@ -264,17 +286,31 @@ export default function EditOfferPage() {
                                             {selectedProductIds.length > 0 ? `${selectedProductIds.length} products selected` : "Select products"}
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-64 p-2 max-h-60 overflow-y-auto" align="start">
-                                        {allProducts.map(product => (
-                                            <DropdownMenuCheckboxItem
-                                                key={product.id}
-                                                checked={selectedProductIds.includes(product.id)}
-                                                onCheckedChange={() => handleProductSelection(product.id)}
-                                                onSelect={(e) => e.preventDefault()}
-                                            >
-                                                {product.name}
-                                            </DropdownMenuCheckboxItem>
-                                        ))}
+                                    <DropdownMenuContent className="w-64 p-0 max-h-72 overflow-y-auto" align="start">
+                                        {allCategories.map(category => {
+                                            const productsInCategory = allProducts.filter(p => 
+                                                p.categories.some(cat => cat.id === category.id)
+                                            );
+
+                                            if (productsInCategory.length === 0) return null;
+
+                                            return (
+                                                <DropdownMenuGroup key={category.id}>
+                                                    <DropdownMenuLabel className="px-2 py-1.5">{category.name}</DropdownMenuLabel>
+                                                    {productsInCategory.map(product => (
+                                                        <DropdownMenuCheckboxItem
+                                                            key={product.id}
+                                                            checked={selectedProductIds.includes(product.id)}
+                                                            onCheckedChange={() => handleProductSelection(product.id)}
+                                                            onSelect={(e) => e.preventDefault()}
+                                                            className="pl-4"
+                                                        >
+                                                            {product.name}
+                                                        </DropdownMenuCheckboxItem>
+                                                    ))}
+                                                </DropdownMenuGroup>
+                                            )
+                                        })}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
