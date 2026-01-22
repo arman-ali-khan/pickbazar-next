@@ -220,7 +220,7 @@ export default function OrderDetailsPage() {
                              <CardTitle>Order Status</CardTitle>
                         </CardHeader>
                         <CardContent>
-                            <Select value={status} onValueChange={(value) => handleStatusChange(value as OrderStatus)}>
+                            <Select value={status} onValueChange={(value) => setStatus(value as OrderStatus)}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Select status" />
                                 </SelectTrigger>
