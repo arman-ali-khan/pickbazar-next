@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import ProductRowCard from '@/components/product-row-card';
 import { useSupabase } from '@/lib/supabase/provider';
-import OfferCarousel from '@/components/offer-carousel';
+import OfferCarousel, { type OfferForCarousel } from '@/components/offer-carousel';
 import { Skeleton } from '@/components/ui/skeleton';
 
 type ViewMode = 'grid' | 'list';
@@ -40,6 +40,7 @@ function ShopContent() {
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [dbCategories, setDbCategories] = useState<{name: string, subcategories: string[]}[]>([]);
+  const [offers, setOffers] = useState<OfferForCarousel[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -66,12 +67,20 @@ function ShopContent() {
 
   const fetchAndProcessData = useCallback(async () => {
     setLoading(true);
-    const [productsRes, categoriesRes] = await Promise.all([
+    const [productsRes, categoriesRes, offersRes, allCategoriesRes] = await Promise.all([
       supabase
         .from('products')
         .select(`*, product_categories(categories(name))`)
         .eq('status', 'active'),
-      supabase.rpc('get_category_tree')
+      supabase.rpc('get_category_tree'),
+      supabase
+        .from('offers')
+        .select('id, title, subtitle, image_url, category_ids, product_ids')
+        .eq('status', 'active')
+        .lte('start_date', new Date().toISOString())
+        .gte('end_date', new Date().toISOString())
+        .limit(5),
+      supabase.from('categories').select('id, name')
     ]);
 
     if (productsRes.data) {
@@ -92,6 +101,25 @@ function ShopContent() {
     if (categoriesRes.data) {
       setDbCategories(categoriesRes.data);
     }
+
+    if (offersRes.data && allCategoriesRes.data) {
+        const offersWithCategoryNames = offersRes.data.map(offer => {
+            const categoryNames = offer.category_ids?.map(id => (allCategoriesRes.data as any[]).find(c => c.id === id)?.name).filter(Boolean) as string[];
+            return {
+                id: offer.id,
+                title: offer.title,
+                subtitle: offer.subtitle,
+                image_url: offer.image_url,
+                product_ids: offer.product_ids,
+                categoryNames,
+            };
+        });
+        setOffers(offersWithCategoryNames);
+    } else {
+        if(offersRes.error) console.error("Shop page offer fetch error:", offersRes.error.message);
+    }
+
+
     setLoading(false);
   }, [supabase]);
 
@@ -161,37 +189,42 @@ function ShopContent() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
-        <div className="hidden lg:block space-y-6">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-32 w-full" />
+      <>
+        <div className="mb-8">
+            <Skeleton className="h-48" />
         </div>
-        <div>
-          <div className="flex justify-between items-center mb-6">
-            <Skeleton className="h-6 w-40" />
-            <Skeleton className="h-10 w-48" />
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
-            {Array.from({ length: 12 }).map((_, i) => (
-              <div key={i} className="space-y-2">
-                <Skeleton className="aspect-[3/2] w-full" />
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-6 w-3/4" />
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
+            <div className="hidden lg:block space-y-6">
                 <Skeleton className="h-10 w-full" />
-              </div>
-            ))}
-          </div>
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-32 w-full" />
+            </div>
+            <div>
+                <div className="flex justify-between items-center mb-6">
+                    <Skeleton className="h-6 w-40" />
+                    <Skeleton className="h-10 w-48" />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                        <Skeleton className="aspect-[3/2] w-full" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                    ))}
+                </div>
+            </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
     <>
       <div className="mb-8">
-          <OfferCarousel />
+          <OfferCarousel offers={offers} />
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
           <div className="hidden lg:block">

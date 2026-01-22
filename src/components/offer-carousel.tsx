@@ -12,82 +12,21 @@ import Autoplay from "embla-carousel-autoplay"
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { useSupabase } from "@/lib/supabase/provider";
-import { useState, useEffect } from "react";
-import { Skeleton } from "./ui/skeleton";
 
-interface Offer {
+export interface OfferForCarousel {
   id: number;
   title: string;
   subtitle: string | null;
   image_url: string | null;
-  category_ids: number[] | null;
   product_ids: number[] | null;
   categoryNames?: string[];
 }
 
 const bgColors = ['bg-sky-100', 'bg-emerald-100', 'bg-fuchsia-100', 'bg-orange-100', 'bg-yellow-100'];
 
-export default function OfferCarousel() {
-  const { supabase } = useSupabase();
-  const [offers, setOffers] = useState<Offer[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function OfferCarousel({ offers }: { offers: OfferForCarousel[] }) {
 
-  useEffect(() => {
-    const fetchOffersAndCategories = async () => {
-      setLoading(true);
-
-      const [offersRes, categoriesRes] = await Promise.all([
-        supabase
-          .from('offers')
-          .select('id, title, subtitle, image_url, category_ids, product_ids')
-          .eq('status', 'active')
-          .lte('start_date', new Date().toISOString())
-          .gte('end_date', new Date().toISOString())
-          .limit(5),
-        supabase.from('categories').select('id, name')
-      ]);
-
-      const { data: offersData, error: offersError } = offersRes;
-      const { data: categoriesData, error: categoriesError } = categoriesRes;
-
-      if (offersError) {
-        console.error("Error fetching offers for carousel:", offersError);
-      }
-      if (categoriesError) {
-        console.error("Error fetching categories for carousel:", categoriesError);
-      }
-
-      if (offersData && categoriesData) {
-        const offersWithCategoryNames = offersData.map(offer => {
-            const categoryNames = offer.category_ids?.map(id => categoriesData.find(c => c.id === id)?.name).filter(Boolean) as string[];
-            return {
-                ...offer,
-                categoryNames,
-            };
-        });
-        setOffers(offersWithCategoryNames || []);
-      }
-      
-      setLoading(false);
-    };
-
-    fetchOffersAndCategories();
-  }, [supabase]);
-
-  if (loading) {
-    return (
-      <section className="py-8 px-4 md:px-8">
-        <div className="flex gap-4">
-          <Skeleton className="h-48 flex-1" />
-          <Skeleton className="h-48 flex-1 hidden md:block" />
-          <Skeleton className="h-48 flex-1 hidden lg:block" />
-        </div>
-      </section>
-    );
-  }
-  
-  if (offers.length === 0) {
+  if (!offers || offers.length === 0) {
     return null;
   }
 

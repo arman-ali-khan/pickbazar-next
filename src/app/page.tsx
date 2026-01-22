@@ -1,8 +1,9 @@
+
 import CartDrawer from "@/components/cart-drawer";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
 import HeroBanners from "@/components/product-image-gallery";
-import OfferCarousel from "@/components/offer-carousel";
+import OfferCarousel, { type OfferForCarousel } from "@/components/offer-carousel";
 import RecommendedProducts from "@/components/recommended-products";
 import RecentlyAddedProducts from "@/components/recently-added-products";
 import CustomerReviews from "@/components/customer-reviews";
@@ -25,12 +26,40 @@ export default async function Home() {
     `)
     .order('display_order');
 
+  const { data: offersData, error: offersError } = await supabase
+    .from('offers')
+    .select('id, title, subtitle, image_url, category_ids, product_ids')
+    .eq('status', 'active')
+    .lte('start_date', new Date().toISOString())
+    .gte('end_date', new Date().toISOString())
+    .limit(5);
+
+  const { data: categoriesData, error: categoriesError } = await supabase.from('categories').select('id, name');
+
+  let offers: OfferForCarousel[] = [];
+  if (offersData && categoriesData) {
+    offers = offersData.map(offer => {
+        const categoryNames = offer.category_ids?.map(id => categoriesData.find(c => c.id === id)?.name).filter(Boolean) as string[];
+        return {
+            id: offer.id,
+            title: offer.title,
+            subtitle: offer.subtitle,
+            image_url: offer.image_url,
+            product_ids: offer.product_ids,
+            categoryNames,
+        };
+    });
+  } else {
+    if (offersError) console.error("Error fetching offers for homepage:", offersError.message);
+    if (categoriesError) console.error("Error fetching categories for homepage:", categoriesError.message);
+  }
+
   return (
     <div className="bg-background min-h-screen">
       <Header />
       <main>
         <HeroBanners />
-        <OfferCarousel />
+        <OfferCarousel offers={offers} />
         <RecommendedProducts />
         <RecentlyAddedProducts />
         <HomePageCategorySections sections={homeSections} />
