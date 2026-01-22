@@ -30,7 +30,7 @@ function SearchContent() {
   const { supabase } = useSupabase();
 
   // Data states
-  const [searchedProducts, setSearchedProducts] = useState<Product[]>([]);
+  const [allSearchedProducts, setAllSearchedProducts] = useState<Product[]>([]);
   const [dbCategories, setDbCategories] = useState<{name: string, subcategories: string[]}[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -41,7 +41,8 @@ function SearchContent() {
 
   const fetchAndProcessData = useCallback(async () => {
     if (!query) {
-      setSearchedProducts([]);
+      setAllSearchedProducts([]);
+      setFilteredProducts([]);
       setLoading(false);
       return;
     }
@@ -68,10 +69,10 @@ function SearchContent() {
         dbCategories: p.product_categories.map((pc: any) => pc.categories.name),
         rating: p.rating || 4.5, // Assuming rating is available, fallback to 4.5
       }));
-      setSearchedProducts(fetchedProducts);
+      setAllSearchedProducts(fetchedProducts);
       setFilteredProducts(fetchedProducts);
     } else {
-      setSearchedProducts([]);
+      setAllSearchedProducts([]);
       setFilteredProducts([]);
     }
 
@@ -89,8 +90,9 @@ function SearchContent() {
   const handleFilterChange = useCallback((filters: {
     categories: string[];
     rating: number;
+    priceRange: [number, number];
   }) => {
-    let tempProducts = [...searchedProducts];
+    let tempProducts = [...allSearchedProducts];
 
     if (filters.categories.length > 0) {
       tempProducts = tempProducts.filter(p => {
@@ -103,9 +105,13 @@ function SearchContent() {
       tempProducts = tempProducts.filter(p => p.rating && p.rating >= filters.rating);
     }
     
+    if (filters.priceRange) {
+        tempProducts = tempProducts.filter(p => p.price >= filters.priceRange[0] && p.price <= filters.priceRange[1]);
+    }
+    
     setFilteredProducts(tempProducts);
     setVisibleCount(PRODUCTS_PER_PAGE);
-  }, [searchedProducts]);
+  }, [allSearchedProducts]);
 
   const sortedProducts = useMemo(() => {
     let products = [...filteredProducts];
@@ -122,7 +128,7 @@ function SearchContent() {
   };
   
   const currentProducts = sortedProducts.slice(0, visibleCount);
-  const maxPrice = useMemo(() => Math.ceil(Math.max(...searchedProducts.map(p => p.price), 100)), [searchedProducts]);
+  const maxPrice = useMemo(() => Math.ceil(Math.max(...allSearchedProducts.map(p => p.price), 100)), [allSearchedProducts]);
   
   return (
     <main className="container py-12">

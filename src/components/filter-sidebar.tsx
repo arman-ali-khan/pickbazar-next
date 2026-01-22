@@ -12,35 +12,28 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
+import { Slider } from './ui/slider';
 
 interface FilterSidebarProps {
   onFilterChange: (filters: {
     categories: string[];
     rating: number;
+    priceRange: [number, number];
   }) => void;
   initialCategories?: string[];
   allCategories: { name: string, subcategories: string[] }[];
   maxPrice: number;
 }
 
-export default function FilterSidebar({ onFilterChange, initialCategories = [], allCategories }: FilterSidebarProps) {
+export default function FilterSidebar({ onFilterChange, initialCategories = [], allCategories, maxPrice }: FilterSidebarProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories);
   const [selectedRating, setSelectedRating] = useState(0);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, maxPrice]);
 
+  // Sync price range when maxPrice prop changes (e.g., new search results)
   useEffect(() => {
-    setSelectedCategories(initialCategories);
-  }, [initialCategories]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      onFilterChange({
-        categories: selectedCategories,
-        rating: selectedRating,
-      });
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [selectedCategories, selectedRating, onFilterChange]);
+    setPriceRange([0, maxPrice]);
+  }, [maxPrice]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategories(prev =>
@@ -49,21 +42,39 @@ export default function FilterSidebar({ onFilterChange, initialCategories = [], 
         : [...prev, category]
     );
   };
+  
+  const handleApplyFilters = () => {
+    onFilterChange({
+        categories: selectedCategories,
+        rating: selectedRating,
+        priceRange: priceRange,
+    });
+  };
 
   const handleClearFilters = () => {
+    const newPriceRange: [number, number] = [0, maxPrice];
     setSelectedCategories([]);
     setSelectedRating(0);
+    setPriceRange(newPriceRange);
+    onFilterChange({
+      categories: [],
+      rating: 0,
+      priceRange: newPriceRange
+    });
   };
 
   return (
     <aside className="w-full h-full lg:border-r lg:p-6 lg:bg-white lg:overflow-y-auto">
-      <div className="flex justify-between items-center mb-6 px-6 lg:px-0 pt-6 lg:pt-0">
+      <div className="flex justify-between items-center mb-4 px-6 lg:px-0 pt-6 lg:pt-0">
         <h3 className="text-lg font-semibold">Filters</h3>
         <Button variant="ghost" size="sm" onClick={handleClearFilters}>
           Clear All
         </Button>
       </div>
-      <Accordion type="multiple" defaultValue={['categories', 'rating']} className="w-full px-6 lg:px-0">
+      <div className="px-6 lg:px-0 mb-4">
+        <Button onClick={handleApplyFilters} className="w-full">Apply Filters</Button>
+      </div>
+      <Accordion type="multiple" defaultValue={['categories', 'price', 'rating']} className="w-full px-6 lg:px-0">
         <AccordionItem value="categories">
           <AccordionTrigger className="font-semibold">Categories</AccordionTrigger>
           <AccordionContent>
@@ -98,6 +109,24 @@ export default function FilterSidebar({ onFilterChange, initialCategories = [], 
                     </AccordionItem>
                 </Accordion>
               ))}
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+
+        <AccordionItem value="price">
+          <AccordionTrigger className="font-semibold">Price</AccordionTrigger>
+          <AccordionContent>
+            <div className="pt-2">
+              <Slider
+                value={priceRange}
+                onValueChange={(value) => setPriceRange(value as [number, number])}
+                max={maxPrice}
+                step={1}
+              />
+              <div className="flex justify-between text-sm text-muted-foreground mt-2">
+                <span>${priceRange[0]}</span>
+                <span>${priceRange[1]}</span>
+              </div>
             </div>
           </AccordionContent>
         </AccordionItem>
