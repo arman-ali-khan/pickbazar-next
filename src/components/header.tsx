@@ -17,7 +17,6 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { categoryData as categories } from '@/lib/category-data';
 import { cn } from '@/lib/utils';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { setSearchOpen } from '@/lib/redux/slices/uiSlice';
+import LucideIcon from './lucide-icon';
 
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
@@ -36,23 +36,66 @@ const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: s
   </Link>
 );
 
+interface DbCategory {
+    id: number;
+    name: string;
+    parent_id: number | null;
+    icon: string | null;
+}
+
+interface HierarchicalCategory extends DbCategory {
+    sub: DbCategory[];
+}
+
 const CategoriesNav = () => {
     const isMobile = useIsMobile();
+    const { supabase } = useSupabase();
+    const [categories, setCategories] = useState<HierarchicalCategory[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('categories')
+                .select('id, name, parent_id, icon')
+                .order('name');
+            
+            if (error) {
+                console.error("Error fetching categories:", error);
+                setCategories([]);
+            } else if (data) {
+                const topLevel: HierarchicalCategory[] = data
+                    .filter(c => c.parent_id === null)
+                    .map(c => ({...c, sub: []}));
+                
+                const children: DbCategory[] = data.filter(c => c.parent_id !== null);
+
+                topLevel.forEach(parent => {
+                    parent.sub = children
+                        .filter(child => child.parent_id === parent.id);
+                });
+                setCategories(topLevel);
+            }
+            setLoading(false);
+        };
+        fetchCategories();
+    }, [supabase]);
 
     const categoriesContent = (
-      <Accordion type="single" collapsible defaultValue={categories[0].name} className="w-full">
+      <Accordion type="single" collapsible defaultValue={categories.length > 0 ? categories[0].name : undefined} className="w-full">
         {categories.map((category) => (
-          <AccordionItem value={category.name} key={category.name} className="border-b last:border-b-0">
+          <AccordionItem value={category.name} key={category.id} className="border-b last:border-b-0">
             <AccordionTrigger className="px-4 py-3 text-sm font-medium hover:no-underline">
               <div className="flex items-center gap-2">
-                <category.icon className="h-5 w-5" />
+                <LucideIcon name={category.icon} className="h-5 w-5" />
                 <span>{category.name}</span>
               </div>
             </AccordionTrigger>
             <AccordionContent>
               <div className="pl-8 flex flex-col items-start">
                 {category.sub.map((subCategory) => (
-                  <Link href={subCategory.href} key={subCategory.name} className="py-2 text-sm text-muted-foreground hover:text-primary w-full text-left">{subCategory.name}</Link>
+                  <Link href={`/shop?category=${encodeURIComponent(subCategory.name)}`} key={subCategory.id} className="py-2 text-sm text-muted-foreground hover:text-primary w-full text-left">{subCategory.name}</Link>
                 ))}
               </div>
             </AccordionContent>
@@ -60,6 +103,15 @@ const CategoriesNav = () => {
         ))}
       </Accordion>
     );
+
+    if (loading && !isMobile) {
+        return (
+             <Button variant="outline" className="gap-2" disabled>
+                <Menu className="h-5 w-5" />
+                Categories
+            </Button>
+        )
+    }
 
     if (isMobile) {
         return (
@@ -74,7 +126,7 @@ const CategoriesNav = () => {
                         <SheetTitle>Categories</SheetTitle>
                     </SheetHeader>
                     <div className="p-2">
-                        {categoriesContent}
+                        {loading ? <p className="text-center text-sm text-muted-foreground">Loading categories...</p> : categoriesContent}
                     </div>
                 </SheetContent>
             </Sheet>
@@ -90,7 +142,7 @@ const CategoriesNav = () => {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-80 p-2 max-h-[calc(80vh)] overflow-y-auto">
-                {categoriesContent}
+                {loading ? <p className="text-center text-sm text-muted-foreground">Loading categories...</p> : categoriesContent}
             </DropdownMenuContent>
         </DropdownMenu>
     );

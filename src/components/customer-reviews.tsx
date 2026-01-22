@@ -1,3 +1,4 @@
+
 'use client';
 import {
   Carousel,
@@ -9,10 +10,48 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Star } from "lucide-react";
-import { product as detailedProduct } from "@/lib/data";
+import { useEffect, useState } from "react";
+import type { ProductReview } from "@/lib/data";
+import { useSupabase } from "@/lib/supabase/provider";
 
 export default function CustomerReviews() {
-    const reviews = detailedProduct.reviews;
+    const { supabase } = useSupabase();
+    const [reviews, setReviews] = useState<ProductReview[]>([]);
+
+    useEffect(() => {
+        const fetchReviews = async () => {
+            // Fetch latest 10 approved reviews
+            const { data, error } = await supabase
+                .from('reviews')
+                .select(`
+                    id,
+                    rating,
+                    text,
+                    created_at,
+                    profiles ( full_name, avatar_url )
+                `)
+                .eq('status', 'Approved')
+                .order('created_at', { ascending: false })
+                .limit(10);
+            
+            if (data) {
+                const formattedReviews = data.map((r: any) => ({
+                    id: r.id,
+                    rating: r.rating,
+                    text: r.text,
+                    date: r.created_at,
+                    author: r.profiles.full_name || 'Anonymous',
+                    avatar: { imageUrl: r.profiles.avatar_url, imageHint: 'person face' }
+                }));
+                setReviews(formattedReviews as any);
+            }
+        }
+        fetchReviews();
+    }, [supabase]);
+
+  if (reviews.length === 0) {
+    return null;
+  }
 
   return (
     <section className="py-12 px-4 md:px-8 bg-muted/20">
@@ -25,7 +64,7 @@ export default function CustomerReviews() {
             className="w-full max-w-6xl mx-auto"
         >
             <CarouselContent>
-                {reviews.map((review) => (
+                {reviews.map((review: any) => (
                     <CarouselItem key={review.id} className="md:basis-1/2 lg:basis-1/3">
                         <div className="p-1">
                             <Card className="h-full">

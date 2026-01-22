@@ -84,8 +84,7 @@ export const products = [
   { id: 9, name: 'French Green Beans', price: 2.20, image: getImage('related_prod_8'), weight: '1lb', category: 'Vegetables', rating: 4.2 },
 ];
 
-
-
+// This object can be removed as product data is now dynamic.
 export const product = {
   id: 1,
   name: 'Apples',
@@ -107,45 +106,8 @@ export const product = {
   category: 'Fruits & Vegetables',
   tags: ['fresh', 'healthy', 'organic'],
   sku: 'FRT-001',
-  ratingDistribution: [
-      { rating: 5, count: 1 },
-      { rating: 4, count: 2 },
-      { rating: 3, count: 0 },
-      { rating: 2, count: 0 },
-      { rating: 1, count: 0 },
-  ],
-  reviews: [
-    {
-      id: 1,
-      author: 'Customer 1',
-      avatar: getImage('avatar_1'),
-      rating: 4.0,
-      date: 'March 11, 2023',
-      text: 'Good not yummy',
-      likes: 7,
-      dislikes: 5
-    },
-    {
-      id: 2,
-      author: 'Customer 2',
-      avatar: getImage('avatar_2'),
-      rating: 5.0,
-      date: 'March 11, 2023',
-      text: 'Good quality and fresh apples',
-      likes: 4,
-      dislikes: 0
-    },
-    {
-      id: 3,
-      author: 'Customer 3',
-      avatar: getImage('avatar_3'),
-      rating: 5.0,
-      date: 'March 11, 2023',
-      text: 'Excellent and tasty apples',
-      likes: 10,
-      dislikes: 1
-    },
-  ],
+  ratingDistribution: [],
+  reviews: [],
   questions: [
     {
       id: 1,
@@ -154,24 +116,6 @@ export const product = {
       author: 'CuriousCustomer',
       date: 'March 17, 2023',
       likes: 2,
-      dislikes: 0
-    },
-    {
-      id: 2,
-      question: 'How many apples will be there on 1 lbs',
-      answer: '3-4 pcs approximately',
-      author: 'VeggieLover',
-      date: 'March 17, 2023',
-      likes: 5,
-      dislikes: 1
-    },
-    {
-      id: 3,
-      question: 'Do you have green apples as well?',
-      answer: 'Unfortunately, no.',
-      author: 'AppleFan',
-      date: 'March 17, 2023',
-      likes: 1,
       dislikes: 0
     },
   ],
@@ -213,140 +157,6 @@ export const admins = [
     avatar: getImage('avatar_3'),
     status: 'inactive' as const,
   },
-];
-
-export const reviewsForAdmin = [
-    {
-      id: 1,
-      author: {
-        name: 'Customer 1',
-        avatar: getImage('avatar_1'),
-      },
-      product: {
-          id: 1,
-          name: 'Apples',
-          image: getImage('apple_main')
-      },
-      rating: 4.0,
-      date: '2024-07-28T10:00:00.000Z',
-      text: 'Good not yummy. A bit sour but overall okay for the price. Would probably buy again if on sale.',
-      status: 'Approved' as const,
-    },
-    {
-      id: 2,
-      author: {
-        name: 'Customer 2',
-        avatar: getImage('avatar_2'),
-      },
-      product: {
-          id: 2,
-          name: 'Baby Spinach',
-          image: getImage('related_prod_1')
-      },
-      rating: 5.0,
-      date: '2024-07-27T15:30:00.000Z',
-      text: 'Good quality and fresh spinach. Perfect for my morning smoothies. Highly recommend!',
-      status: 'Pending' as const,
-    },
-    {
-      id: 3,
-      author: {
-        name: 'Customer 3',
-        avatar: getImage('avatar_3'),
-      },
-      product: {
-          id: 3,
-          name: 'Blueberries',
-          image: getImage('related_prod_2')
-      },
-      rating: 5.0,
-      date: '2024-07-26T09:00:00.000Z',
-      text: 'Excellent and tasty blueberries. Sweet and juicy, great for snacks or in yogurt.',
-      status: 'Approved' as const,
-    },
-     {
-      id: 4,
-      author: {
-        name: 'Mary Johnson',
-        avatar: getImage('avatar_1'),
-      },
-      product: {
-          id: 4,
-          name: 'Brussels Sprout',
-          image: getImage('related_prod_3')
-      },
-      rating: 2.0,
-      date: '2024-07-25T11:45:00.000Z',
-      text: 'They were a bit bitter for my taste. Packaging was good though.',
-      status: 'Hidden' as const,
-    }
-];
-
-export const questionsForAdmin = [
-    {
-      id: 1,
-      author: {
-        name: 'CuriousCustomer',
-        avatar: getImage('avatar_1'),
-      },
-      product: {
-          id: 1,
-          name: 'Apples',
-          image: getImage('apple_main')
-      },
-      question: 'How long I can store this product?',
-      answer: 'Hi, in freezer you can store them for about 2 weeks in freezer.',
-      date: '2024-07-20T10:00:00.000Z',
-      status: 'Answered' as const,
-    },
-    {
-      id: 2,
-      author: {
-        name: 'VeggieLover',
-        avatar: getImage('avatar_2'),
-      },
-      product: {
-          id: 1,
-          name: 'Apples',
-          image: getImage('apple_main')
-      },
-      question: 'How many apples will be there on 1 lbs',
-      answer: null,
-      date: '2024-07-22T11:30:00.000Z',
-      status: 'Pending' as const,
-    },
-    {
-      id: 3,
-      author: {
-        name: 'AppleFan',
-        avatar: getImage('avatar_3'),
-      },
-      product: {
-          id: 2,
-          name: 'Baby Spinach',
-          image: getImage('related_prod_1')
-      },
-      question: 'Is this spinach pre-washed?',
-      answer: 'Yes, it is triple washed and ready to eat.',
-      date: '2024-07-23T09:00:00.000Z',
-      status: 'Answered' as const,
-    },
-     {
-      id: 4,
-      author: {
-        name: 'Mary Johnson',
-        avatar: getImage('avatar_1'),
-      },
-      product: {
-          id: 4,
-          name: 'Brussels Sprout',
-          image: getImage('related_prod_3')
-      },
-      question: 'Are these organic?',
-      answer: null,
-      date: '2024-07-24T18:45:00.000Z',
-      status: 'Pending' as const,
-    }
 ];
 
 export const offers = [
@@ -478,15 +288,60 @@ export const userNotifications = [
   },
 ];
 
+// --- Type Definitions ---
+
 export type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
 export type Product = (typeof products)[0] & { originalPrice?: number, rating?: number };
 export type RelatedProduct = typeof relatedProducts[0];
-export type Review = typeof product.reviews[0];
-export type Question = typeof product.questions[0];
 export type Transaction = typeof transactions[0];
 export type Admin = typeof admins[0];
-export type AdminReview = typeof reviewsForAdmin[0];
-export type AdminQuestion = typeof questionsForAdmin[0];
 export type Offer = typeof offers[0];
 export type Message = typeof messages[0];
 export type UserNotification = typeof userNotifications[0];
+
+export interface Question {
+  id: number;
+  question: string;
+  answer: string;
+  author: string;
+  date: string;
+  likes: number;
+  dislikes: number;
+}
+
+export interface ProductReview {
+  id: number;
+  rating: number;
+  text: string | null;
+  created_at: string;
+  author_name: string | null;
+  author_avatar: string | null;
+}
+
+export interface AdminReview {
+  id: number;
+  rating: number;
+  text: string | null;
+  status: 'Pending' | 'Approved' | 'Hidden';
+  created_at: string;
+  author: {
+    name: string | null;
+    avatar_url: string | null;
+  };
+  product: {
+    id: number;
+    name: string;
+    featured_image_url: string;
+  };
+}
+
+export interface UserReview {
+    id: number;
+    rating: number;
+    text: string | null;
+    status: string;
+    created_at: string;
+    product_name: string;
+    product_image: string;
+    product_id: number;
+}

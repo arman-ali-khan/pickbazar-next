@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -14,6 +15,7 @@ import {
   LogOut,
   Bell,
   LayoutDashboard,
+  Star,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,11 +26,12 @@ import { useState, useEffect } from 'react';
 
 const navItems = [
     { href: '/profile', icon: User, label: 'Profile' },
-    { href: '/profile/change-password', icon: KeyRound, label: 'Change Password' },
-    { href: '/profile/my-cards', icon: CreditCard, label: 'My Cards' },
     { href: '/profile/my-orders', icon: ShoppingBag, label: 'My Orders' },
     { href: '/profile/my-wishlists', icon: Heart, label: 'My Wishlists' },
+    { href: '/profile/my-reviews', icon: Star, label: 'My Reviews' },
+    { href: '/profile/my-cards', icon: CreditCard, label: 'My Cards' },
     { href: '/profile/notifications', icon: Bell, label: 'Notifications' },
+    { href: '/profile/change-password', icon: KeyRound, label: 'Change Password' },
     { href: '/profile/my-questions', icon: HelpCircle, label: 'My Questions' },
     { href: '/profile/my-refunds', icon: RefreshCw, label: 'My Refunds' },
     { href: '/contact', icon: HelpCircle, label: 'Need Help' },

@@ -1,11 +1,12 @@
+
 'use client';
 import Image from 'next/image';
-import { useState, useRef } from 'react';
+import { useState, useRef, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Plus, Minus, Star, ThumbsUp, ThumbsDown } from 'lucide-react';
-import type { Product, RelatedProduct, Review, Question } from '@/lib/data';
+import type { Product, RelatedProduct, ProductReview, Question } from '@/lib/data';
 import ProductCard from '@/components/product-details';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Progress } from './ui/progress';
@@ -13,6 +14,12 @@ import { ImagePlaceholder } from '@/lib/placeholder-images';
 import ImageMagnify from './image-magnify';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { addToCart, updateQuantity, selectItemQuantity, triggerFlyToCart } from '@/lib/redux/slices/cartSlice';
+import { useSupabase } from '@/lib/supabase/provider';
+import { Dialog, DialogTrigger } from './ui/dialog';
+import { LoginDialog } from './login-dialog';
+import { Textarea } from './ui/textarea';
+import { useToast } from '@/hooks/use-toast';
+import { submitReview } from '@/app/actions';
 
 interface ProductPageContentProps {
     product: Product & {
@@ -26,10 +33,80 @@ interface ProductPageContentProps {
         tags: string[];
         sku: string;
         ratingDistribution: { rating: number, count: number }[];
-        reviews: Review[];
+        reviews: ProductReview[];
         questions: Question[];
     };
     relatedProducts: RelatedProduct[];
+}
+
+function ReviewForm({ productId }: { productId: number }) {
+    const { user } = useSupabase();
+    const { toast } = useToast();
+    const [rating, setRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [text, setText] = useState('');
+    const [isPending, startTransition] = useTransition();
+
+    if (!user) {
+        return (
+            <div className="text-center p-6 border rounded-lg bg-muted/50">
+                <p>You must be logged in to write a review.</p>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button className="mt-4">Login</Button>
+                    </DialogTrigger>
+                    <LoginDialog />
+                </Dialog>
+            </div>
+        );
+    }
+    
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        startTransition(async () => {
+            const formData = new FormData();
+            formData.append('productId', String(productId));
+            formData.append('rating', String(rating));
+            formData.append('text', text);
+
+            const result = await submitReview(formData);
+            if (result?.error) {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+            } else {
+                toast({ title: 'Review Submitted', description: 'Thank you! Your review is pending approval.' });
+                setRating(0);
+                setText('');
+            }
+        });
+    }
+
+    return (
+        <div>
+            <h3 className="text-lg font-semibold mb-4">Write a Review</h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="flex items-center gap-1">
+                    <p className="text-sm mr-2">Your Rating:</p>
+                    {[1, 2, 3, 4, 5].map(star => (
+                        <button
+                            key={star}
+                            type="button"
+                            onMouseEnter={() => setHoverRating(star)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            onClick={() => setRating(star)}
+                        >
+                            <Star className={`h-6 w-6 transition-colors ${star <= (hoverRating || rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                        </button>
+                    ))}
+                </div>
+                <div>
+                    <Textarea value={text} onChange={e => setText(e.target.value)} placeholder="Share your thoughts about the product..." />
+                </div>
+                <Button type="submit" disabled={rating === 0 || isPending}>
+                    {isPending ? 'Submitting...' : 'Submit Review'}
+                </Button>
+            </form>
+        </div>
+    );
 }
 
 export default function ProductPageContent({ product, relatedProducts }: ProductPageContentProps) {
@@ -161,22 +238,24 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                                         <div key={item.rating} className="flex items-center gap-2">
                                             <span className="text-sm text-muted-foreground">{item.rating} star</span>
                                             <Progress value={(item.count/totalReviews) * 100} className="w-40 h-2" />
-                                            <span className="text-sm text-muted-foreground">{((item.count/totalReviews) * 100).toFixed(0)}%</span>
+                                            <span className="text-sm text-muted-foreground">{totalReviews > 0 ? ((item.count/totalReviews) * 100).toFixed(0) : 0}%</span>
                                         </div>
                                     ))}
                                 </div>
+                                <Separator className="my-8" />
+                                <ReviewForm productId={product.id} />
                             </div>
                              <div>
                                 {product.reviews.map(review => (
                                     <div key={review.id} className="mb-6 pb-6 border-b last:border-b-0">
                                         <div className="flex items-center gap-3 mb-2">
                                             <Avatar className="h-10 w-10">
-                                                <AvatarImage src={review.avatar.imageUrl} alt={review.author} data-ai-hint={review.avatar.imageHint} />
-                                                <AvatarFallback>{review.author.charAt(0)}</AvatarFallback>
+                                                <AvatarImage src={review.author_avatar ?? undefined} alt={review.author_name ?? 'User'} />
+                                                <AvatarFallback>{(review.author_name ?? 'U').charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <p className="font-semibold">{review.author}</p>
-                                                <p className="text-xs text-muted-foreground">{review.date}</p>
+                                                <p className="font-semibold">{review.author_name}</p>
+                                                <p className="text-xs text-muted-foreground">{format(new Date(review.created_at), 'PP')}</p>
                                             </div>
                                             <div className="flex items-center ml-auto">
                                                 {[...Array(5)].map((_, i) => (
@@ -185,6 +264,8 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                                             </div>
                                         </div>
                                         <p className="text-sm text-gray-600 mb-3">{review.text}</p>
+                                        {/* Likes/dislikes can be a future feature */}
+                                        {/*
                                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                             <Button variant="ghost" size="sm" className="flex items-center gap-1">
                                                 <ThumbsUp className="h-4 w-4" /> {review.likes}
@@ -193,6 +274,7 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                                                 <ThumbsDown className="h-4 w-4" /> {review.dislikes}
                                             </Button>
                                         </div>
+                                        */}
                                     </div>
                                 ))}
                             </div>

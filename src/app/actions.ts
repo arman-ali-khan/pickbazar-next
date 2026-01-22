@@ -2,6 +2,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server';
+import { revalidatePath } from 'next/cache';
 
 export async function getQuickViewData(productId: number) {
   if (isNaN(productId)) return null;
@@ -78,4 +79,40 @@ export async function getQuickViewData(productId: number) {
   };
 
   return detailedProduct;
+}
+
+
+export async function submitReview(formData: FormData) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'You must be logged in to submit a review.' }
+  }
+
+  const productId = formData.get('productId')
+  const rating = formData.get('rating')
+  const text = formData.get('text')
+
+  if (!productId || !rating) {
+    return { error: 'Product ID and rating are required.' }
+  }
+
+  const { error } = await supabase.from('reviews').insert({
+    user_id: user.id,
+    product_id: Number(productId),
+    rating: Number(rating),
+    text: String(text)
+  })
+
+  if (error) {
+    // Handle unique constraint violation (user already reviewed)
+    if (error.code === '23505') {
+        return { error: 'You have already reviewed this product.' };
+    }
+    return { error: error.message }
+  }
+
+  revalidatePath(`/products/${productId}`)
+  return { success: true }
 }

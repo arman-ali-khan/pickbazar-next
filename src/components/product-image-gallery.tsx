@@ -1,10 +1,44 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { categoryData } from '@/lib/category-data';
+import { createClient } from '@/lib/supabase/server';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import LucideIcon from './lucide-icon';
 
-export default function HeroBanners() {
+interface DbCategory {
+    id: number;
+    name: string;
+    parent_id: number | null;
+    icon: string | null;
+}
+
+interface HierarchicalCategory extends DbCategory {
+    sub: DbCategory[];
+}
+
+
+export default async function HeroBanners() {
+  const supabase = createClient();
+  const { data: categoriesData } = await supabase
+    .from('categories')
+    .select('id, name, parent_id, icon')
+    .order('name');
+  
+  let categoryTree: HierarchicalCategory[] = [];
+  if (categoriesData) {
+      const topLevel: HierarchicalCategory[] = categoriesData
+          .filter(c => c.parent_id === null)
+          .map(c => ({...c, sub: []}));
+      
+      const children: DbCategory[] = categoriesData.filter(c => c.parent_id !== null);
+
+      topLevel.forEach(parent => {
+          parent.sub = children
+              .filter(child => child.parent_id === parent.id);
+      });
+      categoryTree = topLevel;
+  }
+    
   return (
     <section className="relative w-full h-[550px]">
         <div className="absolute inset-0 z-0">
@@ -23,25 +57,27 @@ export default function HeroBanners() {
                 <div className="backdrop-blur-xl rounded-lg shadow-lg h-full hidden md:flex flex-col text-black max-h-[450px]">
                     <h2 className="text-lg text-white font-semibold p-4 border-b">Categories</h2>
                     <div className="flex-1 overflow-y-auto p-2">
-                        <Accordion type="single" collapsible defaultValue={categoryData[0].name} className="w-full">
-                            {categoryData.map((category) => (
-                                <AccordionItem value={category.name} key={category.name} className="border-b-0">
-                                    <AccordionTrigger className="p-3 text-sm font-medium text-white hover:text-primary hover:no-underline rounded-md hover:bg-gray-100">
-                                        <div className="flex items-center gap-3">
-                                            <category.icon className="h-5 w-5 text-muted-foreground" />
-                                            <span>{category.name}</span>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent>
-                                        <div className="pl-11 flex flex-col items-start">
-                                        {category.sub.map((subCategory) => (
-                                            <Link href={subCategory.href} key={subCategory.name} className="py-1.5 text-sm w-full hover:underline text-teal-600 text-muted-foreground hover:text-primary">{subCategory.name}</Link>
-                                        ))}
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            ))}
-                        </Accordion>
+                        {categoryTree.length > 0 && 
+                            <Accordion type="single" collapsible defaultValue={categoryTree[0].name} className="w-full">
+                                {categoryTree.map((category) => (
+                                    <AccordionItem value={category.name} key={category.id} className="border-b-0">
+                                        <AccordionTrigger className="p-3 text-sm font-medium text-white hover:text-primary hover:no-underline rounded-md hover:bg-gray-100">
+                                            <div className="flex items-center gap-3">
+                                                <LucideIcon name={category.icon} className="h-5 w-5 text-muted-foreground" />
+                                                <span>{category.name}</span>
+                                            </div>
+                                        </AccordionTrigger>
+                                        <AccordionContent>
+                                            <div className="pl-11 flex flex-col items-start">
+                                            {category.sub.map((subCategory) => (
+                                                <Link href={`/shop?category=${encodeURIComponent(subCategory.name)}`} key={subCategory.id} className="py-1.5 text-sm w-full hover:underline text-teal-600 text-muted-foreground hover:text-primary">{subCategory.name}</Link>
+                                            ))}
+                                            </div>
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                ))}
+                            </Accordion>
+                        }
                     </div>
                 </div>
                 <div className="space-y-6 text-center md:text-left text-white">

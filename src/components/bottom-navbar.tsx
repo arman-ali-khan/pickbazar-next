@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Search, Menu, User, ShoppingCart, ChevronDown, Apple, Beef, Cookie, Dog, Home as HomeIcon, Milk, Soup, Cake, GlassWater, Leaf, Settings } from 'lucide-react';
+import { Home, Search, Menu, User, ShoppingCart, ChevronDown, Settings, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
@@ -19,6 +19,8 @@ import { toggleSearch } from '@/lib/redux/slices/uiSlice';
 import { openCart, selectTotalItems } from '@/lib/redux/slices/cartSlice';
 import ProfileSidebar from './profile-sidebar';
 import { useSupabase } from '@/lib/supabase/provider';
+import { useState, useEffect } from 'react';
+import LucideIcon from './lucide-icon';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
     <Link
@@ -29,22 +31,53 @@ const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: s
     </Link>
   );
 
-const categories = [
-    { name: 'Fruits & Vegetables', icon: Apple, sub: ['Fruits', 'Vegetables'] },
-    { name: 'Meat & Fish', icon: Beef, sub: ['Meat', 'Fish'] },
-    { name: 'Snacks', icon: Cookie, sub: ['Chips', 'Chocolate'] },
-    { name: 'Pet Care', icon: Dog, sub: ['Dog Food', 'Cat Food'] },
-    { name: 'Home & Cleaning', icon: HomeIcon, sub: ['Detergent', 'Cleaning Tools'] },
-    { name: 'Dairy', icon: Milk, sub: ['Milk', 'Cheese'] },
-    { name: 'Cooking', icon: Soup, sub: ['Oil', 'Spices'] },
-    { name: 'Breakfast', icon: Cake, sub: ['Cereal', 'Bread'] },
-    { name: 'Beverage', icon: GlassWater, sub: ['Coffee', 'Juice'] },
-];
+interface DbCategory {
+    id: number;
+    name: string;
+    parent_id: number | null;
+    icon: string | null;
+}
+
+interface HierarchicalCategory extends DbCategory {
+    sub: DbCategory[];
+}
 
 const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
 
 function PagesDrawer() {
-    const { user } = useSupabase();
+    const { user, supabase } = useSupabase();
+    const [categories, setCategories] = useState<HierarchicalCategory[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('categories')
+                .select('id, name, parent_id, icon')
+                .order('name');
+            
+            if (error) {
+                console.error("Error fetching categories:", error);
+                setCategories([]);
+            } else if (data) {
+                const topLevel: HierarchicalCategory[] = data
+                    .filter(c => c.parent_id === null)
+                    .map(c => ({...c, sub: []}));
+                
+                const children: DbCategory[] = data.filter(c => c.parent_id !== null);
+
+                topLevel.forEach(parent => {
+                    parent.sub = children
+                        .filter(child => child.parent_id === parent.id);
+                });
+                setCategories(topLevel);
+            }
+            setLoading(false);
+        };
+        fetchCategories();
+    }, [supabase]);
+
     return (
         <Sheet>
             <SheetTrigger asChild>
@@ -67,25 +100,27 @@ function PagesDrawer() {
                                 Categories
                             </AccordionTrigger>
                             <AccordionContent>
-                                <Accordion type="multiple" className="ml-4">
-                                {categories.map((category) => (
-                                    <AccordionItem value={category.name} key={category.name} className="border-b-0">
-                                        <AccordionTrigger className="py-2 hover:no-underline">
-                                            <div className="flex items-center gap-2 text-sm">
-                                                <category.icon className="h-4 w-4" />
-                                                <span>{category.name}</span>
-                                            </div>
-                                        </AccordionTrigger>
-                                        <AccordionContent>
-                                            <div className="pl-4 flex flex-col items-start">
-                                            {category.sub.map((subCategory) => (
-                                                <Link href={`/shop?category=${subCategory}`} key={subCategory} className="py-2 text-sm text-muted-foreground hover:text-primary">{subCategory}</Link>
-                                            ))}
-                                            </div>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                ))}
-                                </Accordion>
+                                {loading ? <p className="text-sm text-muted-foreground text-center">Loading categories...</p> : (
+                                    <Accordion type="multiple" className="ml-4">
+                                    {categories.map((category) => (
+                                        <AccordionItem value={category.name} key={category.id} className="border-b-0">
+                                            <AccordionTrigger className="py-2 hover:no-underline">
+                                                <div className="flex items-center gap-2 text-sm">
+                                                    <LucideIcon name={category.icon} className="h-4 w-4" />
+                                                    <span>{category.name}</span>
+                                                </div>
+                                            </AccordionTrigger>
+                                            <AccordionContent>
+                                                <div className="pl-4 flex flex-col items-start">
+                                                {category.sub.map((subCategory) => (
+                                                    <Link href={`/shop?category=${encodeURIComponent(subCategory.name)}`} key={subCategory.id} className="py-2 text-sm text-muted-foreground hover:text-primary">{subCategory.name}</Link>
+                                                ))}
+                                                </div>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                    </Accordion>
+                                )}
                             </AccordionContent>
                         </AccordionItem>
                      </Accordion>
