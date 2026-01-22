@@ -350,3 +350,41 @@ export async function cancelRefund(refundId: number) {
   revalidatePath('/profile/my-refunds');
   return { success: true };
 }
+
+export async function updateUserRole(formData: FormData) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Check if the current user is a super-admin
+    if (!user) return { error: 'Authentication required.' };
+    
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    if (profile?.role !== 'super-admin') {
+        return { error: 'You do not have permission to perform this action.' };
+    }
+
+    const userIdToUpdate = formData.get('userId') as string;
+    const newRole = formData.get('role') as 'admin' | 'manager' | 'customer';
+
+    if (!userIdToUpdate || !newRole) {
+        return { error: 'User ID and new role are required.' };
+    }
+    
+    // Prevent a super-admin from changing their own role
+    if (userIdToUpdate === user.id) {
+        return { error: 'Super-admins cannot change their own role.' };
+    }
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ role: newRole })
+        .eq('id', userIdToUpdate);
+
+    if (error) {
+        return { error: error.message };
+    }
+
+    revalidatePath('/admin/admins');
+    revalidatePath('/admin/admins/create');
+    return { success: true };
+}

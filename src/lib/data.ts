@@ -115,33 +115,6 @@ export const product = {
 export const relatedProducts = products.slice(1, 13).map(p => ({...p, id: p.id, name: p.name, price: p.price, image: p.image, weight: p.weight, tag: p.originalPrice ? `${Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}%` : undefined}));
 
 
-export const admins = [
-  {
-    id: 1,
-    name: 'John Doe',
-    email: 'john.doe@pickbazar.com',
-    role: 'admin',
-    avatar: getImage('avatar_1'),
-    status: 'active' as const,
-  },
-  {
-    id: 2,
-    name: 'Jane Smith',
-    email: 'jane.smith@pickbazar.com',
-    role: 'super-admin',
-    avatar: getImage('avatar_2'),
-    status: 'active' as const,
-  },
-  {
-    id: 3,
-    name: 'Peter Jones',
-    email: 'peter.jones@pickbazar.com',
-    role: 'manager',
-    avatar: getImage('avatar_3'),
-    status: 'inactive' as const,
-  },
-];
-
 export const messages = [
   {
     id: 1,
@@ -229,7 +202,14 @@ export const userNotifications = [
 export type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
 export type Product = (typeof products)[0] & { originalPrice?: number, rating?: number };
 export type RelatedProduct = typeof relatedProducts[0];
-export type Admin = typeof admins[0];
+export type Admin = {
+  id: number;
+  name: string;
+  email: string;
+  role: 'admin' | 'manager' | 'super-admin';
+  avatar: ImagePlaceholder;
+  status: 'active' | 'inactive';
+};
 export type Message = typeof messages[0];
 export type UserNotification = typeof userNotifications[0];
 

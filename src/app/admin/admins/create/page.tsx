@@ -1,29 +1,63 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { useState, useEffect, useCallback, useTransition } from 'react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useSupabase } from '@/lib/supabase/provider';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { updateUserRole } from '@/app/actions';
 
-export default function CreateAdminPage() {
+interface PotentialAdmin {
+    id: string;
+    full_name: string;
+    email: string;
+    avatar_url: string;
+}
+
+export default function PromoteUserPage() {
     const router = useRouter();
     const { toast } = useToast();
+    const { supabase } = useSupabase();
+    const [users, setUsers] = useState<PotentialAdmin[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isPending, startTransition] = useTransition();
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        // Here you would typically save the new admin
-        toast({
-            title: "Admin Created",
-            description: `A new admin has been successfully created.`,
+    const fetchUsers = useCallback(async () => {
+        setLoading(true);
+        const { data, error } = await supabase.rpc('get_potential_admins');
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error fetching users', description: error.message });
+        } else {
+            setUsers(data || []);
+        }
+        setLoading(false);
+    }, [supabase, toast]);
+
+    useEffect(() => {
+        fetchUsers();
+    }, [fetchUsers]);
+
+    const handlePromote = (userId: string, role: 'admin' | 'manager') => {
+        startTransition(async () => {
+            const formData = new FormData();
+            formData.append('userId', userId);
+            formData.append('role', role);
+
+            const result = await updateUserRole(formData);
+            if (result?.error) {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+            } else {
+                toast({ title: 'User Promoted', description: `The user has been promoted to ${role}.` });
+                router.push('/admin/admins');
+            }
         });
-        router.push('/admin/admins');
     };
 
     return (
@@ -36,57 +70,63 @@ export default function CreateAdminPage() {
                     </Link>
                 </Button>
                 <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
-                    Add New Admin
+                    Promote User to Admin
                 </h1>
             </div>
-             <form onSubmit={handleSubmit}>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Admin Details</CardTitle>
-                        <CardDescription>Enter the details for the new admin.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-6">
-                             <div className="grid gap-3">
-                                <Label htmlFor="name">Name</Label>
-                                <Input id="name" type="text" className="w-full" required />
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="email">Email</Label>
-                                <Input id="email" type="email" className="w-full" required />
-                            </div>
-                             <div className="grid gap-3">
-                                <Label htmlFor="role">Role</Label>
-                                <Select>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a role" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="admin">Admin</SelectItem>
-                                        <SelectItem value="manager">Manager</SelectItem>
-                                        <SelectItem value="super-admin">Super Admin</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="status">Status</Label>
-                                 <Select>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="active">Active</SelectItem>
-                                        <SelectItem value="inactive">Inactive</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                        </div>
-                    </CardContent>
-                    <CardFooter className="justify-end border-t pt-6">
-                        <Button type="submit">Save Admin</Button>
-                    </CardFooter>
-                </Card>
-            </form>
+            <Card>
+                <CardHeader>
+                    <CardTitle>Users</CardTitle>
+                    <CardDescription>Select a user to promote to an admin or manager role.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {loading ? <p>Loading users...</p> : (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>User</TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {users.map((user) => (
+                                    <TableRow key={user.id}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Avatar className="h-9 w-9">
+                                                    <AvatarImage src={user.avatar_url ?? undefined} alt={user.full_name ?? ''} />
+                                                    <AvatarFallback>{(user.full_name ?? user.email ?? 'U').charAt(0).toUpperCase()}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <p className="font-medium">{user.full_name ?? 'No Name'}</p>
+                                                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="outline" size="sm" disabled={isPending}>
+                                                        Promote
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => handlePromote(user.id, 'admin')}>
+                                                        Make Admin
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handlePromote(user.id, 'manager')}>
+                                                        Make Manager
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    )}
+                     { !loading && users.length === 0 && <p className="text-center text-muted-foreground py-8">No users available to promote.</p> }
+                </CardContent>
+            </Card>
         </main>
     );
 }
