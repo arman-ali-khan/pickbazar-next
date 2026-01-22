@@ -10,24 +10,21 @@ CREATE TABLE IF NOT EXISTS refunds (
     updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
--- 2. Create a specific trigger function for the refunds table
-CREATE OR REPLACE FUNCTION set_refunds_updated_at()
+-- 2. Trigger to update the updated_at timestamp on any change
+CREATE OR REPLACE FUNCTION handle_refunds_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
    NEW.updated_at = NOW();
    RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ language 'plpgsql';
 
--- Drop old triggers to be safe
 DROP TRIGGER IF EXISTS update_refunds_updated_at ON refunds;
-DROP TRIGGER IF EXISTS set_refunds_updated_at_trigger ON refunds;
-
--- Create the new trigger using the specific function
-CREATE TRIGGER set_refunds_updated_at_trigger
+DROP TRIGGER IF EXISTS set_refunds_updated_at ON refunds;
+CREATE TRIGGER set_refunds_updated_at
 BEFORE UPDATE ON refunds
 FOR EACH ROW
-EXECUTE PROCEDURE set_refunds_updated_at();
+EXECUTE PROCEDURE handle_refunds_updated_at();
 
 
 -- 3. Enable Row Level Security (RLS) on the new table
@@ -48,6 +45,7 @@ FOR ALL USING (
   (SELECT role FROM profiles WHERE id = auth.uid()) IN ('admin', 'manager', 'super-admin')
 );
 
+-- Allow users to delete their own PENDING refund requests.
 DROP POLICY IF EXISTS "Users can delete their own pending refunds" ON refunds;
 CREATE POLICY "Users can delete their own pending refunds" ON refunds
 FOR DELETE USING (auth.uid() = user_id AND status = 'Pending');
