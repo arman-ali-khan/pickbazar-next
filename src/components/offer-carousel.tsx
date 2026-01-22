@@ -21,6 +21,7 @@ interface Offer {
   title: string;
   subtitle: string | null;
   image_url: string | null;
+  product_ids: number[] | null;
 }
 
 const bgColors = ['bg-sky-100', 'bg-emerald-100', 'bg-fuchsia-100', 'bg-orange-100', 'bg-yellow-100'];
@@ -35,7 +36,7 @@ export default function OfferCarousel() {
       setLoading(true);
       const { data, error } = await supabase
         .from('offers')
-        .select('id, title, subtitle, image_url')
+        .select('id, title, subtitle, image_url, product_ids')
         .eq('status', 'active')
         .lte('start_date', new Date().toISOString())
         .gte('end_date', new Date().toISOString())
@@ -44,7 +45,7 @@ export default function OfferCarousel() {
       if (error) {
         console.error("Error fetching offers for carousel:", error);
       } else {
-        setOffers(data || []);
+        setOffers(data as Offer[] || []);
       }
       setLoading(false);
     };
@@ -85,7 +86,7 @@ export default function OfferCarousel() {
                     </h3>
                     {offer.subtitle && <p className="text-gray-600 text-sm">{offer.subtitle}</p>}
                     <Button asChild size="sm" className="font-semibold px-4 py-2 text-xs rounded-full bg-white text-gray-800 hover:bg-gray-50 shadow">
-                        <Link href="/offers">Shop Now</Link>
+                        <Link href={offer.product_ids && offer.product_ids.length > 0 ? `/shop?offer_products=${offer.product_ids.join(',')}` : '/offers'}>Shop Now</Link>
                     </Button>
                 </div>
                 <div className="relative h-32 w-32">

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,15 @@ import { ChevronLeft, CalendarIcon, UploadCloud, X, Image as ImageIcon } from 'l
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Image from 'next/image';
 import { useSupabase } from '@/lib/supabase/provider';
+import React from 'react';
+import type { Product } from '@/lib/data';
 
 export default function CreateOfferPage() {
     const router = useRouter();
@@ -34,7 +37,20 @@ export default function CreateOfferPage() {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+    const [allProducts, setAllProducts] = useState<Product[]>([]);
+    const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
+
+    useEffect(() => {
+        const fetchProducts = async () => {
+            const { data, error } = await supabase.from('products').select('id, name');
+            if (data) {
+                setAllProducts(data as any[]);
+            }
+        };
+        fetchProducts();
+    }, [supabase]);
 
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -63,6 +79,14 @@ export default function CreateOfferPage() {
         return data.secure_url;
     };
 
+    const handleProductSelection = (productId: number) => {
+        setSelectedProductIds(prev =>
+            prev.includes(productId)
+            ? prev.filter(id => id !== productId)
+            : [...prev, productId]
+        );
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title || !code || !discountPercentage || !startDate || !endDate) {
@@ -86,6 +110,7 @@ export default function CreateOfferPage() {
                 start_date: startDate.toISOString(),
                 end_date: endDate.toISOString(),
                 image_url: imageUrl,
+                product_ids: selectedProductIds,
             };
 
             const { error } = await supabase.from('offers').insert(offerData);
@@ -192,17 +217,41 @@ export default function CreateOfferPage() {
                                 </Popover>
                             </div>
                         </div>
-                        <div className="grid gap-3">
-                            <Label htmlFor="status">Status</Label>
-                            <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="inactive">Inactive</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="grid gap-3">
+                                <Label htmlFor="status">Status</Label>
+                                <Select value={status} onValueChange={setStatus}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="active">Active</SelectItem>
+                                        <SelectItem value="inactive">Inactive</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                             <div className="grid gap-3">
+                                <Label>Link Products (Optional)</Label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start font-normal h-auto text-left">
+                                            {selectedProductIds.length > 0 ? `${selectedProductIds.length} products selected` : "Select products"}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-64 p-2 max-h-60 overflow-y-auto" align="start">
+                                        {allProducts.map(product => (
+                                            <DropdownMenuCheckboxItem
+                                                key={product.id}
+                                                checked={selectedProductIds.includes(product.id)}
+                                                onCheckedChange={() => handleProductSelection(product.id)}
+                                                onSelect={(e) => e.preventDefault()}
+                                            >
+                                                {product.name}
+                                            </DropdownMenuCheckboxItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end border-t pt-6">

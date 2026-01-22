@@ -12,6 +12,7 @@ interface Offer {
   title: string;
   subtitle: string | null;
   image_url: string | null;
+  product_ids: number[] | null;
 }
 
 const bgColors = [
@@ -23,7 +24,7 @@ export default async function OffersPage() {
   const supabase = createClient();
   const { data: offers } = await supabase
     .from('offers')
-    .select('id, title, subtitle, image_url')
+    .select('id, title, subtitle, image_url, product_ids')
     .eq('status', 'active')
     .lte('start_date', new Date().toISOString())
     .gte('end_date', new Date().toISOString());
@@ -38,7 +39,7 @@ export default async function OffersPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {(offers || []).map((offer, index) => (
+          {(offers || []).map((offer: Offer, index) => (
             <div key={offer.id} className={`rounded-lg p-6 flex items-center justify-between h-48 ${bgColors[index % bgColors.length]}`}>
               <div className="space-y-3">
                   <h3 className="text-xl font-bold text-gray-800">
@@ -46,7 +47,7 @@ export default async function OffersPage() {
                   </h3>
                   {offer.subtitle && <p className="text-gray-600 text-sm">{offer.subtitle}</p>}
                   <Button asChild size="sm" className="font-semibold px-4 py-2 text-xs rounded-full bg-white text-gray-800 hover:bg-gray-50 shadow">
-                      <Link href="/shop">Shop Now</Link>
+                      <Link href={offer.product_ids && offer.product_ids.length > 0 ? `/shop?offer_products=${offer.product_ids.join(',')}` : '/shop'}>Shop Now</Link>
                   </Button>
               </div>
               <div className="relative h-32 w-32 flex-shrink-0">

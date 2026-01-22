@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useCallback, useEffect, useMemo, Suspense } from 'react';
@@ -32,7 +33,10 @@ function ShopContent() {
   const { supabase } = useSupabase();
 
   const categoryQuery = searchParams.get('category');
+  const offerProductsQuery = searchParams.get('offer_products');
+
   const initialCategories = useMemo(() => (categoryQuery ? [categoryQuery] : []), [categoryQuery]);
+  const initialProductIds = useMemo(() => (offerProductsQuery ? offerProductsQuery.split(',').map(Number) : []), [offerProductsQuery]);
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [dbCategories, setDbCategories] = useState<{name: string, subcategories: string[]}[]>([]);
@@ -83,7 +87,7 @@ function ShopContent() {
         rating: p.rating || 4.5,
       }));
       setAllProducts(fetchedProducts);
-      setFilteredProducts(fetchedProducts); // Initialize with all products
+      // Initial filtering based on query params happens in the useEffect below
     }
 
     if (categoriesRes.data) {
@@ -96,11 +100,35 @@ function ShopContent() {
     fetchAndProcessData();
   }, [fetchAndProcessData]);
 
+  // This effect applies the initial filter from URL params once products are loaded
+  useEffect(() => {
+    if (allProducts.length > 0) {
+      let tempProducts = [...allProducts];
+      if (initialProductIds.length > 0) {
+          tempProducts = tempProducts.filter(p => initialProductIds.includes(p.id));
+      }
+      if (initialCategories.length > 0) {
+         tempProducts = tempProducts.filter(p => {
+          const productCats = (p as any).dbCategories || [p.category];
+          return productCats.some((pc: string) => initialCategories.includes(pc));
+        });
+      }
+      setFilteredProducts(tempProducts);
+    }
+  }, [allProducts, initialCategories, initialProductIds]);
+
+
   const handleFilterChange = useCallback((filters: {
     categories: string[];
     rating: number;
+    priceRange: [number, number];
   }) => {
     let tempProducts = [...allProducts];
+
+    // If offer products are specified, filter from that subset, otherwise from all products
+    if (initialProductIds.length > 0) {
+        tempProducts = tempProducts.filter(p => initialProductIds.includes(p.id));
+    }
 
     if (filters.categories.length > 0) {
       tempProducts = tempProducts.filter(p => {
@@ -112,10 +140,14 @@ function ShopContent() {
     if (filters.rating > 0) {
       tempProducts = tempProducts.filter(p => p.rating && p.rating >= filters.rating);
     }
+
+    if (filters.priceRange) {
+        tempProducts = tempProducts.filter(p => p.price >= filters.priceRange[0] && p.price <= filters.priceRange[1]);
+    }
     
     setFilteredProducts(tempProducts);
     setVisibleCount(PRODUCTS_PER_PAGE);
-  }, [allProducts]);
+  }, [allProducts, initialProductIds]);
 
   useEffect(() => {
     let sorted = [...filteredProducts];

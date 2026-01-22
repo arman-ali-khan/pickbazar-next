@@ -11,12 +11,15 @@ import { ChevronLeft, CalendarIcon, UploadCloud, X } from 'lucide-react';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Image from 'next/image';
 import { useSupabase } from '@/lib/supabase/provider';
+import type { Product } from '@/lib/data';
+import React from 'react';
 
 type OfferStatus = 'active' | 'inactive' | 'expired';
 
@@ -38,6 +41,9 @@ export default function EditOfferPage() {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+    const [allProducts, setAllProducts] = useState<Product[]>([]);
+    const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
+
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -47,25 +53,34 @@ export default function EditOfferPage() {
             return;
         }
 
-        const fetchOffer = async () => {
-            const { data, error } = await supabase.from('offers').select('*').eq('id', offerId).single();
-            if (error || !data) {
+        const fetchOfferAndProducts = async () => {
+            const { data: offerData, error: offerError } = await supabase.from('offers').select('*').eq('id', offerId).single();
+            
+            if (offerError || !offerData) {
                 toast({ variant: 'destructive', title: 'Error', description: 'Offer not found.' });
                 notFound();
                 return;
             }
 
-            setTitle(data.title);
-            setSubtitle(data.subtitle || '');
-            setCode(data.code);
-            setDiscountPercentage(data.discount_percentage);
-            setStatus(data.status as OfferStatus);
-            setStartDate(new Date(data.start_date));
-            setEndDate(new Date(data.end_date));
-            setImagePreview(data.image_url);
+            const { data: productsData, error: productsError } = await supabase.from('products').select('id, name');
+
+            setTitle(offerData.title);
+            setSubtitle(offerData.subtitle || '');
+            setCode(offerData.code);
+            setDiscountPercentage(offerData.discount_percentage);
+            setStatus(offerData.status as OfferStatus);
+            setStartDate(new Date(offerData.start_date));
+            setEndDate(new Date(offerData.end_date));
+            setImagePreview(offerData.image_url);
+            setSelectedProductIds(offerData.product_ids || []);
+            
+            if (productsData) {
+                setAllProducts(productsData as any[]);
+            }
+
             setLoading(false);
         };
-        fetchOffer();
+        fetchOfferAndProducts();
     }, [offerId, supabase, toast]);
     
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,6 +108,14 @@ export default function EditOfferPage() {
         const data = await response.json();
         return data.secure_url;
     };
+
+    const handleProductSelection = (productId: number) => {
+        setSelectedProductIds(prev =>
+            prev.includes(productId)
+            ? prev.filter(id => id !== productId)
+            : [...prev, productId]
+        );
+    };
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -113,6 +136,7 @@ export default function EditOfferPage() {
                 start_date: startDate?.toISOString(),
                 end_date: endDate?.toISOString(),
                 image_url: imageUrl,
+                product_ids: selectedProductIds,
             };
 
             const { error } = await supabase.from('offers').update(offerData).eq('id', offerId);
@@ -218,18 +242,42 @@ export default function EditOfferPage() {
                                 </Popover>
                             </div>
                         </div>
-                        <div className="grid gap-3">
-                            <Label htmlFor="status">Status</Label>
-                            <Select value={status} onValueChange={(value) => setStatus(value as OfferStatus)}>
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="inactive">Inactive</SelectItem>
-                                    <SelectItem value="expired">Expired</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="grid gap-3">
+                                <Label htmlFor="status">Status</Label>
+                                <Select value={status} onValueChange={(value) => setStatus(value as OfferStatus)}>
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="active">Active</SelectItem>
+                                        <SelectItem value="inactive">Inactive</SelectItem>
+                                        <SelectItem value="expired">Expired</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="grid gap-3">
+                                <Label>Link Products (Optional)</Label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start font-normal h-auto text-left">
+                                            {selectedProductIds.length > 0 ? `${selectedProductIds.length} products selected` : "Select products"}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-64 p-2 max-h-60 overflow-y-auto" align="start">
+                                        {allProducts.map(product => (
+                                            <DropdownMenuCheckboxItem
+                                                key={product.id}
+                                                checked={selectedProductIds.includes(product.id)}
+                                                onCheckedChange={() => handleProductSelection(product.id)}
+                                                onSelect={(e) => e.preventDefault()}
+                                            >
+                                                {product.name}
+                                            </DropdownMenuCheckboxItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end border-t pt-6">
