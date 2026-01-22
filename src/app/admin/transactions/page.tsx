@@ -24,12 +24,24 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from 'next/link';
-import { transactions as initialTransactions } from '@/lib/data';
 import { format } from 'date-fns';
+import { useSupabase } from "@/lib/supabase/provider";
+import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-type Transaction = typeof initialTransactions[0];
+interface Transaction {
+    id: number;
+    order_id: number;
+    order_number: string;
+    customer_name: string;
+    customer_avatar: string | null;
+    amount: number;
+    payment_method: string;
+    status: 'Pending' | 'Completed' | 'Failed';
+    created_at: string;
+}
 
 const getStatusVariant = (status: Transaction['status']) => {
     switch (status) {
@@ -44,9 +56,31 @@ const getStatusVariant = (status: Transaction['status']) => {
     }
 };
 
-
 export default function AdminTransactionsPage() {
-    const [transactions, setTransactions] = useState(initialTransactions);
+    const { supabase } = useSupabase();
+    const { toast } = useToast();
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const getTransactions = useCallback(async () => {
+        setLoading(true);
+        const { data, error } = await supabase.rpc('get_admin_transactions');
+        
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error fetching transactions', description: error.message });
+        } else {
+            setTransactions(data || []);
+        }
+        setLoading(false);
+    }, [supabase, toast]);
+
+    useEffect(() => {
+        getTransactions();
+    }, [getTransactions]);
+
+    if (loading) {
+        return <p>Loading transactions...</p>
+    }
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
@@ -62,7 +96,7 @@ export default function AdminTransactionsPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Transaction ID</TableHead>
-                                    <TableHead>Order ID</TableHead>
+                                    <TableHead>Customer</TableHead>
                                     <TableHead>Date</TableHead>
                                     <TableHead>Payment Method</TableHead>
                                     <TableHead>Status</TableHead>
@@ -73,14 +107,18 @@ export default function AdminTransactionsPage() {
                             <TableBody>
                                 {transactions.map((transaction) => (
                                     <TableRow key={transaction.id}>
-                                        <TableCell className="font-medium">{transaction.id}</TableCell>
+                                        <TableCell className="font-medium">TRN-{transaction.id}</TableCell>
                                         <TableCell>
-                                            <Button variant="link" asChild className="p-0 h-auto">
-                                                <Link href={`/admin/orders/${transaction.orderId}`}>{transaction.orderId}</Link>
-                                            </Button>
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-8 w-8">
+                                                    <AvatarImage src={transaction.customer_avatar ?? undefined} alt={transaction.customer_name} />
+                                                    <AvatarFallback>{transaction.customer_name?.charAt(0) ?? 'U'}</AvatarFallback>
+                                                </Avatar>
+                                                <span>{transaction.customer_name}</span>
+                                            </div>
                                         </TableCell>
-                                        <TableCell suppressHydrationWarning>{format(new Date(transaction.date), 'PPp')}</TableCell>
-                                        <TableCell>{transaction.paymentMethod}</TableCell>
+                                        <TableCell suppressHydrationWarning>{format(new Date(transaction.created_at), 'PPp')}</TableCell>
+                                        <TableCell>{transaction.payment_method}</TableCell>
                                         <TableCell>
                                             <Badge variant={getStatusVariant(transaction.status)}>{transaction.status}</Badge>
                                         </TableCell>
@@ -93,9 +131,9 @@ export default function AdminTransactionsPage() {
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end">
-                                                     <DropdownMenuItem asChild>
-                                                        <Link href={`/admin/orders/${transaction.orderId}`}>View Order</Link>
-                                                    </DropdownMenuItem>
+                                                     {transaction.order_number && <DropdownMenuItem asChild>
+                                                        <Link href={`/admin/orders/${transaction.order_number}`}>View Order</Link>
+                                                    </DropdownMenuItem>}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </TableCell>
@@ -110,7 +148,7 @@ export default function AdminTransactionsPage() {
                             <Card key={transaction.id}>
                                 <CardHeader>
                                     <CardTitle className="flex justify-between items-center text-base">
-                                        {transaction.id}
+                                        <span>TRN-{transaction.id}</span>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" size="icon">
@@ -118,23 +156,21 @@ export default function AdminTransactionsPage() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem asChild>
-                                                    <Link href={`/admin/orders/${transaction.orderId}`}>View Order</Link>
-                                                </DropdownMenuItem>
+                                                {transaction.order_number && <DropdownMenuItem asChild>
+                                                    <Link href={`/admin/orders/${transaction.order_number}`}>View Order</Link>
+                                                </DropdownMenuItem>}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </CardTitle>
-                                    <CardDescription>
-                                        <Button variant="link" asChild className="p-0 h-auto text-muted-foreground text-sm">
-                                            <Link href={`/admin/orders/${transaction.orderId}`}>Order ID: {transaction.orderId}</Link>
-                                        </Button>
-                                    </CardDescription>
+                                    {transaction.order_number && <CardDescription>
+                                        <Link href={`/admin/orders/${transaction.order_number}`} className="text-muted-foreground hover:underline">Order ID: {transaction.order_number}</Link>
+                                    </CardDescription>}
                                 </CardHeader>
                                 <CardContent className="space-y-2">
-                                     <p className="text-sm text-muted-foreground" suppressHydrationWarning>{format(new Date(transaction.date), 'PPp')}</p>
+                                     <p className="text-sm text-muted-foreground" suppressHydrationWarning>{format(new Date(transaction.created_at), 'PPp')}</p>
                                      <div className="flex justify-between items-end">
                                         <div>
-                                            <p className="text-sm text-muted-foreground">{transaction.paymentMethod}</p>
+                                            <p className="text-sm text-muted-foreground">{transaction.payment_method}</p>
                                             <p className="font-semibold mt-1">${transaction.amount.toFixed(2)}</p>
                                         </div>
                                         <Badge variant={getStatusVariant(transaction.status)}>{transaction.status}</Badge>

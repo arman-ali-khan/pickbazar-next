@@ -115,14 +115,6 @@ export const product = {
 export const relatedProducts = products.slice(1, 13).map(p => ({...p, id: p.id, name: p.name, price: p.price, image: p.image, weight: p.weight, tag: p.originalPrice ? `${Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}%` : undefined}));
 
 
-export const transactions = [
-    { id: 'TRN-001', orderId: 'ORD-001', date: '2024-07-28T14:48:00.000Z', amount: 125.50, paymentMethod: 'Credit Card', status: 'Completed' as const },
-    { id: 'TRN-002', orderId: 'ORD-002', date: '2024-07-27T10:30:00.000Z', amount: 89.90, paymentMethod: 'PayPal', status: 'Completed' as const },
-    { id: 'TRN-003', orderId: 'ORD-003', date: '2024-07-26T18:00:00.000Z', amount: 210.00, paymentMethod: 'Credit Card', status: 'Completed' as const },
-    { id: 'TRN-004', orderId: 'ORD-004', date: '2024-07-25T09:15:00.000Z', amount: 55.20, paymentMethod: 'Cash on Delivery', status: 'Pending' as const },
-    { id: 'TRN-005', orderId: 'ORD-005', date: '2024-07-28T11:00:00.000Z', amount: 45.75, paymentMethod: 'Credit Card', status: 'Failed' as const },
-];
-
 export const admins = [
   {
     id: 1,
@@ -284,7 +276,6 @@ export const userNotifications = [
 export type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
 export type Product = (typeof products)[0] & { originalPrice?: number, rating?: number };
 export type RelatedProduct = typeof relatedProducts[0];
-export type Transaction = typeof transactions[0];
 export type Admin = typeof admins[0];
 export type Offer = typeof offers[0];
 export type Message = typeof messages[0];

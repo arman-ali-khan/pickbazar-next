@@ -17,6 +17,7 @@ import {
   Bell,
   LayoutDashboard,
   Star,
+  Banknote
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ const navItems = [
     { href: '/profile/my-reviews', icon: Star, label: 'My Reviews' },
     { href: '/profile/my-questions', icon: HelpCircle, label: 'My Questions' },
     { href: '/profile/my-cards', icon: CreditCard, label: 'My Cards' },
+    { href: '/profile/my-transactions', icon: Banknote, label: 'My Transactions' },
     { href: '/profile/notifications', icon: Bell, label: 'Notifications' },
     { href: '/profile/change-password', icon: KeyRound, label: 'Change Password' },
     { href: '/profile/my-refunds', icon: RefreshCw, label: 'My Refunds' },

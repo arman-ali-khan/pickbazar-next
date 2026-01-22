@@ -44,6 +44,8 @@ export default function PaymentPage() {
     const [selectedMethod, setSelectedMethod] = useState('card');
     const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
+    const [trxId, setTrxId] = useState('');
+    const [mobileLast4, setMobileLast4] = useState('');
 
     useEffect(() => {
         const savedInfo = localStorage.getItem('shippingInfo');
@@ -72,11 +74,15 @@ export default function PaymentPage() {
             price: item.price,
         }));
         
+        const transactionDetails = selectedMethod === 'mobile-banking' ? { trxId, mobileLast4 } : null;
+
         const { data: orderNumber, error } = await supabase.rpc('create_order', {
             p_user_id: user.id,
             p_total_amount: total,
             p_shipping_details: shippingInfo,
             p_items: orderItems,
+            p_payment_method: selectedMethod,
+            p_transaction_details: transactionDetails,
         });
 
         if (error) {
@@ -188,11 +194,11 @@ export default function PaymentPage() {
                         <div className="grid sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="trxId">Transaction ID</Label>
-                                <Input id="trxId" placeholder="Enter TrxID" />
+                                <Input id="trxId" placeholder="Enter TrxID" value={trxId} onChange={(e) => setTrxId(e.target.value)} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="mobileLast4">Your Mobile No. (Last 4 Digits)</Label>
-                                <Input id="mobileLast4" placeholder="e.g., 1234" />
+                                <Input id="mobileLast4" placeholder="e.g., 1234" value={mobileLast4} onChange={(e) => setMobileLast4(e.target.value)} />
                             </div>
                         </div>
                     </div>
