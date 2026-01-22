@@ -88,7 +88,6 @@ function SearchContent() {
   
   const handleFilterChange = useCallback((filters: {
     categories: string[];
-    priceRange: number[];
     rating: number;
   }) => {
     let tempProducts = [...searchedProducts];
@@ -99,10 +98,6 @@ function SearchContent() {
         return productCats.some((pc: string) => filters.categories.includes(pc));
       });
     }
-
-    tempProducts = tempProducts.filter(
-      p => p.price >= filters.priceRange[0] && p.price <= filters.priceRange[1]
-    );
 
     if (filters.rating > 0) {
       tempProducts = tempProducts.filter(p => p.rating && p.rating >= filters.rating);

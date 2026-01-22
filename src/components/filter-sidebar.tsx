@@ -9,7 +9,6 @@ import {
 } from '@/components/ui/accordion';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
 import { Star } from 'lucide-react';
@@ -17,7 +16,6 @@ import { Star } from 'lucide-react';
 interface FilterSidebarProps {
   onFilterChange: (filters: {
     categories: string[];
-    priceRange: number[];
     rating: number;
   }) => void;
   initialCategories?: string[];
@@ -25,15 +23,10 @@ interface FilterSidebarProps {
   maxPrice: number;
 }
 
-export default function FilterSidebar({ onFilterChange, initialCategories = [], allCategories, maxPrice }: FilterSidebarProps) {
+export default function FilterSidebar({ onFilterChange, initialCategories = [], allCategories }: FilterSidebarProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories);
-  const [priceRange, setPriceRange] = useState([0, maxPrice]);
   const [selectedRating, setSelectedRating] = useState(0);
 
-  useEffect(() => {
-    setPriceRange([0, maxPrice]);
-  }, [maxPrice]);
-  
   useEffect(() => {
     setSelectedCategories(initialCategories);
   }, [initialCategories]);
@@ -42,13 +35,12 @@ export default function FilterSidebar({ onFilterChange, initialCategories = [], 
     const timer = setTimeout(() => {
       onFilterChange({
         categories: selectedCategories,
-        priceRange,
         rating: selectedRating,
       });
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [selectedCategories, priceRange, selectedRating, onFilterChange]);
+  }, [selectedCategories, selectedRating, onFilterChange]);
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategories(prev =>
@@ -60,7 +52,6 @@ export default function FilterSidebar({ onFilterChange, initialCategories = [], 
 
   const handleClearFilters = () => {
     setSelectedCategories([]);
-    setPriceRange([0, maxPrice]);
     setSelectedRating(0);
   };
 
@@ -72,7 +63,7 @@ export default function FilterSidebar({ onFilterChange, initialCategories = [], 
           Clear All
         </Button>
       </div>
-      <Accordion type="multiple" defaultValue={['categories', 'price', 'rating']} className="w-full px-6 lg:px-0">
+      <Accordion type="multiple" defaultValue={['categories', 'rating']} className="w-full px-6 lg:px-0">
         <AccordionItem value="categories">
           <AccordionTrigger className="font-semibold">Categories</AccordionTrigger>
           <AccordionContent>
@@ -110,24 +101,7 @@ export default function FilterSidebar({ onFilterChange, initialCategories = [], 
             </div>
           </AccordionContent>
         </AccordionItem>
-        <AccordionItem value="price">
-          <AccordionTrigger className="font-semibold">Price</AccordionTrigger>
-          <AccordionContent>
-            <div className="pt-4">
-              <Slider
-                min={0}
-                max={maxPrice > 0 ? maxPrice : 100}
-                step={1}
-                value={priceRange}
-                onValueChange={setPriceRange}
-              />
-              <div className="flex justify-between text-sm text-muted-foreground mt-2">
-                <span>${priceRange[0]}</span>
-                <span>${priceRange[1]}</span>
-              </div>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+        
         <AccordionItem value="rating">
           <AccordionTrigger className="font-semibold">Rating</AccordionTrigger>
           <AccordionContent>
