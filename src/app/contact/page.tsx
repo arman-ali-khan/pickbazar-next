@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -20,6 +21,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useSupabase } from '@/lib/supabase/provider';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -28,8 +31,27 @@ const formSchema = z.object({
   message: z.string().min(10, 'Message must be at least 10 characters.'),
 });
 
+type ContactInfo = {
+  address: string;
+  email: string;
+  phone: string;
+};
+
 export default function ContactPage() {
   const { toast } = useToast();
+  const { supabase } = useSupabase();
+  const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
+
+  useEffect(() => {
+    const fetchContactInfo = async () => {
+      const { data } = await supabase.from('pages').select('content').eq('slug', 'contact').single();
+      if (data) {
+        setContactInfo(data.content as ContactInfo);
+      }
+    };
+    fetchContactInfo();
+  }, [supabase]);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -65,27 +87,33 @@ export default function ContactPage() {
                 <CardTitle>Contact Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 text-sm">
-                <div className="flex items-start gap-4">
-                  <MapPin className="h-5 w-5 text-primary mt-1" />
-                  <div>
-                    <h4 className="font-semibold">Our Address</h4>
-                    <p className="text-muted-foreground">123 Green Grocer Lane, Farmville, FV 54321</p>
-                  </div>
-                </div>
-                 <div className="flex items-start gap-4">
-                  <Mail className="h-5 w-5 text-primary mt-1" />
-                  <div>
-                    <h4 className="font-semibold">Email Us</h4>
-                    <p className="text-muted-foreground">support@pickbazar.com</p>
-                  </div>
-                </div>
-                 <div className="flex items-start gap-4">
-                  <Phone className="h-5 w-5 text-primary mt-1" />
-                  <div>
-                    <h4 className="font-semibold">Call Us</h4>
-                    <p className="text-muted-foreground">+1 (123) 456-7890</p>
-                  </div>
-                </div>
+                {contactInfo ? (
+                  <>
+                    <div className="flex items-start gap-4">
+                      <MapPin className="h-5 w-5 text-primary mt-1" />
+                      <div>
+                        <h4 className="font-semibold">Our Address</h4>
+                        <p className="text-muted-foreground">{contactInfo.address}</p>
+                      </div>
+                    </div>
+                     <div className="flex items-start gap-4">
+                      <Mail className="h-5 w-5 text-primary mt-1" />
+                      <div>
+                        <h4 className="font-semibold">Email Us</h4>
+                        <p className="text-muted-foreground">{contactInfo.email}</p>
+                      </div>
+                    </div>
+                     <div className="flex items-start gap-4">
+                      <Phone className="h-5 w-5 text-primary mt-1" />
+                      <div>
+                        <h4 className="font-semibold">Call Us</h4>
+                        <p className="text-muted-foreground">{contactInfo.phone}</p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground">Loading contact information...</p>
+                )}
               </CardContent>
             </Card>
           </div>

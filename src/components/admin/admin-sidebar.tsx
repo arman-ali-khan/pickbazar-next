@@ -31,7 +31,8 @@ import {
   ChevronLeft,
   Leaf,
   ChevronDown,
-  LayoutTemplate
+  LayoutTemplate,
+  Files
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -57,6 +58,7 @@ const navItems = [
   { href: '/admin/questions', icon: HelpCircle, label: 'Questions' },
   { href: '/admin/offers', icon: Gift, label: 'Offers' },
   { href: '/admin/messages', icon: MessageSquare, label: 'Messages' },
+  { href: '/admin/pages', icon: Files, label: 'Page Manager' },
 ];
 
 const settingsNavItems = [

@@ -1,4 +1,3 @@
-'use client';
 
 import Header from '@/components/header';
 import Footer from '@/components/footer';
@@ -8,8 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Linkedin, Twitter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { createClient } from '@/lib/supabase/server';
+import { notFound } from 'next/navigation';
 
-const teamMembers = [
+interface TeamMember {
+  name: string;
+  role: string;
+  avatar: { src: string; hint: string };
+  bio: string;
+  social: { linkedin: string; twitter: string };
+}
+
+const staticTeamMembers = [
   {
     name: 'John Doe',
     role: 'CEO & Founder',
@@ -33,15 +42,38 @@ const teamMembers = [
   },
 ];
 
-export default function AboutPage() {
+
+export default async function AboutPage() {
+  const supabase = createClient();
+  const { data } = await supabase.from('pages').select('content').eq('slug', 'about').single();
+
+  if (!data) {
+    notFound();
+  }
+
+  const pageContent = data.content as {
+    title: string;
+    subtitle: string;
+    missionTitle: string;
+    missionText: string;
+    teamTitle: string;
+    team: { name: string; role: string; bio: string }[];
+  };
+
+  // Merge dynamic data with static data (for avatars, social links etc.)
+  const teamMembers = pageContent.team.map((dynamicMember, index) => ({
+    ...staticTeamMembers[index],
+    ...dynamicMember,
+  }));
+
   return (
     <div className="bg-muted/20 min-h-screen">
       <Header />
       <main className="container py-12">
         <section className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-800">About Pickbazar</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-800">{pageContent.title}</h1>
           <p className="text-muted-foreground mt-4 text-lg max-w-3xl mx-auto">
-            We are a team of passionate food lovers dedicated to bringing the freshest groceries right to your doorstep.
+            {pageContent.subtitle}
           </p>
         </section>
 
@@ -56,9 +88,9 @@ export default function AboutPage() {
             />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
               <div className="text-center text-white p-8">
-                <h2 className="text-3xl font-bold mb-4">Our Mission</h2>
+                <h2 className="text-3xl font-bold mb-4">{pageContent.missionTitle}</h2>
                 <p className="max-w-2xl mx-auto">
-                  To provide our customers with the highest quality, freshest products sourced from local farms and trusted suppliers, all while offering a convenient and delightful shopping experience.
+                  {pageContent.missionText}
                 </p>
               </div>
             </div>
@@ -66,7 +98,7 @@ export default function AboutPage() {
         </section>
 
         <section className="text-center mb-16">
-          <h2 className="text-3xl font-bold text-gray-800 mb-8">Meet Our Team</h2>
+          <h2 className="text-3xl font-bold text-gray-800 mb-8">{pageContent.teamTitle}</h2>
           <div className="grid md:grid-cols-3 gap-8">
             {teamMembers.map((member) => (
               <Card key={member.name} className="text-center">
