@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronDown, Menu, Search, Leaf, X, User, Bell } from 'lucide-react';
+import { ChevronDown, Menu, Search, Leaf, X, User, Bell, ShoppingBag, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -246,6 +246,18 @@ export default function Header() {
                         <Link href="/profile">
                           <User className="mr-2 h-4 w-4" />
                           <span>Profile</span>
+                        </Link>
+                      </DropdownMenuItem>
+                       <DropdownMenuItem asChild>
+                        <Link href="/profile/my-orders">
+                          <ShoppingBag className="mr-2 h-4 w-4" />
+                          <span>My Orders</span>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile/my-wishlists">
+                          <Heart className="mr-2 h-4 w-4" />
+                          <span>My Wishlist</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSub>
