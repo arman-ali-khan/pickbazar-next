@@ -25,6 +25,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { setSearchOpen } from '@/lib/redux/slices/uiSlice';
 import LucideIcon from './lucide-icon';
+import { Skeleton } from './ui/skeleton';
 
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
@@ -95,7 +96,7 @@ const CategoriesNav = () => {
             <AccordionContent>
               <div className="pl-8 flex flex-col items-start">
                 {category.sub.map((subCategory) => (
-                  <Link href={`/shop?category=${encodeURIComponent(subCategory.name)}`} key={subCategory.id} className="py-2 text-sm text-muted-foreground hover:text-primary w-full text-left">{subCategory.name}</Link>
+                  <Link href={`/shop?category=${encodeURIComponent(subCategory.name)}`} key={subCategory.id} className="py-1.5 text-sm text-muted-foreground hover:text-primary w-full text-left">{subCategory.name}</Link>
                 ))}
               </div>
             </AccordionContent>
@@ -149,6 +150,12 @@ const CategoriesNav = () => {
 };
 
 export default function Header() {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+  
   const dispatch = useAppDispatch();
   const isSearchOpen = useAppSelector(state => state.ui.isSearchOpen);
   const router = useRouter();
@@ -200,6 +207,41 @@ export default function Header() {
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name;
   const userAvatar = user?.user_metadata?.avatar_url;
 
+  if (!isMounted) {
+    return (
+        <header className={cn(
+            "sticky top-0 z-50 w-full border-b transition-all duration-300",
+            "bg-white border-gray-200 shadow-sm"
+        )}>
+            <div className="container flex h-20 items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-10 w-10 md:hidden" />
+                    <div className="hidden md:block">
+                        <Skeleton className="h-10 w-36" />
+                    </div>
+                    <Skeleton className="h-8 w-32" />
+                </div>
+                <div className="hidden items-center space-x-6 text-sm md:flex">
+                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-14" />
+                </div>
+                <div className="flex items-center justify-end space-x-2">
+                    <div className="hidden md:flex items-center space-x-2">
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <Skeleton className="h-10 w-10 rounded-full" />
+                        <Skeleton className="h-10 w-36" />
+                    </div>
+                    <div className="md:hidden flex items-center gap-2">
+                        <Skeleton className="h-10 w-10" />
+                        <Skeleton className="h-10 w-20" />
+                    </div>
+                </div>
+            </div>
+        </header>
+    );
+  }
 
   return (
     <header className={cn(
