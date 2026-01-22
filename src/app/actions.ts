@@ -142,6 +142,7 @@ export async function submitQuestion(formData: FormData) {
         return { error: error.message };
     }
 
+    revalidatePath('/admin/questions');
     revalidatePath(`/products/${productId}`);
     return { success: true };
 }
@@ -150,9 +151,10 @@ export async function answerQuestion(formData: FormData) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    const allowedRoles = ['admin', 'manager', 'super-admin'];
+    // In a real app, you'd have a more robust role check.
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single();
     
+    const allowedRoles = ['admin', 'manager', 'super-admin'];
     if (!user || !allowedRoles.includes(profile?.role || '')) {
         return { error: 'You do not have permission to perform this action.' };
     }
@@ -201,7 +203,7 @@ export async function applyCoupon(code: string, cartItems: { id: number; price: 
   }
 
   const now = new Date().toISOString();
-  if (offer.status !== 'active' || offer.start_date > now || offer.end_date < now) {
+  if (offer.status !== 'active' || offer.start_date > now || (offer.end_date && offer.end_date < now)) {
     return { error: 'This coupon is not active or has expired.' };
   }
 

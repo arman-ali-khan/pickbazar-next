@@ -92,7 +92,7 @@ export default function CheckoutPage() {
             }
             if (result.success && result.discount) {
                 setCouponMessage({ type: 'success', message: result.success });
-                setAppliedDiscount({ code: result.code, discount: result.discount });
+                setAppliedDiscount({ code: result.code!, discount: result.discount });
             }
         });
     };
