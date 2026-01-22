@@ -7,11 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
-import { ChevronLeft, CalendarIcon, UploadCloud, X } from 'lucide-react';
+import { ChevronLeft, CalendarIcon, UploadCloud, X, Search } from 'lucide-react';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuCheckboxItem, DropdownMenuGroup, DropdownMenuLabel } from "@/components/ui/dropdown-menu";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
@@ -24,6 +24,9 @@ type OfferStatus = 'active' | 'inactive' | 'expired';
 
 interface Category { id: number; name: string; parent_id: number | null; }
 interface HierarchicalCategory extends Category { subcategories: Category[]; }
+interface Product { id: number; name: string; category_id: number; }
+interface ProductGroup { categoryName: string; products: Product[]; }
+
 
 export default function EditOfferPage() {
     const router = useRouter();
@@ -32,6 +35,7 @@ export default function EditOfferPage() {
     const { supabase } = useSupabase();
     const offerId = parseInt(params.id, 10);
     
+    // Form state
     const [title, setTitle] = useState('');
     const [subtitle, setSubtitle] = useState('');
     const [code, setCode] = useState('');
@@ -40,14 +44,20 @@ export default function EditOfferPage() {
     const [startDate, setStartDate] = useState<Date | undefined>();
     const [endDate, setEndDate] = useState<Date | undefined>();
     
+    // Image state
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     
+    // Data state
     const [allCategories, setAllCategories] = useState<HierarchicalCategory[]>([]);
+    const [allProducts, setAllProducts] = useState<Product[]>([]);
     const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+    const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
 
+    // UI state
     const [loading, setLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [productSearch, setProductSearch] = useState('');
 
     useEffect(() => {
         if (isNaN(offerId)) {
@@ -64,7 +74,10 @@ export default function EditOfferPage() {
                 return;
             }
 
-            const { data: categoriesData, error: categoriesError } = await supabase.from('categories').select('id, name, parent_id').order('name');
+            const [categoriesRes, productsRes] = await Promise.all([
+                supabase.from('categories').select('id, name, parent_id').order('name'),
+                supabase.from('products').select('id, name, product_categories!inner(category_id)').order('name')
+            ]);
             
             setTitle(offerData.title);
             setSubtitle(offerData.subtitle || '');
@@ -75,17 +88,23 @@ export default function EditOfferPage() {
             setEndDate(new Date(offerData.end_date));
             setImagePreview(offerData.image_url);
             setSelectedCategoryIds(offerData.category_ids || []);
+            setSelectedProductIds(offerData.product_ids || []);
             
-            if (categoriesData) {
-                const fetchedCategories: Category[] = categoriesData;
+            if (categoriesRes.data) {
+                const fetchedCategories: Category[] = categoriesRes.data;
                 const topLevel = fetchedCategories.filter(c => !c.parent_id);
                 const children = fetchedCategories.filter(c => c.parent_id);
-
-                const hierarchical = topLevel.map(parent => ({
-                    ...parent,
-                    subcategories: children.filter(child => child.parent_id === parent.id)
-                }));
+                const hierarchical = topLevel.map(parent => ({ ...parent, subcategories: children.filter(child => child.parent_id === parent.id) }));
                 setAllCategories(hierarchical);
+            }
+
+            if (productsRes.data) {
+                const fetchedProducts: Product[] = (productsRes.data || []).map((p: any) => ({
+                    id: p.id,
+                    name: p.name,
+                    category_id: p.product_categories[0]?.category_id
+                }));
+                setAllProducts(fetchedProducts);
             }
 
             setLoading(false);
@@ -93,6 +112,34 @@ export default function EditOfferPage() {
         fetchOfferAndData();
     }, [offerId, supabase, toast]);
     
+    const productGroups = React.useMemo(() => {
+        if (allProducts.length === 0 || allCategories.length === 0) return [];
+        
+        let filteredProducts = allProducts;
+        if (productSearch) {
+            filteredProducts = allProducts.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase()));
+        }
+
+        const categoryMap = new Map<number, HierarchicalCategory>();
+        allCategories.forEach(cat => {
+            categoryMap.set(cat.id, cat);
+            cat.subcategories.forEach(sub => categoryMap.set(sub.id, cat));
+        });
+
+        const groups = new Map<string, Product[]>();
+        filteredProducts.forEach(product => {
+            const parentCategory = categoryMap.get(product.category_id);
+            if(parentCategory) {
+                if (!groups.has(parentCategory.name)) {
+                    groups.set(parentCategory.name, []);
+                }
+                groups.get(parentCategory.name)!.push(product);
+            }
+        });
+        
+        return Array.from(groups.entries()).map(([categoryName, products]) => ({ categoryName, products }));
+    }, [allProducts, allCategories, productSearch]);
+
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -126,6 +173,14 @@ export default function EditOfferPage() {
             : [...prev, categoryId]
         );
     };
+
+    const handleProductSelection = (productId: number) => {
+        setSelectedProductIds(prev =>
+            prev.includes(productId)
+            ? prev.filter(id => id !== productId)
+            : [...prev, productId]
+        );
+    };
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -146,7 +201,8 @@ export default function EditOfferPage() {
                 start_date: startDate?.toISOString(),
                 end_date: endDate?.toISOString(),
                 image_url: imageUrl,
-                category_ids: selectedCategoryIds,
+                category_ids: selectedCategoryIds.length > 0 ? selectedCategoryIds : null,
+                product_ids: selectedProductIds.length > 0 ? selectedProductIds : null,
             };
 
             const { error } = await supabase.from('offers').update(offerData).eq('id', offerId);
@@ -303,6 +359,42 @@ export default function EditOfferPage() {
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
+                        </div>
+                        <div className="grid gap-3">
+                            <Label>Link Products (Optional)</Label>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-start font-normal h-auto text-left">
+                                        {selectedProductIds.length > 0 ? `${selectedProductIds.length} products selected` : "Select products"}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-80 p-2 max-h-96 overflow-y-auto" align="start">
+                                    <div className="relative p-2">
+                                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                        <Input 
+                                            placeholder="Search products..." 
+                                            className="pl-8" 
+                                            value={productSearch}
+                                            onChange={(e) => setProductSearch(e.target.value)}
+                                        />
+                                    </div>
+                                    {productGroups.map(group => (
+                                        <DropdownMenuGroup key={group.categoryName}>
+                                            <DropdownMenuLabel>{group.categoryName}</DropdownMenuLabel>
+                                            {group.products.map(prod => (
+                                                <DropdownMenuCheckboxItem
+                                                    key={prod.id}
+                                                    checked={selectedProductIds.includes(prod.id)}
+                                                    onCheckedChange={() => handleProductSelection(prod.id)}
+                                                    onSelect={(e) => e.preventDefault()}
+                                                >
+                                                    {prod.name}
+                                                </DropdownMenuCheckboxItem>
+                                            ))}
+                                        </DropdownMenuGroup>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end border-t pt-6">

@@ -87,7 +87,6 @@ function ShopContent() {
         rating: p.rating || 4.5,
       }));
       setAllProducts(fetchedProducts);
-      // Initial filtering based on query params happens in the useEffect below
     }
 
     if (categoriesRes.data) {
@@ -100,20 +99,19 @@ function ShopContent() {
     fetchAndProcessData();
   }, [fetchAndProcessData]);
 
-  // This effect applies the initial filter from URL params once products are loaded
   useEffect(() => {
     if (allProducts.length > 0) {
-      let tempProducts = [...allProducts];
-      if (initialProductIds.length > 0) {
-          tempProducts = tempProducts.filter(p => initialProductIds.includes(p.id));
+      if (initialProductIds.length > 0 || initialCategories.length > 0) {
+          const tempProducts = allProducts.filter(p => {
+              const matchesProductIds = initialProductIds.length > 0 && initialProductIds.includes(p.id);
+              const productCats = (p as any).dbCategories || [p.category];
+              const matchesCategories = initialCategories.length > 0 && productCats.some((pc: string) => initialCategories.includes(pc));
+              return matchesProductIds || matchesCategories;
+          });
+          setFilteredProducts(tempProducts);
+      } else {
+          setFilteredProducts(allProducts);
       }
-      if (initialCategories.length > 0) {
-         tempProducts = tempProducts.filter(p => {
-          const productCats = (p as any).dbCategories || [p.category];
-          return productCats.some((pc: string) => initialCategories.includes(pc));
-        });
-      }
-      setFilteredProducts(tempProducts);
     }
   }, [allProducts, initialCategories, initialProductIds]);
 
@@ -124,11 +122,6 @@ function ShopContent() {
     priceRange: [number, number];
   }) => {
     let tempProducts = [...allProducts];
-
-    // If offer products are specified, filter from that subset, otherwise from all products
-    if (initialProductIds.length > 0) {
-        tempProducts = tempProducts.filter(p => initialProductIds.includes(p.id));
-    }
 
     if (filters.categories.length > 0) {
       tempProducts = tempProducts.filter(p => {
@@ -147,7 +140,7 @@ function ShopContent() {
     
     setFilteredProducts(tempProducts);
     setVisibleCount(PRODUCTS_PER_PAGE);
-  }, [allProducts, initialProductIds]);
+  }, [allProducts]);
 
   useEffect(() => {
     let sorted = [...filteredProducts];

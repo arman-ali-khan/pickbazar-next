@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -21,6 +22,7 @@ interface Offer {
   subtitle: string | null;
   image_url: string | null;
   category_ids: number[] | null;
+  product_ids: number[] | null;
   categoryNames?: string[];
 }
 
@@ -38,7 +40,7 @@ export default function OfferCarousel() {
       const [offersRes, categoriesRes] = await Promise.all([
         supabase
           .from('offers')
-          .select('id, title, subtitle, image_url, category_ids')
+          .select('id, title, subtitle, image_url, category_ids, product_ids')
           .eq('status', 'active')
           .lte('start_date', new Date().toISOString())
           .gte('end_date', new Date().toISOString())
@@ -98,9 +100,16 @@ export default function OfferCarousel() {
       >
         <CarouselContent className="-ml-4">
           {offers.map((offer, index) => {
-             const href = offer.categoryNames && offer.categoryNames.length > 0 
-              ? `/shop?categories=${offer.categoryNames.join(',')}` 
-              : '/offers';
+            const params = new URLSearchParams();
+            if (offer.categoryNames && offer.categoryNames.length > 0) {
+              params.set('categories', offer.categoryNames.join(','));
+            }
+            if (offer.product_ids && offer.product_ids.length > 0) {
+              params.set('offer_products', offer.product_ids.join(','));
+            }
+            const queryString = params.toString();
+            const href = queryString ? `/shop?${queryString}` : '/shop';
+
             return (
               <CarouselItem key={offer.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
                 <div className={`rounded-lg p-6 flex items-center justify-between h-48 ${bgColors[index % bgColors.length]}`}>

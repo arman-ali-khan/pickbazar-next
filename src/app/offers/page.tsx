@@ -13,6 +13,7 @@ interface Offer {
   subtitle: string | null;
   image_url: string | null;
   category_ids: number[] | null;
+  product_ids: number[] | null;
 }
 
 const bgColors = [
@@ -24,7 +25,7 @@ export default async function OffersPage() {
   const supabase = createClient();
   const { data: offersData } = await supabase
     .from('offers')
-    .select('id, title, subtitle, image_url, category_ids')
+    .select('id, title, subtitle, image_url, category_ids, product_ids')
     .eq('status', 'active')
     .lte('start_date', new Date().toISOString())
     .gte('end_date', new Date().toISOString());
@@ -46,9 +47,16 @@ export default async function OffersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {offers.map((offer, index) => {
             const categoryNames = offer.category_ids?.map(id => categories.find(c => c.id === id)?.name).filter(Boolean);
-            const href = categoryNames && categoryNames.length > 0
-              ? `/shop?categories=${categoryNames.map(encodeURIComponent).join(',')}`
-              : '/shop';
+            
+            const params = new URLSearchParams();
+            if (categoryNames && categoryNames.length > 0) {
+              params.set('categories', categoryNames.join(','));
+            }
+            if (offer.product_ids && offer.product_ids.length > 0) {
+              params.set('offer_products', offer.product_ids.join(','));
+            }
+            const queryString = params.toString();
+            const href = queryString ? `/shop?${queryString}` : '/shop';
             
             return (
               <div key={offer.id} className={`rounded-lg p-6 flex items-center justify-between h-48 ${bgColors[index % bgColors.length]}`}>
