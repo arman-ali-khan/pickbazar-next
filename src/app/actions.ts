@@ -328,3 +328,25 @@ export async function updateRefundStatus(formData: FormData) {
   revalidatePath('/admin');
   return { success: true };
 }
+
+export async function cancelRefund(refundId: number) {
+  const supabase = createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return { error: 'You must be logged in to cancel a refund.' }
+  }
+
+  // The RLS policy will ensure the user can only delete their own pending refund.
+  const { error } = await supabase
+    .from('refunds')
+    .delete()
+    .eq('id', refundId);
+
+  if (error) {
+    return { error: `Failed to cancel refund: ${error.message}` };
+  }
+  
+  revalidatePath('/profile/my-refunds');
+  return { success: true };
+}

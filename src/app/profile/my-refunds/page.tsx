@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useTransition } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
@@ -13,6 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { cancelRefund } from '@/app/actions';
 
 interface Refund {
     id: number;
@@ -38,6 +41,7 @@ export default function MyRefundsPage() {
     const { toast } = useToast();
     const [refunds, setRefunds] = useState<Refund[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isPending, startTransition] = useTransition();
 
     const getRefunds = useCallback(async () => {
         if (!user) return;
@@ -55,6 +59,18 @@ export default function MyRefundsPage() {
     useEffect(() => {
         getRefunds();
     }, [getRefunds]);
+
+    const handleCancel = (refundId: number) => {
+        startTransition(async () => {
+            const result = await cancelRefund(refundId);
+            if (result?.error) {
+                toast({ variant: 'destructive', title: 'Error Cancelling Refund', description: result.error });
+            } else {
+                toast({ title: 'Refund Request Cancelled', description: 'Your refund request has been successfully withdrawn.' });
+                getRefunds();
+            }
+        });
+    };
 
     return (
         <div className="bg-muted/20 min-h-screen">
@@ -83,6 +99,7 @@ export default function MyRefundsPage() {
                                                 <TableHead>Reason</TableHead>
                                                 <TableHead>Status</TableHead>
                                                 <TableHead>Amount</TableHead>
+                                                <TableHead className="text-right">Action</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -100,6 +117,29 @@ export default function MyRefundsPage() {
                                                         <Badge variant={getStatusVariant(refund.status)}>{refund.status}</Badge>
                                                     </TableCell>
                                                     <TableCell>${refund.amount.toFixed(2)}</TableCell>
+                                                    <TableCell className="text-right">
+                                                        {refund.status === 'Pending' && (
+                                                            <AlertDialog>
+                                                                <AlertDialogTrigger asChild>
+                                                                    <Button variant="destructive" size="sm" disabled={isPending}>Cancel</Button>
+                                                                </AlertDialogTrigger>
+                                                                <AlertDialogContent>
+                                                                    <AlertDialogHeader>
+                                                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                        <AlertDialogDescription>
+                                                                            This will permanently cancel your refund request for order {refund.order_number}. This action cannot be undone.
+                                                                        </AlertDialogDescription>
+                                                                    </AlertDialogHeader>
+                                                                    <AlertDialogFooter>
+                                                                        <AlertDialogCancel>Keep Request</AlertDialogCancel>
+                                                                        <AlertDialogAction onClick={() => handleCancel(refund.id)}>
+                                                                            Yes, Cancel It
+                                                                        </AlertDialogAction>
+                                                                    </AlertDialogFooter>
+                                                                </AlertDialogContent>
+                                                            </AlertDialog>
+                                                        )}
+                                                    </TableCell>
                                                 </TableRow>
                                             ))}
                                         </TableBody>
@@ -119,7 +159,30 @@ export default function MyRefundsPage() {
                                                     <span className="text-sm text-muted-foreground" suppressHydrationWarning>{format(new Date(refund.created_at), 'PP')}</span>
                                                     <Badge variant={getStatusVariant(refund.status)}>{refund.status}</Badge>
                                                 </div>
-                                                <p className="font-semibold text-right">${refund.amount.toFixed(2)}</p>
+                                                <div className="flex justify-between items-end">
+                                                    <p className="font-semibold text-right">${refund.amount.toFixed(2)}</p>
+                                                     {refund.status === 'Pending' && (
+                                                        <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                <Button variant="destructive" size="sm" disabled={isPending}>Cancel Request</Button>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        This will permanently cancel your refund request for order {refund.order_number}. This action cannot be undone.
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Keep Request</AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={() => handleCancel(refund.id)}>
+                                                                        Yes, Cancel It
+                                                                    </AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                    )}
+                                                </div>
                                             </CardContent>
                                         </Card>
                                     ))}
