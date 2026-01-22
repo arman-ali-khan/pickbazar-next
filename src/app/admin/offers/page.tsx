@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -24,32 +25,71 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, PlusCircle, Pencil, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from 'next/link';
-import { offers as initialOffers } from '@/lib/data';
-import type { Offer } from '@/lib/data';
 import Image from "next/image";
 import { format } from "date-fns";
+import { useSupabase } from "@/lib/supabase/provider";
+import { useToast } from "@/hooks/use-toast";
 
-const getStatusVariant = (status: Offer['status']) => {
+type OfferStatus = 'active' | 'inactive' | 'expired';
+
+interface Offer {
+  id: number;
+  title: string;
+  subtitle: string | null;
+  code: string;
+  discount_percentage: number;
+  status: OfferStatus;
+  start_date: string;
+  end_date: string;
+  image_url: string | null;
+}
+
+const getStatusVariant = (status: OfferStatus) => {
     switch (status) {
-        case 'active':
-            return 'secondary';
-        case 'expired':
-            return 'destructive';
-        case 'inactive':
-            return 'default';
-        default:
-            return 'default';
+        case 'active': return 'secondary';
+        case 'expired': return 'destructive';
+        case 'inactive': return 'default';
+        default: return 'default';
     }
 };
 
 export default function AdminOffersPage() {
-    const [offers, setOffers] = useState(initialOffers);
+    const { supabase } = useSupabase();
+    const { toast } = useToast();
+    const [offers, setOffers] = useState<Offer[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const handleDelete = (id: number) => {
-        setOffers(offers.filter(offer => offer.id !== id));
+    const getOffers = useCallback(async () => {
+        setLoading(true);
+        const { data, error } = await supabase.from('offers').select('*').order('created_at', { ascending: false });
+
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error fetching offers', description: error.message });
+        } else {
+            setOffers(data);
+        }
+        setLoading(false);
+    }, [supabase, toast]);
+
+    useEffect(() => {
+        getOffers();
+    }, [getOffers]);
+
+    const handleDelete = async (id: number) => {
+        const { error } = await supabase.from('offers').delete().eq('id', id);
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error deleting offer', description: error.message });
+        } else {
+            toast({ title: 'Offer Deleted' });
+            getOffers();
+        }
     };
+
+    if (loading) {
+        return <p>Loading offers...</p>;
+    }
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
@@ -89,10 +129,9 @@ export default function AdminOffersPage() {
                                         <TableCell className="hidden sm:table-cell">
                                             <Image
                                                 alt={offer.title}
-                                                className="aspect-square rounded-md object-contain"
+                                                className="aspect-square rounded-md object-contain p-1"
                                                 height="64"
-                                                src={offer.image.imageUrl}
-                                                data-ai-hint={offer.image.imageHint}
+                                                src={offer.image_url || 'https://picsum.photos/seed/placeholder/200'}
                                                 width="64"
                                             />
                                         </TableCell>
@@ -101,10 +140,10 @@ export default function AdminOffersPage() {
                                           <p className="text-xs text-muted-foreground">{offer.subtitle}</p>
                                         </TableCell>
                                         <TableCell><Badge variant="outline">{offer.code}</Badge></TableCell>
-                                        <TableCell>{offer.discount}%</TableCell>
+                                        <TableCell>{offer.discount_percentage}%</TableCell>
                                         <TableCell>
                                             <p className="text-sm" suppressHydrationWarning>
-                                              {format(new Date(offer.startDate), 'PP')} - {format(new Date(offer.endDate), 'PP')}
+                                              {format(new Date(offer.start_date), 'PP')} - {format(new Date(offer.end_date), 'PP')}
                                             </p>
                                         </TableCell>
                                         <TableCell>
@@ -141,10 +180,9 @@ export default function AdminOffersPage() {
                                 <CardHeader className="flex flex-row items-center gap-4 space-y-0 p-4">
                                      <Image
                                         alt={offer.title}
-                                        className="aspect-square rounded-md object-contain"
+                                        className="aspect-square rounded-md object-contain p-1"
                                         height="48"
-                                        src={offer.image.imageUrl}
-                                        data-ai-hint={offer.image.imageHint}
+                                        src={offer.image_url || 'https://picsum.photos/seed/placeholder/200'}
                                         width="48"
                                     />
                                     <div className="flex-1">
@@ -176,14 +214,14 @@ export default function AdminOffersPage() {
                                   </div>
                                   <div className="flex justify-between items-center text-sm">
                                       <span className="text-muted-foreground">Discount</span>
-                                      <span>{offer.discount}%</span>
+                                      <span>{offer.discount_percentage}%</span>
                                   </div>
                                    <div className="flex justify-between items-center text-sm">
                                       <span className="text-muted-foreground">Status</span>
                                       <Badge variant={getStatusVariant(offer.status)} className="capitalize">{offer.status}</Badge>
                                   </div>
                                   <div className="text-xs text-muted-foreground" suppressHydrationWarning>
-                                      {format(new Date(offer.startDate), 'PP')} - {format(new Date(offer.endDate), 'PP')}
+                                      {format(new Date(offer.start_date), 'PP')} - {format(new Date(offer.end_date), 'PP')}
                                   </div>
                                 </CardContent>
                             </Card>

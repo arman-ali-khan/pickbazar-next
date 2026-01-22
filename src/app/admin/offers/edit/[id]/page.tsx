@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,65 +7,129 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, CalendarIcon, UploadCloud, X } from 'lucide-react';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { offers as initialOffers } from '@/lib/data';
-import type { Offer } from '@/lib/data';
+import Image from 'next/image';
+import { useSupabase } from '@/lib/supabase/provider';
+
+type OfferStatus = 'active' | 'inactive' | 'expired';
 
 export default function EditOfferPage() {
     const router = useRouter();
     const params = useParams<{ id: string }>();
     const { toast } = useToast();
+    const { supabase } = useSupabase();
     const offerId = parseInt(params.id, 10);
     
-    const [offer, setOffer] = useState<Offer | undefined>(() => initialOffers.find(o => o.id === offerId));
+    const [title, setTitle] = useState('');
+    const [subtitle, setSubtitle] = useState('');
+    const [code, setCode] = useState('');
+    const [discountPercentage, setDiscountPercentage] = useState<number | null>(null);
+    const [status, setStatus] = useState<OfferStatus>('active');
+    const [startDate, setStartDate] = useState<Date | undefined>();
+    const [endDate, setEndDate] = useState<Date | undefined>();
     
-    const [title, setTitle] = useState(offer?.title || '');
-    const [subtitle, setSubtitle] = useState(offer?.subtitle || '');
-    const [code, setCode] = useState(offer?.code || '');
-    const [discount, setDiscount] = useState(offer?.discount || 0);
-    const [status, setStatus] = useState(offer?.status || '');
-    const [startDate, setStartDate] = useState<Date | undefined>(offer ? new Date(offer.startDate) : undefined);
-    const [endDate, setEndDate] = useState<Date | undefined>(offer ? new Date(offer.endDate) : undefined);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+    const [loading, setLoading] = useState(true);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        const foundOffer = initialOffers.find(a => a.id === offerId);
-        if (foundOffer) {
-            setOffer(foundOffer);
-            setTitle(foundOffer.title);
-            setSubtitle(foundOffer.subtitle);
-            setCode(foundOffer.code);
-            setDiscount(foundOffer.discount);
-            setStatus(foundOffer.status);
-            setStartDate(new Date(foundOffer.startDate));
-            setEndDate(new Date(foundOffer.endDate));
-        } else {
+        if (isNaN(offerId)) {
             notFound();
+            return;
         }
-    }, [offerId]);
 
+        const fetchOffer = async () => {
+            const { data, error } = await supabase.from('offers').select('*').eq('id', offerId).single();
+            if (error || !data) {
+                toast({ variant: 'destructive', title: 'Error', description: 'Offer not found.' });
+                notFound();
+                return;
+            }
 
-    if (!offer) {
-        return null; 
-    }
+            setTitle(data.title);
+            setSubtitle(data.subtitle || '');
+            setCode(data.code);
+            setDiscountPercentage(data.discount_percentage);
+            setStatus(data.status as OfferStatus);
+            setStartDate(new Date(data.start_date));
+            setEndDate(new Date(data.end_date));
+            setImagePreview(data.image_url);
+            setLoading(false);
+        };
+        fetchOffer();
+    }, [offerId, supabase, toast]);
     
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        console.log({ id: offer.id, title, subtitle, code, discount, status, startDate, endDate });
-        toast({
-            title: "Offer Updated",
-            description: `The offer "${title}" has been successfully updated.`,
-        });
-        router.push('/admin/offers');
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
     };
+    
+    const uploadImage = async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'aistudio');
+
+        const response = await fetch('https://api.cloudinary.com/v1_1/dcckbmhft/image/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`Failed to upload image to Cloudinary: ${errorData.error.message}`);
+        }
+        const data = await response.json();
+        return data.secure_url;
+    };
+    
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        try {
+            let imageUrl = imagePreview;
+            if (imageFile) {
+                imageUrl = await uploadImage(imageFile);
+            }
+
+            const offerData = {
+                title,
+                subtitle: subtitle || null,
+                code,
+                discount_percentage: discountPercentage,
+                status,
+                start_date: startDate?.toISOString(),
+                end_date: endDate?.toISOString(),
+                image_url: imageUrl,
+            };
+
+            const { error } = await supabase.from('offers').update(offerData).eq('id', offerId);
+            if (error) throw error;
+
+            toast({ title: "Offer Updated", description: `The offer "${title}" has been successfully updated.` });
+            router.push('/admin/offers');
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Error updating offer', description: error.message });
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    if (loading) {
+        return <p>Loading offer details...</p>
+    }
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
@@ -85,79 +150,90 @@ export default function EditOfferPage() {
                         <CardTitle>Offer Details</CardTitle>
                         <CardDescription>Update the details for the offer.</CardDescription>
                     </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-6">
+                     <CardContent className="grid gap-6">
+                        <div className="space-y-2">
+                            <Label>Offer Image</Label>
+                            {imagePreview ? (
+                                <div className="relative w-full h-48 border rounded-lg">
+                                    <Image src={imagePreview} alt="Offer preview" fill className="object-contain rounded-md p-2" />
+                                    <Button variant="destructive" size="icon" type="button" className="absolute top-2 right-2 h-7 w-7" onClick={() => { setImageFile(null); setImagePreview(null); }}>
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ) : (
+                                <label htmlFor="image-upload" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/70">
+                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                        <UploadCloud className="w-8 h-8 mb-4 text-muted-foreground" />
+                                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span></p>
+                                    </div>
+                                    <Input id="image-upload" type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
+                                </label> 
+                            )}
+                        </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="title">Title</Label>
+                            <Input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                        </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="subtitle">Subtitle</Label>
+                            <Input id="subtitle" type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-6">
                             <div className="grid gap-3">
-                                <Label htmlFor="title">Title</Label>
-                                <Input id="title" type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                                <Label htmlFor="code">Code</Label>
+                                <Input id="code" type="text" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} required />
                             </div>
                             <div className="grid gap-3">
-                                <Label htmlFor="subtitle">Subtitle</Label>
-                                <Input id="subtitle" type="text" value={subtitle} onChange={(e) => setSubtitle(e.target.value)} />
+                                <Label htmlFor="discount">Discount (%)</Label>
+                                <Input id="discount" type="number" value={discountPercentage ?? ''} onChange={(e) => setDiscountPercentage(e.target.value === '' ? null : parseInt(e.target.value, 10))} required />
                             </div>
-                            <div className="grid md:grid-cols-2 gap-6">
-                               <div className="grid gap-3">
-                                  <Label htmlFor="code">Code</Label>
-                                  <Input id="code" type="text" value={code} onChange={(e) => setCode(e.target.value)} required />
-                              </div>
-                               <div className="grid gap-3">
-                                  <Label htmlFor="discount">Discount (%)</Label>
-                                  <Input id="discount" type="number" value={discount} onChange={(e) => setDiscount(Number(e.target.value))} required />
-                              </div>
-                            </div>
-                            <div className="grid md:grid-cols-2 gap-6">
-                                <div className="grid gap-3">
-                                    <Label>Start Date</Label>
-                                    <Popover>
-                                        <PopoverTrigger asChild>
-                                        <Button
-                                            variant={"outline"}
-                                            className={cn("justify-start text-left font-normal", !startDate && "text-muted-foreground")}
-                                        >
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div className="grid gap-3">
+                                <Label>Start Date</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant={"outline"} className={cn("justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
                                             <CalendarIcon className="mr-2 h-4 w-4" />
                                             {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
                                         </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0">
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
                                         <Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus />
-                                        </PopoverContent>
-                                    </Popover>
-                                </div>
-                                <div className="grid gap-3">
-                                    <Label>End Date</Label>
-                                      <Popover>
-                                        <PopoverTrigger asChild>
-                                        <Button
-                                            variant={"outline"}
-                                            className={cn("justify-start text-left font-normal", !endDate && "text-muted-foreground")}
-                                        >
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                            <div className="grid gap-3">
+                                <Label>End Date</Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button variant={"outline"} className={cn("justify-start text-left font-normal", !endDate && "text-muted-foreground")}>
                                             <CalendarIcon className="mr-2 h-4 w-4" />
                                             {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
                                         </Button>
-                                        </PopoverTrigger>
-                                        <PopoverContent className="w-auto p-0">
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0">
                                         <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus />
-                                        </PopoverContent>
-                                    </Popover>
-                                </div>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
-                            <div className="grid gap-3">
-                                <Label htmlFor="status">Status</Label>
-                                 <Select value={status} onValueChange={(value) => setStatus(value as Offer['status'])}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select status" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="active">Active</SelectItem>
-                                        <SelectItem value="inactive">Inactive</SelectItem>
-                                        <SelectItem value="expired">Expired</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                        </div>
+                        <div className="grid gap-3">
+                            <Label htmlFor="status">Status</Label>
+                            <Select value={status} onValueChange={(value) => setStatus(value as OfferStatus)}>
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="active">Active</SelectItem>
+                                    <SelectItem value="inactive">Inactive</SelectItem>
+                                    <SelectItem value="expired">Expired</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </CardContent>
                     <CardFooter className="justify-end border-t pt-6">
-                        <Button type="submit">Update Offer</Button>
+                        <Button type="submit" disabled={isSubmitting}>{isSubmitting ? 'Saving...' : 'Update Offer'}</Button>
                     </CardFooter>
                 </Card>
             </form>

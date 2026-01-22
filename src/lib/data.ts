@@ -142,53 +142,6 @@ export const admins = [
   },
 ];
 
-export const offers = [
-  {
-    id: 1,
-    title: 'Summer Sale',
-    subtitle: '10% off on all fruits',
-    code: 'SUMMER10',
-    discount: 10,
-    status: 'active' as const,
-    startDate: '2024-07-01T00:00:00.000Z',
-    endDate: '2024-08-31T23:59:59.000Z',
-    image: getImage('related_prod_1'),
-  },
-  {
-    id: 2,
-    title: 'Weekend Special',
-    subtitle: 'Buy 1 Get 1 Free on Vegetables',
-    code: 'BOGO-VEG',
-    discount: 50,
-    status: 'active' as const,
-    startDate: '2024-07-26T00:00:00.000Z',
-    endDate: '2024-07-28T23:59:59.000Z',
-    image: getImage('related_prod_3'),
-  },
-  {
-    id: 3,
-    title: 'First Time User',
-    subtitle: '20% off on your first order',
-    code: 'NEW20',
-    discount: 20,
-    status: 'inactive' as const,
-    startDate: '2024-01-01T00:00:00.000Z',
-    endDate: '2024-12-31T23:59:59.000Z',
-    image: getImage('related_prod_4'),
-  },
-  {
-    id: 4,
-    title: 'Winter Clearance',
-    subtitle: 'Up to 50% off on selected items',
-    code: 'WINTER50',
-    discount: 50,
-    status: 'expired' as const,
-    startDate: '2023-12-01T00:00:00.000Z',
-    endDate: '2024-01-31T23:59:59.000Z',
-    image: getImage('related_prod_5'),
-  },
-];
-
 export const messages = [
   {
     id: 1,
@@ -277,7 +230,6 @@ export type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | '
 export type Product = (typeof products)[0] & { originalPrice?: number, rating?: number };
 export type RelatedProduct = typeof relatedProducts[0];
 export type Admin = typeof admins[0];
-export type Offer = typeof offers[0];
 export type Message = typeof messages[0];
 export type UserNotification = typeof userNotifications[0];
 
