@@ -35,6 +35,9 @@ import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import LucideIcon from "@/components/lucide-icon";
+import { iconList } from "@/lib/icon-list";
 
 interface Category {
   id: number;
@@ -42,6 +45,7 @@ interface Category {
   slug: string;
   description: string | null;
   parent_id: number | null;
+  icon: string | null;
 }
 
 interface CategoryWithSubcategories extends Category {
@@ -54,6 +58,7 @@ export default function AdminCategoriesPage() {
     const [categories, setCategories] = useState<CategoryWithSubcategories[]>([]);
     const [loading, setLoading] = useState(true);
     const [newSubCategoryNames, setNewSubCategoryNames] = useState<{ [key: number]: string }>({});
+    const [newSubCategoryIcons, setNewSubCategoryIcons] = useState<{ [key: number]: string | null }>({});
     const [addingSubCategoryId, setAddingSubCategoryId] = useState<number | null>(null);
 
     const getCategories = useCallback(async () => {
@@ -101,10 +106,12 @@ export default function AdminCategoriesPage() {
         setAddingSubCategoryId(parentId);
 
         const slug = name.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const icon = newSubCategoryIcons[parentId] || null;
 
         const { error } = await supabase.from('categories').insert({
             name: name.trim(),
             slug,
+            icon,
             parent_id: parentId,
         });
 
@@ -115,6 +122,7 @@ export default function AdminCategoriesPage() {
         } else {
             toast({ title: 'Sub-category Added' });
             setNewSubCategoryNames(prev => ({ ...prev, [parentId]: '' }));
+            setNewSubCategoryIcons(prev => ({ ...prev, [parentId]: null }));
             getCategories(); // Refresh list
         }
     };
@@ -147,9 +155,12 @@ export default function AdminCategoriesPage() {
                                 <div className="flex items-center pr-4">
                                     <AccordionTrigger className="flex-1 text-left px-4 py-0 font-semibold hover:no-underline text-base">
                                          <div className="flex justify-between items-center w-full py-4">
-                                            <div className="flex-1 space-y-1 text-left">
-                                                <p className="font-medium">{category.name}</p>
-                                                <p className="text-sm text-muted-foreground">{category.slug}</p>
+                                            <div className="flex-1 space-y-1 text-left flex items-center gap-3">
+                                                <LucideIcon name={category.icon} className="h-5 w-5 text-muted-foreground" />
+                                                <div>
+                                                    <p className="font-medium">{category.name}</p>
+                                                    <p className="text-sm text-muted-foreground">{category.slug}</p>
+                                                </div>
                                             </div>
                                              {category.subcategories.length > 0 && <Badge variant="outline">{category.subcategories.length} sub-categories</Badge>}
                                         </div>
@@ -187,7 +198,12 @@ export default function AdminCategoriesPage() {
                                                 <TableBody>
                                                 {category.subcategories.map(sub => (
                                                     <TableRow key={sub.id}>
-                                                        <TableCell>{sub.name}</TableCell>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-2">
+                                                                <LucideIcon name={sub.icon} className="h-4 w-4 text-muted-foreground" />
+                                                                <span>{sub.name}</span>
+                                                            </div>
+                                                        </TableCell>
                                                         <TableCell>{sub.slug}</TableCell>
                                                         <TableCell className="text-right">
                                                             <DropdownMenu>
@@ -221,7 +237,23 @@ export default function AdminCategoriesPage() {
                                                     placeholder="New sub-category name"
                                                     value={newSubCategoryNames[category.id] || ''}
                                                     onChange={(e) => setNewSubCategoryNames(prev => ({ ...prev, [category.id]: e.target.value }))}
+                                                    className="flex-grow"
                                                 />
+                                                <Select onValueChange={(value) => setNewSubCategoryIcons(prev => ({ ...prev, [category.id]: value }))}>
+                                                    <SelectTrigger className="w-[180px]">
+                                                        <SelectValue placeholder="Select icon" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {iconList.map(iconName => (
+                                                            <SelectItem key={iconName} value={iconName}>
+                                                                <div className="flex items-center gap-2">
+                                                                    <LucideIcon name={iconName} className="h-4 w-4" />
+                                                                    <span>{iconName}</span>
+                                                                </div>
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                                 <Button type="submit" disabled={addingSubCategoryId === category.id}>
                                                     {addingSubCategoryId === category.id ? "Adding..." : "Add"}
                                                 </Button>

@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useSupabase } from '@/lib/supabase/provider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
+import { iconList } from '@/lib/icon-list';
+import LucideIcon from '@/components/lucide-icon';
 
 interface Category {
   id: number;
@@ -21,6 +23,7 @@ interface Category {
 export default function CreateCategoryPage() {
     const [name, setName] = useState('');
     const [slug, setSlug] = useState('');
+    const [icon, setIcon] = useState<string | null>(null);
     const [description, setDescription] = useState('');
     const [parentId, setParentId] = useState<string | null>(null);
     const [parentCategories, setParentCategories] = useState<Category[]>([]);
@@ -59,6 +62,7 @@ export default function CreateCategoryPage() {
             name,
             slug,
             description,
+            icon,
             parent_id: parentId ? parseInt(parentId) : null,
         };
 
@@ -122,6 +126,24 @@ export default function CreateCategoryPage() {
                                     onChange={(e) => setSlug(e.target.value)}
                                     required
                                 />
+                            </div>
+                             <div className="grid gap-3">
+                                <Label htmlFor="icon">Icon</Label>
+                                <Select onValueChange={setIcon} value={icon ?? ''}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select an icon" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {iconList.map(iconName => (
+                                            <SelectItem key={iconName} value={iconName}>
+                                                <div className="flex items-center gap-2">
+                                                    <LucideIcon name={iconName} className="h-4 w-4" />
+                                                    <span>{iconName}</span>
+                                                </div>
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
                              <div className="grid gap-3">
                                 <Label htmlFor="parent">Parent Category</Label>

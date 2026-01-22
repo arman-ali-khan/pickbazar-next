@@ -19,7 +19,8 @@ export default async function Home() {
       display_order,
       categories (
         id,
-        name
+        name,
+        icon
       )
     `)
     .order('display_order');

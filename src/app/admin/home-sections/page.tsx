@@ -7,11 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGr
 import { ArrowUp, ArrowDown, Trash2, GripVertical } from "lucide-react";
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
+import LucideIcon from '@/components/lucide-icon';
 
 interface Category {
   id: number;
   name: string;
   parent_id: number | null;
+  icon: string | null;
 }
 
 interface Section {
@@ -20,6 +22,7 @@ interface Section {
   display_order: number;
   categories: {
     name: string;
+    icon: string | null;
   };
 }
 
@@ -35,8 +38,8 @@ export default function HomeSectionsManagerPage() {
     const fetchData = useCallback(async () => {
         setLoading(true);
         const [sectionsRes, categoriesRes] = await Promise.all([
-            supabase.from('home_page_sections').select('id, category_id, display_order, categories(name)').order('display_order'),
-            supabase.from('categories').select('id, name, parent_id').order('name'),
+            supabase.from('home_page_sections').select('id, category_id, display_order, categories(name, icon)').order('display_order'),
+            supabase.from('categories').select('id, name, parent_id, icon').order('name'),
         ]);
 
         if (sectionsRes.error) {
@@ -88,7 +91,7 @@ export default function HomeSectionsManagerPage() {
                 id: null,
                 category_id: categoryToAdd.id,
                 display_order: sections.length,
-                categories: { name: categoryToAdd.name },
+                categories: { name: categoryToAdd.name, icon: categoryToAdd.icon },
             };
             setSections(prev => [...prev, newSection]);
             setNewSectionCategoryId('');
@@ -130,8 +133,9 @@ export default function HomeSectionsManagerPage() {
                     <div className="space-y-4">
                         {sections.length > 0 ? (
                             sections.map((section, index) => (
-                                <div key={section.category_id} className="flex items-center gap-2 p-3 border rounded-lg bg-muted/50">
+                                <div key={section.category_id} className="flex items-center gap-4 p-3 border rounded-lg bg-muted/50">
                                     <GripVertical className="h-5 w-5 text-muted-foreground" />
+                                    <LucideIcon name={section.categories.icon} className="h-5 w-5 text-muted-foreground" />
                                     <p className="flex-1 font-medium">{section.categories.name}</p>
                                     <div className="flex items-center gap-1">
                                         <Button variant="ghost" size="icon" onClick={() => handleMove(index, 'up')} disabled={index === 0}>
