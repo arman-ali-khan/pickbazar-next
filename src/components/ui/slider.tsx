@@ -9,8 +9,10 @@ const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof SliderPrimitive.Root>
 >(({ className, ...props }, ref) => {
-  const value = props.value || props.defaultValue
-  const thumbs = Array.isArray(value) ? value.length : 1
+  const value = props.value ?? props.defaultValue
+  const isRange = Array.isArray(value)
+  const thumbs = isRange ? value.length : 1
+
   return (
     <SliderPrimitive.Root
       ref={ref}
