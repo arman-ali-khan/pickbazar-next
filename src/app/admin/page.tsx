@@ -4,11 +4,15 @@ import { DollarSign, ShoppingCart, Users, Box } from "lucide-react";
 import { createClient } from '@/lib/supabase/server';
 import RecentReviews from '@/components/admin/recent-reviews';
 import type { AdminReview } from "@/lib/data";
+import RecentRefundRequests from "@/components/admin/recent-refund-requests";
 
 export default async function AdminDashboardPage() {
     const supabase = createClient();
     const { data: allReviewsData } = await supabase.rpc('get_admin_reviews');
+    const { data: allRefundsData } = await supabase.rpc('get_admin_refunds');
+
     const pendingReviews = (allReviewsData || []).filter((review: AdminReview) => review.status === 'Pending').slice(0, 5);
+    const pendingRefunds = (allRefundsData || []).filter((refund) => refund.status === 'Pending').slice(0, 5);
 
     return (
         <div>
@@ -58,6 +62,9 @@ export default async function AdminDashboardPage() {
             <div className="grid gap-6 mt-6 lg:grid-cols-2">
                 <div className="lg:col-span-1">
                     <RecentReviews reviews={pendingReviews} />
+                </div>
+                <div className="lg:col-span-1">
+                    <RecentRefundRequests refunds={pendingRefunds} />
                 </div>
             </div>
         </div>

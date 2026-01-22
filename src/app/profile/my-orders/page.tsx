@@ -15,8 +15,10 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import type { OrderStatus } from '@/lib/data';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { RefundRequestDialog } from '@/components/refund-request-dialog';
 
-interface Order {
+export interface Order {
     id: number;
     order_number: string;
     created_at: string;
@@ -99,10 +101,20 @@ export default function MyOrdersPage() {
                                                         <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
                                                     </TableCell>
                                                     <TableCell>${order.total_amount}</TableCell>
-                                                    <TableCell>
+                                                    <TableCell className="space-x-2">
                                                         <Button variant="outline" size="sm" asChild>
                                                             <Link href={`/profile/my-orders/${order.order_number}`}>View Details</Link>
                                                         </Button>
+                                                        {order.status === 'Delivered' ? (
+                                                            <Dialog>
+                                                                <DialogTrigger asChild>
+                                                                     <Button variant="secondary" size="sm">Request Refund</Button>
+                                                                </DialogTrigger>
+                                                                <RefundRequestDialog order={order} />
+                                                            </Dialog>
+                                                        ) : (
+                                                            <Button variant="secondary" size="sm" disabled>Request Refund</Button>
+                                                        )}
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
@@ -117,14 +129,32 @@ export default function MyOrdersPage() {
                                                 <CardTitle className="text-base">{order.order_number}</CardTitle>
                                                 <p className="text-sm text-muted-foreground">{format(new Date(order.created_at), 'PP')}</p>
                                             </CardHeader>
-                                            <CardContent className="flex justify-between items-center">
-                                                <div>
-                                                    <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
-                                                    <p className="font-semibold mt-2">${order.total_amount}</p>
+                                            <CardContent className="flex flex-col gap-4">
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <p className="text-xs text-muted-foreground">Status</p>
+                                                        <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
+                                                    </div>
+                                                     <div>
+                                                        <p className="text-xs text-muted-foreground text-right">Total</p>
+                                                        <p className="font-semibold mt-1 text-right">${order.total_amount}</p>
+                                                    </div>
                                                 </div>
-                                                <Button variant="outline" size="sm" asChild>
-                                                    <Link href={`/profile/my-orders/${order.order_number}`}>View Details</Link>
-                                                </Button>
+                                                <div className="flex justify-end items-center gap-2">
+                                                    <Button variant="outline" size="sm" asChild>
+                                                        <Link href={`/profile/my-orders/${order.order_number}`}>View Details</Link>
+                                                    </Button>
+                                                    {order.status === 'Delivered' ? (
+                                                        <Dialog>
+                                                            <DialogTrigger asChild>
+                                                                <Button variant="secondary" size="sm">Request Refund</Button>
+                                                            </DialogTrigger>
+                                                            <RefundRequestDialog order={order} />
+                                                        </Dialog>
+                                                    ) : (
+                                                         <Button variant="secondary" size="sm" disabled>Request Refund</Button>
+                                                    )}
+                                                </div>
                                             </CardContent>
                                         </Card>
                                     ))}

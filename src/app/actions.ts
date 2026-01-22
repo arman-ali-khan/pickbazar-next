@@ -247,3 +247,84 @@ export async function applyCoupon(code: string, cartItems: { id: number; price: 
 
   return { discount: totalDiscount, code: code.toUpperCase(), success: `Coupon "${code.toUpperCase()}" applied!` };
 }
+
+export async function requestRefund(formData: FormData) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'You must be logged in to request a refund.' };
+  }
+
+  const orderId = formData.get('orderId');
+  const amount = formData.get('amount');
+  const reason = formData.get('reason');
+
+  if (!orderId || !amount || !reason) {
+    return { error: 'Order ID, amount, and reason are required.' };
+  }
+
+  // Check if a refund for this order already exists
+  const { data: existingRefund, error: checkError } = await supabase
+    .from('refunds')
+    .select('id')
+    .eq('order_id', Number(orderId))
+    .single();
+
+  if (checkError && checkError.code !== 'PGRST116') { // PGRST116 is 'not found'
+      return { error: `Could not process request: ${checkError.message}` };
+  }
+
+  if (existingRefund) {
+    return { error: 'A refund request for this order already exists.' };
+  }
+
+  const { error } = await supabase.from('refunds').insert({
+    order_id: Number(orderId),
+    user_id: user.id,
+    amount: Number(amount),
+    reason: String(reason),
+    status: 'Pending',
+  });
+
+  if (error) {
+    return { error: `Refund request failed: ${error.message}` };
+  }
+  
+  revalidatePath('/profile/my-orders');
+  revalidatePath('/profile/my-refunds');
+  return { success: true };
+}
+
+export async function updateRefundStatus(formData: FormData) {
+  const supabase = createClient();
+  // Role check should be done inside the server action
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Authentication required' };
+  
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  const allowedRoles = ['admin', 'manager', 'super-admin'];
+  if (!allowedRoles.includes(profile?.role || '')) {
+      return { error: 'You do not have permission to perform this action.' };
+  }
+
+  const refundId = formData.get('refundId');
+  const newStatus = formData.get('status');
+
+  if (!refundId || !newStatus) {
+    return { error: 'Refund ID and new status are required.' };
+  }
+
+  const { error } = await supabase
+    .from('refunds')
+    .update({ status: String(newStatus) })
+    .eq('id', Number(refundId));
+  
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/admin/refunds');
+  revalidatePath('/admin');
+  return { success: true };
+}
