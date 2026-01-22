@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -21,7 +20,8 @@ interface Offer {
   title: string;
   subtitle: string | null;
   image_url: string | null;
-  product_ids: number[] | null;
+  category_ids: number[] | null;
+  categoryNames?: string[];
 }
 
 const bgColors = ['bg-sky-100', 'bg-emerald-100', 'bg-fuchsia-100', 'bg-orange-100', 'bg-yellow-100'];
@@ -32,25 +32,45 @@ export default function OfferCarousel() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchOffers = async () => {
+    const fetchOffersAndCategories = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('offers')
-        .select('id, title, subtitle, image_url, product_ids')
-        .eq('status', 'active')
-        .lte('start_date', new Date().toISOString())
-        .gte('end_date', new Date().toISOString())
-        .limit(5);
 
-      if (error) {
-        console.error("Error fetching offers for carousel:", error);
-      } else {
-        setOffers(data as Offer[] || []);
+      const [offersRes, categoriesRes] = await Promise.all([
+        supabase
+          .from('offers')
+          .select('id, title, subtitle, image_url, category_ids')
+          .eq('status', 'active')
+          .lte('start_date', new Date().toISOString())
+          .gte('end_date', new Date().toISOString())
+          .limit(5),
+        supabase.from('categories').select('id, name')
+      ]);
+
+      const { data: offersData, error: offersError } = offersRes;
+      const { data: categoriesData, error: categoriesError } = categoriesRes;
+
+      if (offersError) {
+        console.error("Error fetching offers for carousel:", offersError);
       }
+      if (categoriesError) {
+        console.error("Error fetching categories for carousel:", categoriesError);
+      }
+
+      if (offersData && categoriesData) {
+        const offersWithCategoryNames = offersData.map(offer => {
+            const categoryNames = offer.category_ids?.map(id => categoriesData.find(c => c.id === id)?.name).filter(Boolean) as string[];
+            return {
+                ...offer,
+                categoryNames,
+            };
+        });
+        setOffers(offersWithCategoryNames || []);
+      }
+      
       setLoading(false);
     };
 
-    fetchOffers();
+    fetchOffersAndCategories();
   }, [supabase]);
 
   if (loading) {
@@ -77,29 +97,34 @@ export default function OfferCarousel() {
         className="w-full relative"
       >
         <CarouselContent className="-ml-4">
-          {offers.map((offer, index) => (
-            <CarouselItem key={offer.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
-              <div className={`rounded-lg p-6 flex items-center justify-between h-48 ${bgColors[index % bgColors.length]}`}>
-                <div className="space-y-3">
-                    <h3 className="text-xl font-bold text-gray-800">
-                        {offer.title}
-                    </h3>
-                    {offer.subtitle && <p className="text-gray-600 text-sm">{offer.subtitle}</p>}
-                    <Button asChild size="sm" className="font-semibold px-4 py-2 text-xs rounded-full bg-white text-gray-800 hover:bg-gray-50 shadow">
-                        <Link href={offer.product_ids && offer.product_ids.length > 0 ? `/shop?offer_products=${offer.product_ids.join(',')}` : '/offers'}>Shop Now</Link>
-                    </Button>
+          {offers.map((offer, index) => {
+             const href = offer.categoryNames && offer.categoryNames.length > 0 
+              ? `/shop?categories=${offer.categoryNames.join(',')}` 
+              : '/offers';
+            return (
+              <CarouselItem key={offer.id} className="pl-4 md:basis-1/2 lg:basis-1/3">
+                <div className={`rounded-lg p-6 flex items-center justify-between h-48 ${bgColors[index % bgColors.length]}`}>
+                  <div className="space-y-3">
+                      <h3 className="text-xl font-bold text-gray-800">
+                          {offer.title}
+                      </h3>
+                      {offer.subtitle && <p className="text-gray-600 text-sm">{offer.subtitle}</p>}
+                      <Button asChild size="sm" className="font-semibold px-4 py-2 text-xs rounded-full bg-white text-gray-800 hover:bg-gray-50 shadow">
+                          <Link href={href}>Shop Now</Link>
+                      </Button>
+                  </div>
+                  <div className="relative h-32 w-32">
+                      <Image 
+                          src={offer.image_url || 'https://picsum.photos/seed/placeholder/200'}
+                          alt={offer.title}
+                          fill
+                          className="object-contain"
+                      />
+                  </div>
                 </div>
-                <div className="relative h-32 w-32">
-                    <Image 
-                        src={offer.image_url || 'https://picsum.photos/seed/placeholder/200'}
-                        alt={offer.title}
-                        fill
-                        className="object-contain"
-                    />
-                </div>
-              </div>
-            </CarouselItem>
-          ))}
+              </CarouselItem>
+            );
+          })}
         </CarouselContent>
         <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10" />
         <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10" />
