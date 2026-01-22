@@ -12,11 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Button } from '@/components/ui/button';
-import { products } from '@/lib/data';
 import { Star } from 'lucide-react';
-
-const categories = [...new Set(products.map(p => p.category))];
-const maxPrice = Math.ceil(Math.max(...products.map(p => p.price)));
 
 interface FilterSidebarProps {
   onFilterChange: (filters: {
@@ -25,23 +21,33 @@ interface FilterSidebarProps {
     rating: number;
   }) => void;
   initialCategories?: string[];
+  allCategories: { name: string, subcategories: string[] }[];
+  maxPrice: number;
 }
 
-export default function FilterSidebar({ onFilterChange, initialCategories = [] }: FilterSidebarProps) {
+export default function FilterSidebar({ onFilterChange, initialCategories = [], allCategories, maxPrice }: FilterSidebarProps) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>(initialCategories);
   const [priceRange, setPriceRange] = useState([0, maxPrice]);
   const [selectedRating, setSelectedRating] = useState(0);
 
   useEffect(() => {
+    setPriceRange([0, maxPrice]);
+  }, [maxPrice]);
+  
+  useEffect(() => {
     setSelectedCategories(initialCategories);
   }, [initialCategories]);
 
   useEffect(() => {
-    onFilterChange({
-      categories: selectedCategories,
-      priceRange,
-      rating: selectedRating,
-    });
+    const timer = setTimeout(() => {
+      onFilterChange({
+        categories: selectedCategories,
+        priceRange,
+        rating: selectedRating,
+      });
+    }, 300);
+
+    return () => clearTimeout(timer);
   }, [selectedCategories, priceRange, selectedRating, onFilterChange]);
 
   const handleCategoryChange = (category: string) => {
@@ -71,15 +77,35 @@ export default function FilterSidebar({ onFilterChange, initialCategories = [] }
           <AccordionTrigger className="font-semibold">Categories</AccordionTrigger>
           <AccordionContent>
             <div className="space-y-2 pt-2">
-              {categories.map(category => (
-                <div key={category} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={category}
-                    checked={selectedCategories.includes(category)}
-                    onCheckedChange={() => handleCategoryChange(category)}
-                  />
-                  <Label htmlFor={category} className="font-normal">{category}</Label>
-                </div>
+              {allCategories.map(category => (
+                 <Accordion key={category.name} type="single" collapsible>
+                    <AccordionItem value={category.name} className="border-b-0">
+                      <div className="flex items-center space-x-2">
+                          <Checkbox
+                              id={`parent-${category.name}`}
+                              checked={selectedCategories.includes(category.name)}
+                              onCheckedChange={() => handleCategoryChange(category.name)}
+                          />
+                          <AccordionTrigger className="flex-1 p-0 hover:no-underline font-semibold">
+                            <Label htmlFor={`parent-${category.name}`} className="font-semibold cursor-pointer">
+                                {category.name}
+                            </Label>
+                          </AccordionTrigger>
+                      </div>
+                      <AccordionContent className="pl-6 pt-2 space-y-2">
+                          {category.subcategories.map(sub => (
+                              <div key={sub} className="flex items-center space-x-2">
+                                  <Checkbox
+                                      id={sub}
+                                      checked={selectedCategories.includes(sub)}
+                                      onCheckedChange={() => handleCategoryChange(sub)}
+                                  />
+                                  <Label htmlFor={sub} className="font-normal cursor-pointer">{sub}</Label>
+                              </div>
+                          ))}
+                      </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
               ))}
             </div>
           </AccordionContent>
@@ -90,7 +116,7 @@ export default function FilterSidebar({ onFilterChange, initialCategories = [] }
             <div className="pt-4">
               <Slider
                 min={0}
-                max={maxPrice}
+                max={maxPrice > 0 ? maxPrice : 100}
                 step={1}
                 value={priceRange}
                 onValueChange={setPriceRange}
