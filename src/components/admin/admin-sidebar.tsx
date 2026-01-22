@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import {
@@ -68,7 +69,7 @@ const settingsNavItems = [
 
 const SidebarNavLink = ({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string; }) => {
     const pathname = usePathname();
-    const isActive = pathname === href;
+    const isActive = pathname.startsWith(href) && (href !== '/admin' || pathname === '/admin');
 
     return (
         <SidebarMenuItem>

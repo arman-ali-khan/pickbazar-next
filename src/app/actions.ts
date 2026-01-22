@@ -116,3 +116,67 @@ export async function submitReview(formData: FormData) {
   revalidatePath(`/products/${productId}`)
   return { success: true }
 }
+
+export async function submitQuestion(formData: FormData) {
+    const supabase = createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'You must be logged in to ask a question.' }
+    }
+
+    const productId = formData.get('productId');
+    const questionText = formData.get('questionText');
+
+    if (!productId || !questionText) {
+        return { error: 'Product and question text are required.' };
+    }
+
+    const { error } = await supabase.from('questions').insert({
+        user_id: user.id,
+        product_id: Number(productId),
+        question_text: String(questionText),
+    });
+
+    if (error) {
+        return { error: error.message };
+    }
+
+    revalidatePath(`/products/${productId}`);
+    return { success: true };
+}
+
+export async function answerQuestion(formData: FormData) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    const allowedRoles = ['admin', 'manager', 'super-admin'];
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single();
+    
+    if (!user || !allowedRoles.includes(profile?.role || '')) {
+        return { error: 'You do not have permission to perform this action.' };
+    }
+
+    const questionId = formData.get('questionId');
+    const answerText = formData.get('answerText');
+
+    if (!questionId || !answerText) {
+        return { error: 'Question ID and answer text are required.' };
+    }
+
+    const { error } = await supabase
+        .from('questions')
+        .update({
+            answer_text: String(answerText),
+            status: 'Answered',
+            answered_at: new Date().toISOString(),
+        })
+        .eq('id', Number(questionId));
+
+    if (error) {
+        return { error: error.message };
+    }
+
+    revalidatePath('/admin/questions');
+    return { success: true };
+}

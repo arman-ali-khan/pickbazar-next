@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -8,22 +9,51 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Trash2, MessageSquare } from "lucide-react";
 import Link from 'next/link';
-import { questionsForAdmin as initialQuestions } from '@/lib/data';
 import type { AdminQuestion } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from 'next/image';
 import { format } from 'date-fns';
+import { useSupabase } from '@/lib/supabase/provider';
+import { useToast } from '@/hooks/use-toast';
 
 const getStatusVariant = (status: AdminQuestion['status']) => {
     return status === 'Answered' ? 'secondary' : 'default';
 };
 
 export default function AdminQuestionsPage() {
-    const [questions, setQuestions] = useState(initialQuestions);
+    const { supabase } = useSupabase();
+    const { toast } = useToast();
+    const [questions, setQuestions] = useState<AdminQuestion[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const handleDelete = (questionId: number) => {
-        setQuestions(questions.filter(q => q.id !== questionId));
+    const getQuestions = useCallback(async () => {
+        setLoading(true);
+        const { data, error } = await supabase.rpc('get_admin_questions');
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error fetching questions', description: error.message });
+        } else {
+            setQuestions(data as AdminQuestion[]);
+        }
+        setLoading(false);
+    }, [supabase, toast]);
+
+    useEffect(() => {
+        getQuestions();
+    }, [getQuestions]);
+
+    const handleDelete = async (questionId: number) => {
+        const { error } = await supabase.from('questions').delete().eq('id', questionId);
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error deleting question', description: error.message });
+        } else {
+            toast({ title: 'Question deleted successfully' });
+            getQuestions();
+        }
     };
+
+    if (loading) {
+        return <p>Loading questions...</p>;
+    }
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">

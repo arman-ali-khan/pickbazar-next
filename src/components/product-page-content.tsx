@@ -1,3 +1,4 @@
+
 'use client';
 import Image from 'next/image';
 import { useState, useRef, useTransition } from 'react';
@@ -18,26 +19,8 @@ import { Dialog, DialogTrigger } from './ui/dialog';
 import { LoginDialog } from './login-dialog';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { submitReview } from '@/app/actions';
+import { submitReview, submitQuestion } from '@/app/actions';
 import { format } from 'date-fns';
-
-interface ProductPageContentProps {
-    product: Product & {
-        shortDescription: string;
-        description: string;
-        stock: number;
-        images: ImagePlaceholder[];
-        rating: number;
-        reviewsCount: number;
-        category: string;
-        tags: string[];
-        sku: string;
-        ratingDistribution: { rating: number, count: number }[];
-        reviews: ProductReview[];
-        questions: Question[];
-    };
-    relatedProducts: RelatedProduct[];
-}
 
 function ReviewForm({ productId }: { productId: number }) {
     const { user } = useSupabase();
@@ -108,6 +91,59 @@ function ReviewForm({ productId }: { productId: number }) {
         </div>
     );
 }
+
+function QuestionForm({ productId }: { productId: number }) {
+    const { user } = useSupabase();
+    const { toast } = useToast();
+    const [questionText, setQuestionText] = useState('');
+    const [isPending, startTransition] = useTransition();
+
+    if (!user) {
+        return (
+            <div className="text-center p-6 border rounded-lg bg-muted/50">
+                <p>You must be logged in to ask a question.</p>
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button className="mt-4">Login</Button>
+                    </DialogTrigger>
+                    <LoginDialog />
+                </Dialog>
+            </div>
+        );
+    }
+    
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        startTransition(async () => {
+            const formData = new FormData();
+            formData.append('productId', String(productId));
+            formData.append('questionText', questionText);
+
+            const result = await submitQuestion(formData);
+            if (result?.error) {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+            } else {
+                toast({ title: 'Question Submitted', description: 'Your question will be answered shortly.' });
+                setQuestionText('');
+            }
+        });
+    }
+
+    return (
+        <div className="mt-8">
+            <h3 className="text-lg font-semibold mb-4">Ask a Question</h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+                <div>
+                    <Textarea value={questionText} onChange={e => setQuestionText(e.target.value)} placeholder="Type your question here..." />
+                </div>
+                <Button type="submit" disabled={!questionText.trim() || isPending}>
+                    {isPending ? 'Submitting...' : 'Submit Question'}
+                </Button>
+            </form>
+        </div>
+    );
+}
+
 
 export default function ProductPageContent({ product, relatedProducts }: ProductPageContentProps) {
     const dispatch = useAppDispatch();
@@ -264,31 +300,30 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                                             </div>
                                         </div>
                                         <p className="text-sm text-gray-600 mb-3">{review.text}</p>
-                                        {/* Likes/dislikes can be a future feature */}
-                                        {/*
-                                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                            <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                                                <ThumbsUp className="h-4 w-4" /> {review.likes}
-                                            </Button>
-                                            <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                                                <ThumbsDown className="h-4 w-4" /> {review.dislikes}
-                                            </Button>
-                                        </div>
-                                        */}
                                     </div>
                                 ))}
                             </div>
                         </div>
                     </TabsContent>
                     <TabsContent value="questions" className="py-6">
-                        <div className="space-y-6">
+                        <div className="space-y-6 max-w-2xl">
                             {product.questions.map(q => (
-                                <div key={q.id}>
-                                    <p className="font-semibold text-sm mb-1">Q: {q.question}</p>
-                                    <p className="text-sm text-gray-600">A: {q.answer}</p>
-                                    <p className="text-xs text-muted-foreground mt-2">By {q.author} on {q.date}</p>
+                                <div key={q.id} className="border-b pb-4">
+                                    <div className="flex items-start gap-3">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarFallback>{q.author.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-semibold text-sm">{q.author}</p>
+                                            <p className="text-xs text-muted-foreground">{format(new Date(q.date), 'PP')}</p>
+                                        </div>
+                                    </div>
+                                    <p className="font-semibold text-sm mt-2 pl-11">Q: {q.question}</p>
+                                    <p className="text-sm text-gray-600 mt-2 pl-11">A: {q.answer}</p>
                                 </div>
                             ))}
+                            {product.questions.length === 0 && <p className="text-muted-foreground text-sm">No questions have been answered for this product yet.</p>}
+                            <QuestionForm productId={product.id} />
                         </div>
                     </TabsContent>
                 </Tabs>

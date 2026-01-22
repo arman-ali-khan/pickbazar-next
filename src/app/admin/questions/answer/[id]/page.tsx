@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useTransition } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,35 +10,55 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { questionsForAdmin as initialQuestions } from '@/lib/data';
 import type { AdminQuestion } from '@/lib/data';
 import Image from 'next/image';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { useSupabase } from '@/lib/supabase/provider';
+import { answerQuestion } from '@/app/actions';
 
 
 export default function AnswerQuestionPage() {
     const router = useRouter();
     const params = useParams<{ id: string }>();
     const { toast } = useToast();
+    const { supabase } = useSupabase();
     const questionId = parseInt(params.id, 10);
     
-    const [question, setQuestion] = useState<AdminQuestion | undefined>(() => initialQuestions.find(q => q.id === questionId));
+    const [question, setQuestion] = useState<AdminQuestion | null>(null);
     const [answer, setAnswer] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [isPending, startTransition] = useTransition();
+
+    const getQuestionDetails = useCallback(async () => {
+        if (isNaN(questionId)) {
+            notFound();
+            return;
+        }
+        setLoading(true);
+        const { data, error } = await supabase.rpc('get_admin_question_details', { p_question_id: questionId });
+        
+        if (error || !data || data.length === 0) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Question not found.' });
+            notFound();
+        } else {
+            const questionData = data[0] as AdminQuestion;
+            setQuestion(questionData);
+            setAnswer(questionData.answer || '');
+        }
+        setLoading(false);
+
+    }, [questionId, supabase, toast]);
 
     useEffect(() => {
-        const foundQuestion = initialQuestions.find(q => q.id === questionId);
-        if (foundQuestion) {
-            setQuestion(foundQuestion);
-            if (foundQuestion.answer) {
-                setAnswer(foundQuestion.answer);
-            }
-        } else {
-            notFound();
-        }
-    }, [questionId]);
+        getQuestionDetails();
+    }, [getQuestionDetails]);
 
+
+    if (loading) {
+        return <p>Loading question...</p>;
+    }
 
     if (!question) {
         return null; 
@@ -45,13 +66,19 @@ export default function AnswerQuestionPage() {
     
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Here you would typically save the answer
-        console.log({ questionId: question.id, answer });
-        toast({
-            title: "Answer Submitted",
-            description: `The answer has been successfully submitted.`,
+        startTransition(async () => {
+            const formData = new FormData();
+            formData.append('questionId', String(question.id));
+            formData.append('answerText', answer);
+
+            const result = await answerQuestion(formData);
+            if (result?.error) {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+            } else {
+                toast({ title: 'Answer Submitted', description: 'The question has been successfully answered.' });
+                router.push('/admin/questions');
+            }
         });
-        router.push('/admin/questions');
     };
 
     return (
@@ -104,7 +131,7 @@ export default function AnswerQuestionPage() {
                                 </div>
                             </CardContent>
                             <CardFooter className="justify-end border-t pt-6">
-                                <Button type="submit">Submit Answer</Button>
+                                <Button type="submit" disabled={isPending}>{isPending ? "Submitting..." : "Submit Answer"}</Button>
                             </CardFooter>
                         </Card>
                     </div>

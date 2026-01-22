@@ -1,4 +1,5 @@
 
+
 import type { ImagePlaceholder } from './placeholder-images';
 import { PlaceHolderImages } from './placeholder-images';
 
@@ -108,17 +109,7 @@ export const product = {
   sku: 'FRT-001',
   ratingDistribution: [],
   reviews: [],
-  questions: [
-    {
-      id: 1,
-      question: 'How long I can store this product?',
-      answer: 'Hi, in freezer you can store them for about 2 weeks in freezer.',
-      author: 'CuriousCustomer',
-      date: 'March 17, 2023',
-      likes: 2,
-      dislikes: 0
-    },
-  ],
+  questions: [],
 };
 
 export const relatedProducts = products.slice(1, 13).map(p => ({...p, id: p.id, name: p.name, price: p.price, image: p.image, weight: p.weight, tag: p.originalPrice ? `${Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}%` : undefined}));
@@ -344,4 +335,38 @@ export interface UserReview {
     product_name: string;
     product_image: string;
     product_id: number;
+}
+
+export interface AdminQuestion {
+  id: number;
+  question: string;
+  answer: string | null;
+  status: 'Pending' | 'Answered';
+  date: string;
+  author: {
+    name: string;
+    avatar: {
+      imageUrl: string;
+      imageHint: string;
+    };
+  };
+  product: {
+    id: number;
+    name: string;
+    image: {
+      imageUrl: string;
+      imageHint: string;
+    };
+  };
+}
+
+export interface UserQuestion {
+    id: number;
+    question_text: string;
+    answer_text: string | null;
+    status: string;
+    created_at: string;
+    product_name: string;
+    product_id: number;
+    product_image: string;
 }

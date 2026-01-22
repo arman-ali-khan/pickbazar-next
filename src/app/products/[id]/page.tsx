@@ -1,3 +1,4 @@
+
 import CartDrawer from "@/components/cart-drawer";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
@@ -21,7 +22,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
   });
 
   // Fetch all product data in parallel
-  const [productRes, relatedRes, reviewsRes, ratingStatsRes] = await Promise.all([
+  const [productRes, relatedRes, reviewsRes, ratingStatsRes, questionsRes] = await Promise.all([
     supabase
       .from('products')
       .select('*, product_categories(categories(name)), product_tags(tags(name))')
@@ -30,6 +31,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
     supabase.rpc('get_related_products', { p_id: productId, p_limit: 6 }),
     supabase.rpc('get_product_reviews', { p_product_id: productId }),
     supabase.rpc('get_product_rating_stats', { p_product_id: productId }).single(),
+    supabase.rpc('get_product_questions', { p_product_id: productId }),
   ]);
 
   const { data: productData, error: productError } = productRes;
@@ -42,12 +44,8 @@ export default async function ProductPage({ params }: { params: { id: string } }
   const { data: relatedProductsData } = relatedRes;
   const { data: reviewsData } = reviewsRes;
   const { data: ratingStatsData } = ratingStatsRes;
+  const { data: questionsData } = questionsRes;
 
-  // In a real app, questions would also be fetched from the database.
-  // For now, we'll use mock data.
-  const mockQuestions: Question[] = [
-    { id: 1, question: 'Is this organic?', answer: 'Yes, all our products are certified organic.', author: 'HealthNut', date: 'March 15, 2023', likes: 2, dislikes: 0 }
-  ];
 
   const relatedProducts: RelatedProduct[] = (relatedProductsData || []).map((p: any) => ({
     id: p.id,
@@ -71,6 +69,16 @@ export default async function ProductPage({ params }: { params: { id: string } }
   const tagNames = Array.isArray(productData.product_tags)
       ? productData.product_tags.map((pt: any) => pt.tags.name)
       : [];
+
+  const questions: Question[] = (questionsData || []).map((q: any) => ({
+    id: q.id,
+    question: q.question_text,
+    answer: q.answer_text,
+    author: q.author_name,
+    date: q.created_at,
+    likes: 0, // Likes/dislikes not implemented yet
+    dislikes: 0,
+  }));
   
   const productToShow = {
     // Required base product fields
@@ -103,8 +111,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
     reviewsCount: ratingStatsData?.total_reviews || 0,
     ratingDistribution: ratingStatsData?.rating_distribution || [],
     reviews: (reviewsData as ProductReview[] || []),
-    // Mocked data for display
-    questions: mockQuestions,
+    questions: questions,
   };
 
   return (
