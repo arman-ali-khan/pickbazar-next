@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -30,6 +31,11 @@ interface ShippingInfo {
   email: string;
 }
 
+interface AppliedDiscount {
+  code: string;
+  discount: number;
+}
+
 export default function PaymentPage() {
     const router = useRouter();
     const dispatch = useAppDispatch();
@@ -38,17 +44,26 @@ export default function PaymentPage() {
 
     const cartItems = useAppSelector(selectCartItems);
     const subtotal = useAppSelector(selectSubtotal);
-    const shippingCost = 5.00;
-    const total = subtotal + shippingCost;
     
     const [selectedMethod, setSelectedMethod] = useState('card');
     const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [trxId, setTrxId] = useState('');
     const [mobileLast4, setMobileLast4] = useState('');
+    const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
+
+    const shippingCost = 5.00;
+    const discountAmount = appliedDiscount?.discount || 0;
+    const total = subtotal + shippingCost - discountAmount;
 
     useEffect(() => {
         const savedInfo = localStorage.getItem('shippingInfo');
+        const savedDiscount = localStorage.getItem('appliedDiscount');
+
+        if (savedDiscount) {
+            setAppliedDiscount(JSON.parse(savedDiscount));
+        }
+
         if (savedInfo) {
             setShippingInfo(JSON.parse(savedInfo));
         } else if (cartItems.length > 0) {
@@ -83,6 +98,8 @@ export default function PaymentPage() {
             p_items: orderItems,
             p_payment_method: selectedMethod,
             p_transaction_details: transactionDetails,
+            p_coupon_code: appliedDiscount?.code || null,
+            p_discount_amount: appliedDiscount?.discount || 0,
         });
 
         if (error) {
@@ -97,6 +114,7 @@ export default function PaymentPage() {
 
         dispatch(clearCart());
         localStorage.removeItem('shippingInfo');
+        localStorage.removeItem('appliedDiscount');
         
         router.push(`/checkout/success?order_number=${orderNumber}`);
     };
@@ -228,6 +246,12 @@ export default function PaymentPage() {
                         <p className="text-muted-foreground">Subtotal</p>
                         <p className="font-semibold">${subtotal.toFixed(2)}</p>
                     </div>
+                     {discountAmount > 0 && (
+                        <div className="flex justify-between text-destructive">
+                            <p>Discount ({appliedDiscount?.code})</p>
+                            <p className="font-semibold">-${discountAmount.toFixed(2)}</p>
+                        </div>
+                    )}
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Shipping</p>
                         <p className="font-semibold">${shippingCost.toFixed(2)}</p>
@@ -240,7 +264,7 @@ export default function PaymentPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                 <Button onClick={handlePayment} className="w-full h-12 text-lg" disabled={isProcessing}>
+                 <Button onClick={handlePayment} className="w-full h-12 text-lg" disabled={isProcessing || total < 0}>
                     {isProcessing ? 'Processing...' : `Pay $${total.toFixed(2)}`}
                 </Button>
               </CardFooter>

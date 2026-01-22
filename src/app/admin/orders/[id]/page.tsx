@@ -43,6 +43,8 @@ interface OrderDetails {
         avatar_url: string | null;
     } | null;
     order_items: OrderItem[];
+    coupon_code: string | null;
+    discount_amount: number | null;
 }
 
 const getStatusVariant = (status: OrderStatus) => {
@@ -116,7 +118,7 @@ export default function OrderDetailsPage() {
     }
 
     const subtotal = order.order_items.reduce((acc, item) => acc + item.price_at_purchase * item.quantity, 0);
-    const shipping = Number(order.total_amount) - subtotal; // Simplified calculation
+    const shipping = Number(order.total_amount) + (order.discount_amount || 0) - subtotal;
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
@@ -171,9 +173,15 @@ export default function OrderDetailsPage() {
                                     <p className="text-muted-foreground">Subtotal</p>
                                     <p className="font-medium">${subtotal.toFixed(2)}</p>
                                 </div>
+                                {order.discount_amount && order.discount_amount > 0 && (
+                                    <div className="flex justify-between text-destructive">
+                                        <p className="text-muted-foreground">Discount ({order.coupon_code})</p>
+                                        <p className="font-medium">-${order.discount_amount.toFixed(2)}</p>
+                                    </div>
+                                )}
                                 <div className="flex justify-between">
                                     <p className="text-muted-foreground">Shipping</p>
-                                    <p className="font-medium">${shipping.toFixed(2)}</p>
+                                    <p className="font-medium">${shipping > 0 ? shipping.toFixed(2) : '0.00'}</p>
                                 </div>
                                 <Separator className="my-2" />
                                 <div className="flex justify-between font-semibold text-base">

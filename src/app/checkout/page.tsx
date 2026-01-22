@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import Header from '@/components/header';
 import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
@@ -14,6 +15,7 @@ import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useRouter } from 'next/navigation';
+import { applyCoupon } from '@/app/actions';
 
 interface ShippingInfo {
   firstName: string;
@@ -25,12 +27,14 @@ interface ShippingInfo {
   email: string;
 }
 
+interface AppliedDiscount {
+  code: string;
+  discount: number;
+}
+
 export default function CheckoutPage() {
     const cartItems = useAppSelector(selectCartItems);
     const subtotal = useAppSelector(selectSubtotal);
-    const shippingCost = 5.00;
-    const total = subtotal + shippingCost;
-    
     const { supabase, user } = useSupabase();
     const router = useRouter();
 
@@ -44,44 +48,27 @@ export default function CheckoutPage() {
       email: '',
     });
 
+    const [couponCode, setCouponCode] = useState('');
+    const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
+    const [couponMessage, setCouponMessage] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
+    const [isApplyingCoupon, startTransition] = useTransition();
+
+    const shippingCost = 5.00;
+    const discountAmount = appliedDiscount?.discount || 0;
+    const total = subtotal + shippingCost - discountAmount;
+
     useEffect(() => {
         if (user) {
-            // Pre-fill email from auth user
             setShippingInfo(prev => ({ ...prev, email: user.email || '' }));
-
-            // Fetch profile and address from database
             const fetchUserData = async () => {
-                const { data: profileData, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('full_name')
-                    .eq('id', user.id)
-                    .single();
-                
+                const { data: profileData } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
                 if (profileData) {
                     const [firstName, ...lastNameParts] = (profileData.full_name || '').split(' ');
-                    setShippingInfo(prev => ({
-                        ...prev,
-                        firstName: firstName || '',
-                        lastName: lastNameParts.join(' ') || '',
-                    }));
+                    setShippingInfo(prev => ({ ...prev, firstName: firstName || '', lastName: lastNameParts.join(' ') || '' }));
                 }
-
-                const { data: addressData, error: addressError } = await supabase
-                    .from('addresses')
-                    .select('*')
-                    .eq('user_id', user.id)
-                    .order('created_at', { ascending: false })
-                    .limit(1)
-                    .single();
-
+                const { data: addressData } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single();
                 if (addressData) {
-                    setShippingInfo(prev => ({
-                        ...prev,
-                        address: addressData.street_address || '',
-                        city: addressData.city || '',
-                        state: addressData.state || '',
-                        zip: addressData.zip || '',
-                    }));
+                    setShippingInfo(prev => ({ ...prev, address: addressData.street_address || '', city: addressData.city || '', state: addressData.state || '', zip: addressData.zip || '' }));
                 }
             };
             fetchUserData();
@@ -92,10 +79,31 @@ export default function CheckoutPage() {
         const { id, value } = e.target;
         setShippingInfo(prev => ({ ...prev, [id]: value }));
     };
+
+    const handleApplyCoupon = () => {
+        startTransition(async () => {
+            setCouponMessage(null);
+            const simpleCartItems = cartItems.map(item => ({ id: item.id, price: item.price, quantity: item.quantity }));
+            const result = await applyCoupon(couponCode, simpleCartItems);
+
+            if (result.error) {
+                setCouponMessage({ type: 'error', message: result.error });
+                setAppliedDiscount(null);
+            }
+            if (result.success && result.discount) {
+                setCouponMessage({ type: 'success', message: result.success });
+                setAppliedDiscount({ code: result.code, discount: result.discount });
+            }
+        });
+    };
     
     const handleProceedToPayment = () => {
-        // Save shipping info to localStorage to pass to next step
         localStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
+        if (appliedDiscount) {
+            localStorage.setItem('appliedDiscount', JSON.stringify(appliedDiscount));
+        } else {
+            localStorage.removeItem('appliedDiscount');
+        }
         router.push('/checkout/payment');
     };
 
@@ -107,7 +115,7 @@ export default function CheckoutPage() {
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Checkout</h1>
         </div>
         <div className="grid lg:grid-cols-2 gap-12 items-start">
-          <div>
+          <div className="space-y-8">
             <Card>
               <CardHeader>
                 <CardTitle>Shipping Information</CardTitle>
@@ -147,6 +155,24 @@ export default function CheckoutPage() {
                 </div>
               </CardContent>
             </Card>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Coupon Code</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex gap-2">
+                        <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter coupon code" />
+                        <Button onClick={handleApplyCoupon} disabled={isApplyingCoupon}>
+                            {isApplyingCoupon ? 'Applying...' : 'Apply'}
+                        </Button>
+                    </div>
+                    {couponMessage && (
+                        <p className={`text-sm mt-2 ${couponMessage.type === 'error' ? 'text-destructive' : 'text-green-600'}`}>
+                            {couponMessage.message}
+                        </p>
+                    )}
+                </CardContent>
+            </Card>
           </div>
           <div>
             <Card>
@@ -176,6 +202,12 @@ export default function CheckoutPage() {
                         <p className="text-muted-foreground">Subtotal</p>
                         <p className="font-semibold">${subtotal.toFixed(2)}</p>
                     </div>
+                     {discountAmount > 0 && (
+                        <div className="flex justify-between text-destructive">
+                            <p>Discount ({appliedDiscount?.code})</p>
+                            <p className="font-semibold">-${discountAmount.toFixed(2)}</p>
+                        </div>
+                    )}
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Shipping</p>
                         <p className="font-semibold">${shippingCost.toFixed(2)}</p>

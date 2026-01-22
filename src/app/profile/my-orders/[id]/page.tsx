@@ -41,6 +41,8 @@ interface OrderDetails {
         zip: string;
     };
     order_items: OrderItem[];
+    coupon_code: string | null;
+    discount_amount: number | null;
 }
 
 const getStatusVariant = (status: OrderStatus) => {
@@ -94,7 +96,7 @@ export default function MyOrderDetailsPage() {
     }
 
     const subtotal = order.order_items.reduce((acc, item) => acc + item.price_at_purchase * item.quantity, 0);
-    const shipping = Number(order.total_amount) - subtotal;
+    const shipping = Number(order.total_amount) + (order.discount_amount || 0) - subtotal;
 
     return (
         <div className="bg-muted/20 min-h-screen">
@@ -148,9 +150,15 @@ export default function MyOrderDetailsPage() {
                                     <p className="text-muted-foreground">Subtotal</p>
                                     <p className="font-medium">${subtotal.toFixed(2)}</p>
                                 </div>
+                                {order.discount_amount && order.discount_amount > 0 && (
+                                    <div className="flex justify-between text-destructive">
+                                        <p className="text-muted-foreground">Discount ({order.coupon_code})</p>
+                                        <p className="font-medium">-${order.discount_amount.toFixed(2)}</p>
+                                    </div>
+                                )}
                                 <div className="flex justify-between">
                                     <p className="text-muted-foreground">Shipping</p>
-                                    <p className="font-medium">${shipping.toFixed(2)}</p>
+                                    <p className="font-medium">${shipping > 0 ? shipping.toFixed(2) : '0.00'}</p>
                                 </div>
                                 <Separator className="my-2" />
                                 <div className="flex justify-between font-semibold text-base">

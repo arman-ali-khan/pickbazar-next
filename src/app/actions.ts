@@ -180,3 +180,68 @@ export async function answerQuestion(formData: FormData) {
     revalidatePath('/admin/questions');
     return { success: true };
 }
+
+
+export async function applyCoupon(code: string, cartItems: { id: number; price: number; quantity: number }[]) {
+  const supabase = createClient();
+
+  if (!code) {
+    return { error: 'Please enter a coupon code.' };
+  }
+
+  // Find the offer
+  const { data: offer, error: offerError } = await supabase
+    .from('offers')
+    .select('discount_percentage, category_ids, product_ids, start_date, end_date, status')
+    .eq('code', code.toUpperCase())
+    .single();
+
+  if (offerError || !offer) {
+    return { error: 'Invalid coupon code.' };
+  }
+
+  const now = new Date().toISOString();
+  if (offer.status !== 'active' || offer.start_date > now || offer.end_date < now) {
+    return { error: 'This coupon is not active or has expired.' };
+  }
+
+  let totalDiscount = 0;
+  const eligibleProductIds = new Set<number>();
+
+  // Add products directly linked to the offer
+  if (offer.product_ids) {
+    offer.product_ids.forEach(id => eligibleProductIds.add(id));
+  }
+
+  // Add products from categories linked to the offer
+  if (offer.category_ids && offer.category_ids.length > 0) {
+    const { data: categoryProducts, error: catProdError } = await supabase
+      .from('product_categories')
+      .select('product_id')
+      .in('category_id', offer.category_ids);
+    
+    if (catProdError) {
+      console.error('Error fetching products in category for coupon', catProdError);
+      return { error: 'Could not validate coupon categories. Please try again.' };
+    }
+    categoryProducts.forEach(p => eligibleProductIds.add(p.product_id));
+  }
+  
+  if (eligibleProductIds.size === 0) {
+      // This can happen if an offer has neither product_ids nor category_ids, which is a data issue but we should handle it.
+      return { error: 'This coupon is not configured correctly.' };
+  }
+
+  // Calculate discount based on eligible items in the cart
+  for (const item of cartItems) {
+    if (eligibleProductIds.has(item.id)) {
+      totalDiscount += (item.price * (offer.discount_percentage / 100)) * item.quantity;
+    }
+  }
+  
+  if (totalDiscount === 0) {
+    return { error: 'This coupon is not valid for any items in your cart.' };
+  }
+
+  return { discount: totalDiscount, code: code.toUpperCase(), success: `Coupon "${code.toUpperCase()}" applied!` };
+}
