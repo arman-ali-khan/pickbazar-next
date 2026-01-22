@@ -154,6 +154,61 @@ export default function AdminReviewsPage() {
                             </TableBody>
                         </Table>
                     </div>
+
+                    {/* Mobile View */}
+                    <div className="grid grid-cols-1 gap-4 md:hidden">
+                        {reviews.map((review) => (
+                            <Card key={review.id}>
+                                <CardHeader className="flex flex-row items-start gap-4 space-y-0 p-4">
+                                    <Avatar className="h-10 w-10">
+                                        <AvatarImage src={review.author.avatar_url ?? undefined} alt={review.author.name ?? ''} />
+                                        <AvatarFallback>{(review.author.name ?? 'U').charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                        <CardTitle className="text-base flex justify-between">
+                                            <span>{review.author.name}</span>
+                                            <Badge variant={getStatusVariant(review.status)}>{review.status}</Badge>
+                                        </CardTitle>
+                                        <CardDescription suppressHydrationWarning>{format(new Date(review.created_at), 'PP')}</CardDescription>
+                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="-mt-2 -mr-2">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            {review.status !== 'Approved' && <DropdownMenuItem onClick={() => handleStatusChange(review.id, 'Approved')}><Eye className="mr-2 h-4 w-4" />Approve</DropdownMenuItem>}
+                                            {review.status !== 'Hidden' && <DropdownMenuItem onClick={() => handleStatusChange(review.id, 'Hidden')}><EyeOff className="mr-2 h-4 w-4" />Hide</DropdownMenuItem>}
+                                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(review.id)}>
+                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </CardHeader>
+                                <CardContent className="p-4 pt-0 space-y-2">
+                                    <div className="flex items-center mb-1">
+                                        {[...Array(5)].map((_, i) => (
+                                            <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
+                                        ))}
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">{review.text}</p>
+                                    <div className="flex items-center gap-3 p-2 bg-muted/50 rounded-md border mt-2">
+                                        <div className="relative h-12 w-12 rounded-md border flex-shrink-0">
+                                            <Image src={review.product.featured_image_url} alt={review.product.name} fill className="object-contain p-1" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-sm">{review.product.name}</p>
+                                            <Button variant="link" asChild className="p-0 h-auto text-xs">
+                                                <Link href={`/products/${review.product.id}`}>View Product</Link>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+
                 </CardContent>
             </Card>
         </main>
