@@ -13,13 +13,14 @@ import {
   Wallet,
   LogOut,
   Bell,
+  LayoutDashboard,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabase } from '@/lib/supabase/provider';
-
+import { useState, useEffect } from 'react';
 
 const navItems = [
     { href: '/profile', icon: User, label: 'Profile' },
@@ -33,7 +34,7 @@ const navItems = [
     { href: '/contact', icon: HelpCircle, label: 'Need Help' },
 ];
 
-const ProfileNavLink = ({ href, icon: Icon, label }: typeof navItems[0]) => {
+const ProfileNavLink = ({ href, icon: Icon, label }: { href: string; icon: React.ElementType; label: string; }) => {
   const pathname = usePathname();
   const isActive = pathname === href;
 
@@ -55,9 +56,26 @@ const ProfileNavLink = ({ href, icon: Icon, label }: typeof navItems[0]) => {
 };
 
 export default function ProfileSidebar() {
-    const { supabase } = useSupabase();
+    const { supabase, user } = useSupabase();
     const router = useRouter();
     const { toast } = useToast();
+    const [profileRole, setProfileRole] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchProfile = async () => {
+            if (user) {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+                if (data && data.role) {
+                    setProfileRole(data.role);
+                }
+            }
+        };
+        fetchProfile();
+    }, [user, supabase]);
 
     const handleLogout = async () => {
         try {
@@ -77,6 +95,9 @@ export default function ProfileSidebar() {
           });
         }
     };
+
+    const allowedAdminRoles = ['admin', 'manager', 'super-admin'];
+    const isAdmin = profileRole && allowedAdminRoles.includes(profileRole);
 
     return (
         <aside className="space-y-6">
@@ -105,6 +126,7 @@ export default function ProfileSidebar() {
 
             <Card>
                 <CardContent className="p-2 space-y-1">
+                    {isAdmin && <ProfileNavLink href="/admin" icon={LayoutDashboard} label="Admin Dashboard" />}
                     {navItems.map((item) => (
                         <ProfileNavLink key={item.href} {...item} />
                     ))}
