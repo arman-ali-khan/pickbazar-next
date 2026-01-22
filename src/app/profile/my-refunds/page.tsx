@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -79,8 +78,9 @@ export default function MyRefundsPage() {
                                         <TableHeader>
                                             <TableRow>
                                                 <TableHead>Request ID</TableHead>
-                                                <TableHead>Order ID</TableHead>
+                                                <TableHead>Order</TableHead>
                                                 <TableHead>Date</TableHead>
+                                                <TableHead>Reason</TableHead>
                                                 <TableHead>Status</TableHead>
                                                 <TableHead>Amount</TableHead>
                                             </TableRow>
@@ -94,7 +94,8 @@ export default function MyRefundsPage() {
                                                             <Link href={`/profile/my-orders/${refund.order_number}`}>{refund.order_number}</Link>
                                                         </Button>
                                                     </TableCell>
-                                                    <TableCell>{format(new Date(refund.created_at), 'PP')}</TableCell>
+                                                    <TableCell suppressHydrationWarning>{format(new Date(refund.created_at), 'PP')}</TableCell>
+                                                    <TableCell className="max-w-xs truncate">{refund.reason}</TableCell>
                                                     <TableCell>
                                                         <Badge variant={getStatusVariant(refund.status)}>{refund.status}</Badge>
                                                     </TableCell>
@@ -112,9 +113,10 @@ export default function MyRefundsPage() {
                                                 <CardTitle className="text-base">REF-{refund.id}</CardTitle>
                                                 <CardDescription>Order: <Link href={`/profile/my-orders/${refund.order_number}`} className="underline">{refund.order_number}</Link></CardDescription>
                                             </CardHeader>
-                                            <CardContent>
-                                                <div className="flex justify-between items-center mb-2">
-                                                    <span className="text-sm text-muted-foreground">{format(new Date(refund.created_at), 'PP')}</span>
+                                            <CardContent className="space-y-3">
+                                                <p className="text-sm italic text-muted-foreground">"{refund.reason}"</p>
+                                                <div className="flex justify-between items-center">
+                                                    <span className="text-sm text-muted-foreground" suppressHydrationWarning>{format(new Date(refund.created_at), 'PP')}</span>
                                                     <Badge variant={getStatusVariant(refund.status)}>{refund.status}</Badge>
                                                 </div>
                                                 <p className="font-semibold text-right">${refund.amount.toFixed(2)}</p>
@@ -124,7 +126,9 @@ export default function MyRefundsPage() {
                                 </div>
                             </>
                          ) : (
-                            <p className="text-muted-foreground">You have not requested any refunds.</p>
+                            <div className="text-center py-10">
+                                <p className="text-muted-foreground">You have not requested any refunds.</p>
+                            </div>
                          )}
                     </CardContent>
                 </Card>
