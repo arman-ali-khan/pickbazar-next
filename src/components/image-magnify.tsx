@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ZoomIn } from 'lucide-react';
 
 interface ImageMagnifyProps {
@@ -59,6 +59,8 @@ const ImageMagnify: React.FC<ImageMagnifyProps> = ({
           </div>
         </DialogTrigger>
         <DialogContent className="p-0 border-0 w-screen h-screen max-w-none bg-black/80 backdrop-blur-sm flex items-center justify-center">
+           <DialogTitle className="sr-only">Image of {alt}</DialogTitle>
+           <DialogDescription className="sr-only">A larger, zoomed-in view of the image for {alt}.</DialogDescription>
            <div className="relative w-[90vw] h-[90vh]">
             <Image
               src={finalZoomSrc}
