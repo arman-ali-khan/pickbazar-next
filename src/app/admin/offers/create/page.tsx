@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -50,6 +49,7 @@ export default function CreateOfferPage() {
     const [allProducts, setAllProducts] = useState<SelectableProduct[]>([]);
     const [allCategories, setAllCategories] = useState<Category[]>([]);
     const [selectedProductIds, setSelectedProductIds] = useState<number[]>([]);
+    const [productSearch, setProductSearch] = useState('');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -261,31 +261,41 @@ export default function CreateOfferPage() {
                                             {selectedProductIds.length > 0 ? `${selectedProductIds.length} products selected` : "Select products"}
                                         </Button>
                                     </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="w-64 p-0 max-h-72 overflow-y-auto" align="start">
-                                        {allCategories.map(category => {
-                                            const productsInCategory = allProducts.filter(p => 
-                                                p.categories.some(cat => cat.id === category.id)
-                                            );
+                                    <DropdownMenuContent className="w-80 p-0 max-h-72 flex flex-col" align="start">
+                                        <div className="p-2 border-b sticky top-0 bg-popover">
+                                            <Input
+                                                placeholder="Search products..."
+                                                value={productSearch}
+                                                onChange={(e) => setProductSearch(e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="overflow-y-auto">
+                                            {allCategories.map(category => {
+                                                const productsInCategory = allProducts.filter(p => 
+                                                    p.categories.some(cat => cat.id === category.id) &&
+                                                    p.name.toLowerCase().includes(productSearch.toLowerCase())
+                                                );
 
-                                            if (productsInCategory.length === 0) return null;
+                                                if (productsInCategory.length === 0) return null;
 
-                                            return (
-                                                <DropdownMenuGroup key={category.id}>
-                                                    <DropdownMenuLabel className="px-2 py-1.5">{category.name}</DropdownMenuLabel>
-                                                    {productsInCategory.map(product => (
-                                                        <DropdownMenuCheckboxItem
-                                                            key={product.id}
-                                                            checked={selectedProductIds.includes(product.id)}
-                                                            onCheckedChange={() => handleProductSelection(product.id)}
-                                                            onSelect={(e) => e.preventDefault()}
-                                                            className="pl-4"
-                                                        >
-                                                            {product.name}
-                                                        </DropdownMenuCheckboxItem>
-                                                    ))}
-                                                </DropdownMenuGroup>
-                                            )
-                                        })}
+                                                return (
+                                                    <DropdownMenuGroup key={category.id}>
+                                                        <DropdownMenuLabel className="px-2 py-1.5">{category.name}</DropdownMenuLabel>
+                                                        {productsInCategory.map(product => (
+                                                            <DropdownMenuCheckboxItem
+                                                                key={product.id}
+                                                                checked={selectedProductIds.includes(product.id)}
+                                                                onCheckedChange={() => handleProductSelection(product.id)}
+                                                                onSelect={(e) => e.preventDefault()}
+                                                                className="pl-4"
+                                                            >
+                                                                {product.name}
+                                                            </DropdownMenuCheckboxItem>
+                                                        ))}
+                                                    </DropdownMenuGroup>
+                                                )
+                                            })}
+                                        </div>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                             </div>
