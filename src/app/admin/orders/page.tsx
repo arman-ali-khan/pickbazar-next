@@ -83,10 +83,10 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                                     <AvatarFallback>{(order.customer_name || 'G').charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold flex items-center gap-2">
+                                    <div className="font-semibold flex items-center gap-2">
                                         {order.customer_name || 'Guest User'}
                                         {!order.customer_name && <Badge variant="secondary">Guest</Badge>}
-                                    </p>
+                                    </div>
                                     <p className="text-xs text-muted-foreground">{order.order_number}</p>
                                 </div>
                             </div>
@@ -148,10 +148,10 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                                             <AvatarFallback>{(order.customer_name || 'G').charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-medium flex items-center gap-2">
+                                            <div className="font-medium flex items-center gap-2">
                                                 {order.customer_name || 'Guest User'}
                                                  {!order.customer_name && <Badge variant="secondary">Guest</Badge>}
-                                            </p>
+                                            </div>
                                             <p className="text-xs text-muted-foreground">{order.customer_email}</p>
                                         </div>
                                     </div>
@@ -318,3 +318,5 @@ export default function AdminOrdersPage() {
         </main>
     );
 }
+
+    
