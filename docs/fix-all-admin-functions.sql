@@ -1,83 +1,84 @@
--- This is a comprehensive script to fix all admin-related database functions.
--- It ensures correct data types and permissions to resolve "structure does not match" errors.
+-- This script corrects and defines all database functions for the admin dashboard.
 
--- 1. Drop old functions and view to ensure a clean state.
-DROP FUNCTION IF EXISTS get_admins();
-DROP FUNCTION IF EXISTS get_all_users();
-DROP FUNCTION IF EXISTS get_admin_reviews();
-DROP FUNCTION IF EXISTS get_potential_admins();
-DROP VIEW IF EXISTS public.users_public;
-
-
--- 2. Create a secure view for the auth.users table
-CREATE VIEW public.users_public AS
-    SELECT id, email, created_at FROM auth.users;
-
--- 3. Grant usage to the public view
--- This allows authenticated users (like your app's service role) to read from this view.
-GRANT SELECT ON public.users_public TO authenticated;
-GRANT SELECT ON public.users_public TO service_role;
-
-
--- 4. Recreate get_admins() function
--- Retrieves users with administrative roles.
-CREATE OR REPLACE FUNCTION get_admins()
-RETURNS TABLE (
-    id UUID,
-    full_name TEXT,
-    email TEXT,
-    avatar_url TEXT,
-    role TEXT
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
+-- 1. Create a custom type for roles if it doesn't exist.
+DO $$
 BEGIN
-    RETURN QUERY
-    SELECT
-        p.id,
-        p.full_name,
-        u.email,
-        p.avatar_url,
-        p.role::text
-    FROM public.profiles p
-    JOIN public.users_public u ON p.id = u.id
-    WHERE p.role::text IN ('admin', 'manager', 'super-admin')
-    ORDER BY p.role::text, p.full_name;
-END;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'app_role') THEN
+        CREATE TYPE app_role AS ENUM ('customer', 'manager', 'admin', 'super-admin');
+    END IF;
+END
 $$;
 
+-- 2. Add 'role' column to profiles if it doesn't exist.
+DO $$
+BEGIN
+    ALTER TABLE profiles ADD COLUMN IF NOT EXISTS role app_role DEFAULT 'customer';
+EXCEPTION
+    WHEN duplicate_column THEN
+        RAISE NOTICE 'column role already exists in profiles.';
+END
+$$;
 
--- 5. Recreate get_all_users() function
--- Retrieves all users for the main user management page.
+-- 3. Create a helper function to safely check the current user's role.
+CREATE OR REPLACE FUNCTION get_my_role()
+RETURNS TEXT
+LANGUAGE sql
+STABLE
+SECURITY INVOKER -- Important: runs as the user making the query
+AS $$
+  SELECT role::text FROM public.profiles WHERE id = auth.uid();
+$$;
+
+-- 4. Set up correct Row Level Security (RLS) on the profiles table.
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view their own profile." ON profiles;
+CREATE POLICY "Users can view their own profile." ON profiles FOR SELECT USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Admins can view all profiles." ON profiles;
+CREATE POLICY "Admins can view all profiles." ON profiles FOR SELECT USING (get_my_role() IN ('admin', 'manager', 'super-admin'));
+DROP POLICY IF EXISTS "Users can update their own profile." ON profiles;
+CREATE POLICY "Users can update their own profile." ON profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+DROP POLICY IF EXISTS "Super-admins can update any profile." ON profiles;
+CREATE POLICY "Super-admins can update any profile." ON profiles FOR UPDATE USING (get_my_role() = 'super-admin');
+
+
+-- 5. Create a secure VIEW on auth.users to expose non-sensitive data.
+CREATE OR REPLACE VIEW public.user_details AS
+    SELECT id, email, created_at
+    FROM auth.users;
+GRANT SELECT ON public.user_details TO authenticated;
+
+
+-- 6. Create RPC functions. Drop old ones first to ensure a clean state.
+DROP FUNCTION IF EXISTS get_all_users();
+DROP FUNCTION IF EXISTS get_admin_reviews();
+DROP FUNCTION IF EXISTS get_admin_refunds();
+
+-- Function for the User Management page.
 CREATE OR REPLACE FUNCTION get_all_users()
 RETURNS TABLE (
     id UUID,
     full_name TEXT,
     email TEXT,
     avatar_url TEXT,
-    created_at TIMESTAMPTZ
+    created_at TIMESTAMPTZ,
+    role TEXT -- Use TEXT for robustness
 )
-LANGUAGE plpgsql
+LANGUAGE sql
 SECURITY DEFINER
 AS $$
-BEGIN
-    RETURN QUERY
     SELECT
         p.id,
         p.full_name,
         u.email,
         p.avatar_url,
-        u.created_at
+        u.created_at,
+        p.role::text -- Explicitly cast role to text
     FROM public.profiles p
-    JOIN public.users_public u ON p.id = u.id
+    JOIN public.user_details u ON p.id = u.id
     ORDER BY u.created_at DESC;
-END;
 $$;
 
-
--- 6. Recreate get_admin_reviews() function
--- Retrieves reviews for the admin dashboard and reviews page.
+-- Function for the Reviews page and Dashboard.
 CREATE OR REPLACE FUNCTION get_admin_reviews()
 RETURNS TABLE (
     id BIGINT,
@@ -115,14 +116,19 @@ BEGIN
 END;
 $$;
 
--- 7. Recreate get_potential_admins() function
--- Retrieves non-admin users who can be promoted.
-CREATE OR REPLACE FUNCTION get_potential_admins()
+-- Function for the Refunds page and Dashboard.
+CREATE OR REPLACE FUNCTION get_admin_refunds()
 RETURNS TABLE (
-    id UUID,
-    full_name TEXT,
-    email TEXT,
-    avatar_url TEXT
+    id BIGINT,
+    order_id BIGINT,
+    order_number TEXT,
+    amount NUMERIC,
+    status TEXT,
+    reason TEXT,
+    created_at TIMESTAMPTZ,
+    user_id UUID,
+    customer_name TEXT,
+    customer_avatar_url TEXT
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -130,13 +136,19 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT
-        p.id,
-        p.full_name,
-        u.email,
-        p.avatar_url
-    FROM public.profiles p
-    JOIN public.users_public u ON p.id = u.id
-    WHERE p.role = 'customer'
-    ORDER BY p.full_name;
+        r.id,
+        r.order_id,
+        o.order_number,
+        r.amount,
+        r.status::text,
+        r.reason,
+        r.created_at,
+        r.user_id,
+        p.full_name as customer_name,
+        p.avatar_url as customer_avatar_url
+    FROM public.refunds r
+    JOIN public.orders o ON r.order_id = o.id
+    JOIN public.profiles p ON r.user_id = p.id
+    ORDER BY r.created_at DESC;
 END;
 $$;
