@@ -358,12 +358,17 @@ export async function updateUserRole(formData: FormData) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Check if the current user is a super-admin
-    if (!user) return { error: 'Authentication required.' };
-    
-    const { data: profile } = await supabase.rpc('get_my_role');
-    const myRole = profile?.[0]?.role;
-    
+    if (!user) {
+        return { error: 'Authentication required' };
+    }
+
+    // This RPC call securely gets the calling user's role without causing recursion.
+    const { data: roleData, error: rpcError } = await supabase.rpc('get_my_role');
+    if (rpcError) {
+        return { error: `Could not verify permissions: ${rpcError.message}` };
+    }
+    const myRole = roleData?.[0]?.role;
+
     if (myRole !== 'super-admin') {
         return { error: 'You do not have permission to perform this action.' };
     }
@@ -462,4 +467,30 @@ export async function deleteContactMessage(messageId: number) {
 
     revalidatePath('/admin/messages');
     return { success: true };
+}
+
+export async function updateSettings(settings: { key: string; value: string | null }[]) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'Authentication required' };
+  }
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+  const role = profile?.role;
+  
+  if (!role || !['admin', 'manager', 'super-admin'].includes(role)) {
+      return { error: 'You do not have permission to perform this action.' };
+  }
+
+  const { error } = await supabase.from('settings').upsert(settings, { onConflict: 'key' });
+  
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath('/admin/settings');
+  revalidatePath('/'); 
+  return { success: true };
 }

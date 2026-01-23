@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -7,20 +8,139 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { UploadCloud, Settings as SettingsIcon, Search, CreditCard, Wrench, Megaphone } from "lucide-react";
+import { UploadCloud, Settings as SettingsIcon, Search, CreditCard, Wrench, Megaphone, X } from "lucide-react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useState, useEffect, useCallback, useTransition } from "react";
+import { useSupabase } from "@/lib/supabase/provider";
+import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
+import { updateSettings } from "@/app/actions";
+
+interface SiteSettings {
+    site_title: string;
+    site_subtitle: string;
+    logo_url: string | null;
+    favicon_url: string | null;
+    link_preview_image_url: string | null;
+}
 
 function SettingsContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const pathname = usePathname();
+    const { supabase } = useSupabase();
+    const { toast } = useToast();
 
+    const [settings, setSettings] = useState<Partial<SiteSettings>>({});
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [faviconFile, setFaviconFile] = useState<File | null>(null);
+    const [previewFile, setPreviewFile] = useState<File | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [isSaving, startTransition] = useTransition();
+    
     const activeTab = searchParams.get('tab') || 'general';
 
     const handleTabChange = (value: string) => {
         router.push(`${pathname}?tab=${value}`);
     };
+
+    const fetchSettings = useCallback(async () => {
+        setLoading(true);
+        const { data, error } = await supabase.rpc('get_all_settings');
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error fetching settings', description: error.message });
+        } else {
+            setSettings(data as SiteSettings);
+        }
+        setLoading(false);
+    }, [supabase, toast]);
+
+    useEffect(() => {
+        fetchSettings();
+    }, [fetchSettings]);
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, setter: React.Dispatch<React.SetStateAction<File | null>>, key: keyof SiteSettings) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setter(file);
+            const previewUrl = URL.createObjectURL(file);
+            setSettings(prev => ({...prev, [key]: previewUrl}));
+        }
+    };
+    
+    const removeImage = (setter: React.Dispatch<React.SetStateAction<File | null>>, key: keyof SiteSettings) => {
+        setter(null);
+        setSettings(prev => ({...prev, [key]: null}));
+    }
+
+    const uploadImage = async (file: File) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', 'aistudio');
+
+        const response = await fetch('https://api.cloudinary.com/v1_1/dcckbmhft/image/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!response.ok) throw new Error('Failed to upload image to Cloudinary');
+        const data = await response.json();
+        return data.secure_url;
+    };
+    
+    const handleSaveChanges = () => {
+        startTransition(async () => {
+            try {
+                let logo_url = settings.logo_url;
+                if (logoFile) logo_url = await uploadImage(logoFile);
+
+                let favicon_url = settings.favicon_url;
+                if (faviconFile) favicon_url = await uploadImage(faviconFile);
+
+                let link_preview_image_url = settings.link_preview_image_url;
+                if (previewFile) link_preview_image_url = await uploadImage(previewFile);
+                
+                const settingsToUpdate = [
+                    { key: 'site_title', value: settings.site_title || '' },
+                    { key: 'site_subtitle', value: settings.site_subtitle || '' },
+                    { key: 'logo_url', value: logo_url },
+                    { key: 'favicon_url', value: favicon_url },
+                    { key: 'link_preview_image_url', value: link_preview_image_url },
+                ];
+
+                const result = await updateSettings(settingsToUpdate);
+
+                if (result.error) throw new Error(result.error);
+                
+                toast({ title: 'Settings saved successfully' });
+                await fetchSettings(); // re-fetch to get permanent URLs
+            } catch (error: any) {
+                toast({ variant: 'destructive', title: 'Error saving settings', description: error.message });
+            }
+        });
+    };
+
+    const renderImageUploader = (label: string, key: keyof SiteSettings, fileSetter: React.Dispatch<React.SetStateAction<File | null>>) => (
+        <div className="space-y-2">
+            <Label>{label}</Label>
+            {settings[key] ? (
+                 <div className="relative w-full h-48 border rounded-lg">
+                    <Image src={settings[key]!} alt={`${label} preview`} fill className="object-contain rounded-md p-2" />
+                    <Button variant="destructive" size="icon" className="absolute top-2 right-2 h-7 w-7" onClick={() => removeImage(fileSetter, key)}>
+                        <X className="h-4 w-4" />
+                    </Button>
+                </div>
+            ) : (
+                 <label htmlFor={`${key}-upload`} className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/70">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <UploadCloud className="w-8 h-8 mb-4 text-muted-foreground" />
+                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span></p>
+                    </div>
+                    <Input id={`${key}-upload`} type="file" className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, fileSetter, key)} />
+                </label>
+            )}
+        </div>
+    );
 
     return (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
@@ -54,43 +174,28 @@ function SettingsContent() {
                         <CardDescription>Manage your site's basic information.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="site-title">Site Title</Label>
-                                <Input id="site-title" placeholder="Pickbazar" defaultValue="Pickbazar" />
+                         {loading ? <p>Loading settings...</p> : (
+                            <>
+                            <div className="grid md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="site-title">Site Title</Label>
+                                    <Input id="site-title" value={settings.site_title || ''} onChange={(e) => setSettings(prev => ({...prev, site_title: e.target.value}))} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="site-subtitle">Site Subtitle</Label>
+                                    <Input id="site-subtitle" value={settings.site_subtitle || ''} onChange={(e) => setSettings(prev => ({...prev, site_subtitle: e.target.value}))} />
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="site-subtitle">Site Subtitle</Label>
-                                <Input id="site-subtitle" placeholder="Your friendly neighborhood grocery store" defaultValue="Your friendly neighborhood grocery store" />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Site Logo</Label>
-                            <div className="flex items-center justify-center w-full">
-                                <label htmlFor="logo-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/70">
-                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                        <UploadCloud className="w-8 h-8 mb-4 text-muted-foreground" />
-                                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                                    </div>
-                                    <Input id="logo-upload" type="file" className="hidden" />
-                                </label>
-                            </div>
-                        </div>
-                         <div className="space-y-2">
-                            <Label>Link Preview Image</Label>
-                            <div className="flex items-center justify-center w-full">
-                                <label htmlFor="preview-upload" className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted/70">
-                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                        <UploadCloud className="w-8 h-8 mb-4 text-muted-foreground" />
-                                        <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Click to upload</span> or drag and drop</p>
-                                    </div>
-                                    <Input id="preview-upload" type="file" className="hidden" />
-                                </label>
-                            </div>
-                        </div>
+                            {renderImageUploader('Site Logo', 'logo_url', setLogoFile)}
+                            {renderImageUploader('Favicon', 'favicon_url', setFaviconFile)}
+                            {renderImageUploader('Link Preview Image', 'link_preview_image_url', setPreviewFile)}
+                            </>
+                        )}
                     </CardContent>
                     <CardFooter className="border-t pt-6">
-                        <Button>Save Changes</Button>
+                        <Button onClick={handleSaveChanges} disabled={isSaving}>
+                            {isSaving ? 'Saving...' : 'Save Changes'}
+                        </Button>
                     </CardFooter>
                 </Card>
             </TabsContent>

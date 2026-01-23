@@ -37,7 +37,7 @@ import { updateMessageStatus, deleteContactMessage } from '@/app/actions';
 interface Message {
     id: number;
     senderName: string;
-    senderEmail: string;
+    senderemail: string;
     subject: string;
     message: string;
     date: string;
@@ -95,7 +95,7 @@ export default function AdminMessagesPage() {
             }
         });
     }
-
+console.log(messages,'messages')
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
             <Card>
@@ -128,7 +128,7 @@ export default function AdminMessagesPage() {
                                                 </Avatar>
                                                 <div>
                                                     <p className={cn("font-medium", message.status === 'unread' && 'font-bold')}>{message.senderName}</p>
-                                                    <p className="text-xs text-muted-foreground">{message.senderEmail}</p>
+                                                    <p className="text-xs text-muted-foreground">{message.senderemail}</p>
                                                 </div>
                                             </div>
                                         </TableCell>
@@ -180,7 +180,7 @@ export default function AdminMessagesPage() {
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <p className={cn("font-semibold text-base", message.status === 'unread' && 'font-bold')}>{message.senderName}</p>
-                                                <p className="text-xs text-muted-foreground">{message.senderEmail}</p>
+                                                <p className="text-xs text-muted-foreground">{message.senderemail}</p>
                                             </div>
                                             <Badge variant={getStatusVariant(message.status)}>{message.status}</Badge>
                                         </div>
