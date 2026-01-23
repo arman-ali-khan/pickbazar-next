@@ -177,11 +177,14 @@ export default function AdminMessagesPage() {
                                         <AvatarFallback>{(message.senderName || 'U').charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1">
-                                        <CardTitle className="text-base flex justify-between">
-                                            <span className={cn(message.status === 'unread' && 'font-bold')}>{message.senderName}</span>
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className={cn("font-semibold text-base", message.status === 'unread' && 'font-bold')}>{message.senderName}</p>
+                                                <p className="text-xs text-muted-foreground">{message.senderEmail}</p>
+                                            </div>
                                             <Badge variant={getStatusVariant(message.status)}>{message.status}</Badge>
-                                        </CardTitle>
-                                        <CardDescription suppressHydrationWarning>{format(new Date(message.date), 'PPp')}</CardDescription>
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>{format(new Date(message.date), 'PPp')}</p>
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
