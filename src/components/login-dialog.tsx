@@ -52,7 +52,6 @@ export function LoginDialog() {
       toast({ variant: "destructive", title: "Login Failed", description: error.message });
     } else {
       toast({ title: 'Login Successful', description: "Welcome back!" });
-      router.push('/profile');
       router.refresh();
     }
     setIsSubmitting(false);
@@ -85,7 +84,7 @@ export function LoginDialog() {
     const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-            redirectTo: `${location.origin}/auth/callback`,
+            redirectTo: `${location.origin}/auth/callback?next=${window.location.pathname}`,
         }
     });
     if (error) {
