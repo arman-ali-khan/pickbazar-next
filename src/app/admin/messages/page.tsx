@@ -124,7 +124,7 @@ export default function AdminMessagesPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-9 w-9">
-                                                    <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
+                                                    <AvatarFallback>{(message.senderName || 'U').charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div>
                                                     <p className={cn("font-medium", message.status === 'unread' && 'font-bold')}>{message.senderName}</p>
@@ -174,7 +174,7 @@ export default function AdminMessagesPage() {
                             <Card key={message.id} className={cn(message.status === 'unread' && 'border-primary')}>
                                 <CardHeader className="flex flex-row items-start gap-4 space-y-0 p-4">
                                     <Avatar className="h-10 w-10">
-                                        <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
+                                        <AvatarFallback>{(message.senderName || 'U').charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1">
                                         <CardTitle className="text-base flex justify-between">

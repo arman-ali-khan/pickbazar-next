@@ -107,7 +107,7 @@ export default function ViewMessagePage() {
                         <CardHeader className="border-b">
                              <div className="flex items-center gap-3">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback>{(message.senderName || 'U').charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
                                     <p className="font-semibold">{message.senderName}</p>
