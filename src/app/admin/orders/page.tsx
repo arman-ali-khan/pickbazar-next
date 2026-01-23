@@ -45,7 +45,7 @@ type OrderWithCustomer = {
     created_at: string;
     total_amount: number;
     status: OrderStatus;
-    customer_name: string;
+    customer_name: string | null;
     customer_email: string;
     customer_avatar_url: string | null;
 }
@@ -79,12 +79,13 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                         <CardHeader className="flex flex-row items-center justify-between p-4">
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarImage src={order.customer_avatar_url || undefined} alt={order.customer_name} />
-                                    <AvatarFallback>{order.customer_name.charAt(0)}</AvatarFallback>
+                                    <AvatarImage src={order.customer_avatar_url || undefined} alt={order.customer_name || 'Guest'} />
+                                    <AvatarFallback>{(order.customer_name || 'G').charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
                                     <p className="font-semibold flex items-center gap-2">
-                                        {order.customer_name}
+                                        {order.customer_name || 'Guest User'}
+                                        {!order.customer_name && <Badge variant="secondary">Guest</Badge>}
                                     </p>
                                     <p className="text-xs text-muted-foreground">{order.order_number}</p>
                                 </div>
@@ -143,12 +144,13 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={order.customer_avatar_url || undefined} alt={order.customer_name} />
-                                            <AvatarFallback>{order.customer_name.charAt(0)}</AvatarFallback>
+                                            <AvatarImage src={order.customer_avatar_url || undefined} alt={order.customer_name || 'Guest'} />
+                                            <AvatarFallback>{(order.customer_name || 'G').charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <p className="font-medium flex items-center gap-2">
-                                                {order.customer_name}
+                                                {order.customer_name || 'Guest User'}
+                                                 {!order.customer_name && <Badge variant="secondary">Guest</Badge>}
                                             </p>
                                             <p className="text-xs text-muted-foreground">{order.customer_email}</p>
                                         </div>
@@ -220,7 +222,7 @@ export default function AdminOrdersPage() {
             const lowercasedTerm = searchTerm.toLowerCase();
             filtered = filtered.filter(order =>
                 order.order_number.toLowerCase().includes(lowercasedTerm) ||
-                order.customer_name.toLowerCase().includes(lowercasedTerm) ||
+                (order.customer_name && order.customer_name.toLowerCase().includes(lowercasedTerm)) ||
                 order.customer_email.toLowerCase().includes(lowercasedTerm)
             );
         }
