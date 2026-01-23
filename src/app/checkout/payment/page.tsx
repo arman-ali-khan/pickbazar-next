@@ -67,6 +67,7 @@ export default function PaymentPage() {
         if (savedInfo) {
             setShippingInfo(JSON.parse(savedInfo));
         } else if (cartItems.length > 0) {
+            // If no shipping info but we have cart items, something is wrong, go back
             router.push('/checkout');
         }
     }, [router, cartItems]);
@@ -91,8 +92,42 @@ export default function PaymentPage() {
         
         const transactionDetails = selectedMethod === 'mobile-banking' ? { trxId, mobileLast4 } : null;
 
+        let nonUserId = null;
+        if (!user) {
+            // Handle guest user: find or create a non_user record
+            const { data: existingNonUser, error: findError } = await supabase
+                .from('non_users')
+                .select('id')
+                .eq('email', shippingInfo.email)
+                .single();
+
+            if (findError && findError.code !== 'PGRST116') { // PGRST116 is 'not found'
+                toast({ variant: 'destructive', title: 'Error', description: `Could not process guest checkout: ${findError.message}` });
+                setIsProcessing(false);
+                return;
+            }
+
+            if (existingNonUser) {
+                nonUserId = existingNonUser.id;
+            } else {
+                const { data: newNonUser, error: createError } = await supabase
+                    .from('non_users')
+                    .insert({ email: shippingInfo.email, shipping_details: shippingInfo })
+                    .select('id')
+                    .single();
+                
+                if (createError) {
+                    toast({ variant: 'destructive', title: 'Error', description: `Could not create guest profile: ${createError.message}` });
+                    setIsProcessing(false);
+                    return;
+                }
+                nonUserId = newNonUser.id;
+            }
+        }
+
         const { data: orderNumber, error } = await supabase.rpc('create_order', {
             p_user_id: user?.id,
+            p_non_user_id: nonUserId,
             p_total_amount: total,
             p_shipping_details: shippingInfo,
             p_items: orderItems,
@@ -279,5 +314,3 @@ export default function PaymentPage() {
     </div>
   );
 }
-
-    

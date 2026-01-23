@@ -111,7 +111,7 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                         <CardContent className="p-4 pt-0 space-y-2">
                              <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Total</span>
-                                <span className="font-bold">${order.total_amount}</span>
+                                <span className="font-bold">${order.total_amount.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between items-center text-sm">
                                 <span className="text-muted-foreground">Date</span>
@@ -159,7 +159,7 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                                     </div>
                                 </TableCell>
                                 <TableCell suppressHydrationWarning>{format(new Date(order.created_at), 'PP')}</TableCell>
-                                <TableCell>${order.total_amount}</TableCell>
+                                <TableCell>${order.total_amount.toFixed(2)}</TableCell>
                                 <TableCell>
                                     <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
                                 </TableCell>
@@ -320,5 +320,3 @@ export default function AdminOrdersPage() {
         </main>
     );
 }
-
-    
