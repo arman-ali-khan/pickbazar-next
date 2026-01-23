@@ -39,7 +39,7 @@ interface AppliedDiscount {
 export default function PaymentPage() {
     const router = useRouter();
     const dispatch = useAppDispatch();
-    const { supabase, user } = useSupabase();
+    const { supabase, user, loading: authLoading } = useSupabase();
     const { toast } = useToast();
 
     const cartItems = useAppSelector(selectCartItems);
@@ -57,6 +57,12 @@ export default function PaymentPage() {
     const total = subtotal + shippingCost - discountAmount;
 
     useEffect(() => {
+        if (!authLoading && !user) {
+            toast({ variant: 'destructive', title: 'Authentication Required', description: 'Please login to continue.' });
+            router.push('/checkout');
+            return;
+        }
+
         const savedInfo = localStorage.getItem('shippingInfo');
         const savedDiscount = localStorage.getItem('appliedDiscount');
 
@@ -70,14 +76,14 @@ export default function PaymentPage() {
             // If no shipping info but we have cart items, something is wrong, go back
             router.push('/checkout');
         }
-    }, [router, cartItems]);
+    }, [router, cartItems, authLoading, user, toast]);
     
     const handlePayment = async () => {
-        if (!shippingInfo) {
+        if (!shippingInfo || !user) {
             toast({
                 variant: 'destructive',
                 title: 'Error',
-                description: 'Shipping information is missing. Please go back to the previous step.',
+                description: 'User or shipping information is missing.',
             });
             return;
         }
@@ -92,42 +98,8 @@ export default function PaymentPage() {
         
         const transactionDetails = selectedMethod === 'mobile-banking' ? { trxId, mobileLast4 } : null;
 
-        let nonUserId = null;
-        if (!user) {
-            // Handle guest user: find or create a non_user record
-            const { data: existingNonUser, error: findError } = await supabase
-                .from('non_users')
-                .select('id')
-                .eq('email', shippingInfo.email)
-                .single();
-
-            if (findError && findError.code !== 'PGRST116') { // PGRST116 is 'not found'
-                toast({ variant: 'destructive', title: 'Error', description: `Could not process guest checkout: ${findError.message}` });
-                setIsProcessing(false);
-                return;
-            }
-
-            if (existingNonUser) {
-                nonUserId = existingNonUser.id;
-            } else {
-                const { data: newNonUser, error: createError } = await supabase
-                    .from('non_users')
-                    .insert({ email: shippingInfo.email, shipping_details: shippingInfo })
-                    .select('id')
-                    .single();
-                
-                if (createError) {
-                    toast({ variant: 'destructive', title: 'Error', description: `Could not create guest profile: ${createError.message}` });
-                    setIsProcessing(false);
-                    return;
-                }
-                nonUserId = newNonUser.id;
-            }
-        }
-
         const { data: orderNumber, error } = await supabase.rpc('create_order', {
-            p_user_id: user?.id,
-            p_non_user_id: nonUserId,
+            p_user_id: user.id,
             p_total_amount: total,
             p_shipping_details: shippingInfo,
             p_items: orderItems,
@@ -150,9 +122,6 @@ export default function PaymentPage() {
         dispatch(clearCart());
         localStorage.removeItem('shippingInfo');
         localStorage.removeItem('appliedDiscount');
-        if (!user) {
-            localStorage.removeItem('guestEmail');
-        }
         
         router.push(`/checkout/success?order_number=${orderNumber}`);
     };

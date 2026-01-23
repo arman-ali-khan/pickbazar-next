@@ -41,8 +41,6 @@ import type { OrderStatus } from '@/lib/data';
 
 type OrderWithCustomer = {
     id: number;
-    user_id: string | null;
-    non_user_id: number | null;
     order_number: string;
     created_at: string;
     total_amount: number;
@@ -87,7 +85,6 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                                 <div>
                                     <p className="font-semibold flex items-center gap-2">
                                         {order.customer_name}
-                                        {!order.user_id && <Badge variant="outline">Guest</Badge>}
                                     </p>
                                     <p className="text-xs text-muted-foreground">{order.order_number}</p>
                                 </div>
@@ -152,7 +149,6 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                                         <div>
                                             <p className="font-medium flex items-center gap-2">
                                                 {order.customer_name}
-                                                {!order.user_id && <Badge variant="outline">Guest</Badge>}
                                             </p>
                                             <p className="text-xs text-muted-foreground">{order.customer_email}</p>
                                         </div>
