@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -105,8 +104,8 @@ export default function PaymentPage() {
             p_items: orderItems,
             p_payment_method: selectedMethod,
             p_transaction_details: transactionDetails,
-            p_coupon_code: appliedDiscount?.code,
-            p_discount_amount: appliedDiscount?.discount,
+            p_coupon_code: appliedDiscount?.code || null,
+            p_discount_amount: discountAmount,
         });
 
         if (error) {
