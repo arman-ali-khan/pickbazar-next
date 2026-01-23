@@ -6,7 +6,7 @@ import CartDrawer from '@/components/cart-drawer';
 import ProfileSidebar from '@/components/profile-sidebar';
 import ProductCard from '@/components/product-details';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useSupabase } from '@/lib/supabase/provider';
 import type { Product } from '@/lib/data';
 
@@ -19,21 +19,37 @@ export default function MyWishlistPage() {
         const fetchWishlist = async () => {
             if (!user) return;
             setLoading(true);
-            const { data, error } = await supabase.rpc('get_user_wishlist_products', { p_user_id: user.id });
+            
+            const { data, error } = await supabase
+                .from('wishlist')
+                .select(`
+                    products (
+                        id,
+                        name,
+                        price,
+                        original_price,
+                        featured_image_url,
+                        unit
+                    )
+                `)
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
 
             if (error) {
                 console.error("Error fetching wishlist", error);
             } else if (data) {
-                const products = data.map((p: any) => ({
-                    id: p.id,
-                    name: p.name,
-                    price: p.price,
-                    originalPrice: p.original_price,
-                    image: { id: `prod-${p.id}`, imageUrl: p.featured_image_url || 'https://picsum.photos/seed/placeholder/200', imageHint: 'product', description: p.name },
-                    weight: p.unit || '',
-                    category: '', // Not needed for card display
-                    rating: 0, // Not available here
-                }));
+                const products = data
+                    .filter((item: any) => item.products) // Filter out wishlisted items that might have been deleted
+                    .map((item: any) => ({
+                        id: item.products.id,
+                        name: item.products.name,
+                        price: item.products.price,
+                        originalPrice: item.products.original_price,
+                        image: { id: `prod-${item.products.id}`, imageUrl: item.products.featured_image_url || 'https://picsum.photos/seed/placeholder/200', imageHint: 'product', description: item.products.name },
+                        weight: item.products.unit || '',
+                        category: '', // Not needed for card display
+                        rating: 0, // Not available here
+                    }));
                 setWishlistItems(products);
             }
             setLoading(false);
