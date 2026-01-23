@@ -41,6 +41,7 @@ import type { OrderStatus } from '@/lib/data';
 
 type OrderWithCustomer = {
     id: number;
+    user_id: string | null;
     order_number: string;
     created_at: string;
     total_amount: number;
@@ -88,7 +89,10 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                                     <AvatarFallback>{order.shipping_details.firstName.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold">{order.shipping_details.firstName} {order.shipping_details.lastName}</p>
+                                    <p className="font-semibold flex items-center gap-2">
+                                        {order.shipping_details.firstName} {order.shipping_details.lastName}
+                                        {!order.user_id && <Badge variant="outline">Guest</Badge>}
+                                    </p>
                                     <p className="text-xs text-muted-foreground">{order.order_number}</p>
                                 </div>
                             </div>
@@ -150,7 +154,10 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                                             <AvatarFallback>{order.shipping_details.firstName.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-medium">{order.shipping_details.firstName} {order.shipping_details.lastName}</p>
+                                            <p className="font-medium flex items-center gap-2">
+                                                {order.shipping_details.firstName} {order.shipping_details.lastName}
+                                                {!order.user_id && <Badge variant="outline">Guest</Badge>}
+                                            </p>
                                             <p className="text-xs text-muted-foreground">{order.shipping_details.email}</p>
                                         </div>
                                     </div>
@@ -204,6 +211,7 @@ export default function AdminOrdersPage() {
         } else if (data) {
             const transformedData = data.map((order: any) => ({
                 id: order.id,
+                user_id: order.user_id,
                 order_number: order.order_number,
                 created_at: order.created_at,
                 total_amount: order.total_amount,
