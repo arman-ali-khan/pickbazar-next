@@ -9,6 +9,8 @@ import SupabaseProvider from '@/lib/supabase/provider';
 import { createClient } from '@/lib/supabase/server';
 import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { SetupSupabase } from '@/components/setup-supabase';
+import { Suspense } from 'react';
+import ProgressBar from '@/components/progress-bar';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -72,7 +74,9 @@ export default function RootLayout({
       <body className="font-body antialiased pb-16 md:pb-0">
         <SupabaseProvider>
           <ReduxProvider>
-            {children}
+            <Suspense fallback={<ProgressBar />}>
+              {children}
+            </Suspense>
             <Toaster />
             <FlyToCartAnimation />
             <BottomNavbar />
