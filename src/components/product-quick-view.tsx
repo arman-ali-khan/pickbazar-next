@@ -51,7 +51,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
                         alt={product.name}
                         data-ai-hint={product.image.imageHint}
                         fill
-                        className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                        className="w-full h-full object-contain p-1 group-hover:scale-105 transition-transform duration-300"
                     />
                 </div>
                 <div className="space-y-2 flex-grow">

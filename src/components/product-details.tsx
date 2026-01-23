@@ -44,7 +44,7 @@ export default function ProductCard({ product }: { product: Product }) {
 
     return (
         <Card className="w-full overflow-hidden group border rounded-lg hover:shadow-md transition-shadow duration-200 bg-white flex flex-col">
-            <CardContent className="p-4 flex flex-col flex-grow">
+            <CardContent style={{padding:'0'}} className="flex flex-col flex-grow">
                 <ProductQuickView product={product}>
                     <div ref={imageRef} className="bg-gray-50 rounded-md overflow-hidden aspect-[3/2] relative mb-4 cursor-pointer">
                         <div className="absolute top-2 left-2 z-10">
@@ -56,14 +56,16 @@ export default function ProductCard({ product }: { product: Product }) {
                             </Badge>
                         )}
                         <Image
+                            width={300}
+                            height={200}
                             src={product.image.imageUrl}
                             alt={product.name}
                             data-ai-hint={product.image.imageHint}
-                            fill
-                            className="w-full h-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
+                            className="w-full h-full object-cover p-1 group-hover:scale-105 transition-transform duration-300"
                         />
                     </div>
                 </ProductQuickView>
+                <div className=" px-2 pb-2 sm:pb-6 sm:px-6">
                 <div className="space-y-2 flex-grow">
                     <div className="flex items-baseline gap-2">
                         <p className="font-bold text-gray-800 text-lg">${product.price.toFixed(2)}</p>
@@ -94,6 +96,7 @@ export default function ProductCard({ product }: { product: Product }) {
                             <Plus className="h-4 w-4" />
                         </Button>
                     )}
+                </div>
                 </div>
             </CardContent>
         </Card>

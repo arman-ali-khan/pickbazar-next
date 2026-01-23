@@ -1,10 +1,10 @@
 'use client';
 
-import { Heart } from 'lucide-react';
+import { Heart, Loader2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { cn } from '@/lib/utils';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { toggleWishlist, selectIsInWishlist } from '@/lib/redux/slices/wishlistSlice';
+import { toggleWishlist, selectIsInWishlist, selectIsTogglingWishlist } from '@/lib/redux/slices/wishlistSlice';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogTrigger } from './ui/dialog';
@@ -18,6 +18,7 @@ interface WishlistButtonProps extends React.ComponentProps<typeof Button> {
 export default function WishlistButton({ productId, className, ...props }: WishlistButtonProps) {
   const dispatch = useAppDispatch();
   const isInWishlist = useAppSelector(selectIsInWishlist(productId));
+  const isToggling = useAppSelector(selectIsTogglingWishlist(productId));
   const { user } = useSupabase();
   const { toast } = useToast();
 
@@ -48,6 +49,14 @@ export default function WishlistButton({ productId, className, ...props }: Wishl
             <LoginDialog />
         </Dialog>
     );
+  }
+
+  if (isToggling) {
+      return (
+        <Button variant="outline" size="icon" className={cn("rounded-full w-10 h-10 border-gray-300 bg-white", className)} disabled {...props}>
+            <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
+        </Button>
+      );
   }
 
   return (

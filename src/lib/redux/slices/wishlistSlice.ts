@@ -5,11 +5,13 @@ import { getWishlistIds, toggleWishlistItem } from '@/app/actions';
 export interface WishlistState {
   productIds: number[];
   loading: boolean;
+  togglingProductId: number | null;
 }
 
 const initialState: WishlistState = {
   productIds: [],
   loading: true,
+  togglingProductId: null,
 }
 
 // Async thunk to fetch initial wishlist
@@ -47,7 +49,11 @@ export const wishlistSlice = createSlice({
         .addCase(fetchWishlist.rejected, (state) => {
             state.loading = false;
         })
+        .addCase(toggleWishlist.pending, (state, action) => {
+            state.togglingProductId = action.meta.arg;
+        })
         .addCase(toggleWishlist.fulfilled, (state, action) => {
+            state.togglingProductId = null;
             const { productId, status } = action.payload as { productId: number, status: string };
             if (status === 'added') {
                 if (!state.productIds.includes(productId)) {
@@ -56,10 +62,15 @@ export const wishlistSlice = createSlice({
             } else if (status === 'removed') {
                 state.productIds = state.productIds.filter(id => id !== productId);
             }
+        })
+        .addCase(toggleWishlist.rejected, (state) => {
+            state.togglingProductId = null;
         });
   },
 })
 
 export const selectIsInWishlist = (productId: number) => (state: RootState) => state.wishlist.productIds.includes(productId);
+export const selectIsTogglingWishlist = (productId: number) => (state: RootState) => state.wishlist.togglingProductId === productId;
+
 
 export default wishlistSlice.reducer;
