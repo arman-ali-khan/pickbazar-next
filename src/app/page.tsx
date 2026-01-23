@@ -35,6 +35,8 @@ export default async function Home() {
     .limit(5);
 
   const { data: categoriesData, error: categoriesError } = await supabase.from('categories').select('id, name');
+  
+  const { data: settings } = await supabase.rpc('get_all_settings');
 
   let offers: OfferForCarousel[] = [];
   if (offersData && categoriesData) {
@@ -56,7 +58,7 @@ export default async function Home() {
 
   return (
     <div className="bg-background min-h-screen">
-      <Header />
+      <Header logoUrl={settings?.logo_url} siteTitle={settings?.site_title} />
       <main>
         <HeroBanners />
         <OfferCarousel offers={offers} />

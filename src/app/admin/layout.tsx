@@ -41,10 +41,13 @@ export default async function AdminLayout({
         redirect('/');
     }
     
+    const supabase = createClient();
+    const { data: settings } = await supabase.rpc('get_all_settings');
+
     return (
         <SidebarProvider>
             <div className="flex min-h-screen bg-muted/20 w-full">
-                <AdminSidebar />
+                <AdminSidebar logoUrl={settings?.logo_url} siteTitle={settings?.site_title} />
                 <div className="flex flex-col flex-1 w-0">
                     <AdminHeader />
                     <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">

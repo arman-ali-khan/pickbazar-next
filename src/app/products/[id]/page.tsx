@@ -7,6 +7,51 @@ import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import type { RelatedProduct, ProductReview, Question } from '@/lib/data';
+import type { Metadata } from 'next';
+
+type Props = {
+  params: { id: string };
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const supabase = createClient();
+  const productId = parseInt(params.id, 10);
+
+  if (isNaN(productId)) {
+    return {
+      title: 'Product Not Found',
+    };
+  }
+
+  const { data: product } = await supabase
+    .from('products')
+    .select('name, description, featured_image_url')
+    .eq('id', productId)
+    .single();
+
+  if (!product) {
+    return {
+      title: 'Product Not Found',
+    };
+  }
+
+  return {
+    title: product.name,
+    description: product.description,
+    openGraph: {
+      title: product.name,
+      description: product.description || '',
+      images: product.featured_image_url ? [{ url: product.featured_image_url }] : [],
+    },
+    twitter: {
+        card: 'summary_large_image',
+        title: product.name,
+        description: product.description || '',
+        images: product.featured_image_url ? [product.featured_image_url] : [],
+    }
+  };
+}
+
 
 export default async function ProductPage({ params }: { params: { id: string } }) {
   const supabase = createClient();

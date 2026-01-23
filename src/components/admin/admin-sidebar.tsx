@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import React, { Suspense } from 'react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import Image from 'next/image';
 
 const navItems = [
   { href: '/admin', icon: LayoutGrid, label: 'Dashboard' },
@@ -159,15 +160,24 @@ const SettingsAccordion = () => {
     )
 }
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  logoUrl?: string | null;
+  siteTitle?: string | null;
+}
+
+export default function AdminSidebar({ logoUrl, siteTitle }: AdminSidebarProps) {
   const { state } = useSidebar();
   
   return (
     <Sidebar collapsible="icon" className="border-r bg-card hidden md:flex">
        <SidebarHeader className={cn("flex items-center justify-between  p-4", state === 'expanded' ? 'flex-row-reverse' : '')}>
         <div className={cn("flex items-center gap-2 overflow-hidden transition-all duration-300", state === 'expanded' ? 'w-auto' : 'w-0')}>
-            <Leaf className="h-6 w-6 text-primary" />
-            <Link href="/" className="font-bold text-lg">Pickbazar</Link>
+            {logoUrl ? (
+                <Image src={logoUrl} alt={siteTitle || 'Logo'} width={28} height={28} className="h-7 w-auto"/>
+            ) : (
+                <Leaf className="h-6 w-6 text-primary" />
+            )}
+            <Link href="/" className="font-bold text-lg">{siteTitle || 'Pickbazar'}</Link>
         </div>
         <SidebarTrigger className="hidden md:flex">
             <ChevronLeft />

@@ -26,7 +26,7 @@ import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { setSearchOpen } from '@/lib/redux/slices/uiSlice';
 import LucideIcon from './lucide-icon';
 import { Skeleton } from './ui/skeleton';
-
+import Image from 'next/image';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
   <Link
@@ -149,7 +149,12 @@ const CategoriesNav = () => {
     );
 };
 
-export default function Header() {
+interface HeaderProps {
+  logoUrl?: string | null;
+  siteTitle?: string | null;
+}
+
+export default function Header({ logoUrl, siteTitle }: HeaderProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -286,8 +291,12 @@ export default function Header() {
                     <CategoriesNav />
                 </div>
               <Link href="/" className="flex items-center gap-2">
-                <Leaf className="h-7 w-7 text-primary" />
-                <h1 className="text-2xl font-bold text-gray-800">PickBazar</h1>
+                {logoUrl ? (
+                    <Image src={logoUrl} alt={siteTitle || 'Logo'} width={32} height={32} className="h-8 w-auto" />
+                ) : (
+                    <Leaf className="h-7 w-7 text-primary" />
+                )}
+                <h1 className="text-2xl font-bold text-gray-800">{siteTitle || 'PickBazar'}</h1>
               </Link>
             </div>
 
