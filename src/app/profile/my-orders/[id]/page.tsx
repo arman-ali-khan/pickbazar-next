@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -43,6 +44,13 @@ interface OrderDetails {
     order_items: OrderItem[];
     coupon_code: string | null;
     discount_amount: number | null;
+    transactions: {
+        payment_method: string;
+        transaction_details: {
+            trxId: string;
+            mobileLast4: string;
+        } | null;
+    }[];
 }
 
 const getStatusVariant = (status: OrderStatus) => {
@@ -68,7 +76,8 @@ export default function MyOrderDetailsPage() {
             .from('orders')
             .select(`
                 *,
-                order_items ( id, quantity, price_at_purchase, products ( name, featured_image_url ) )
+                order_items ( id, quantity, price_at_purchase, products ( name, featured_image_url ) ),
+                transactions ( payment_method, transaction_details )
             `)
             .eq('user_id', user.id)
             .eq('order_number', orderNumber)
@@ -154,6 +163,7 @@ export default function MyOrderDetailsPage() {
 
     const subtotal = order.order_items.reduce((acc, item) => acc + item.price_at_purchase * item.quantity, 0);
     const shipping = Number(order.total_amount) + (order.discount_amount || 0) - subtotal;
+    const transaction = order.transactions?.[0];
 
     return (
         <div className="bg-muted/20 min-h-screen">
@@ -231,6 +241,23 @@ export default function MyOrderDetailsPage() {
                                     {order.shipping_details.address}<br />
                                     {order.shipping_details.city}, {order.shipping_details.state} {order.shipping_details.zip}
                                 </address>
+                            </div>
+                             <Separator className="my-4" />
+                             <div>
+                                <h4 className="font-semibold mb-2">Payment Information</h4>
+                                {transaction ? (
+                                    <div className="text-sm text-muted-foreground">
+                                        <p className="capitalize">Method: {transaction.payment_method}</p>
+                                        {transaction.payment_method === 'mobile-banking' && transaction.transaction_details && (
+                                            <div className="mt-1">
+                                                <p>Transaction ID: {transaction.transaction_details.trxId}</p>
+                                                <p>Mobile (last 4): {transaction.transaction_details.mobileLast4}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">Payment details not available.</p>
+                                )}
                             </div>
                         </CardContent>
                     </Card>

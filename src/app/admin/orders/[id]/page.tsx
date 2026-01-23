@@ -46,6 +46,11 @@ interface OrderDetails {
     order_items: OrderItem[];
     coupon_code: string | null;
     discount_amount: number | null;
+    payment_method: string | null;
+    transaction_details: {
+        trxId: string;
+        mobileLast4: string;
+    } | null;
 }
 
 const getStatusVariant = (status: OrderStatus) => {
@@ -291,6 +296,20 @@ export default function OrderDetailsPage() {
                                     {order.shipping_details.city}, {order.shipping_details.state} {order.shipping_details.zip}
                                 </address>
                             </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Payment Information</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="capitalize">Method: {order.payment_method}</p>
+                            {order.payment_method === 'mobile-banking' && order.transaction_details && (
+                                <div className="mt-2 text-sm text-muted-foreground">
+                                    <p>Transaction ID: {order.transaction_details.trxId}</p>
+                                    <p>Mobile Number (last 4): {order.transaction_details.mobileLast4}</p>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                     <Card>

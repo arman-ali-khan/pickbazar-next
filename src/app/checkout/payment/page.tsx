@@ -219,11 +219,11 @@ export default function PaymentPage() {
                         <div className="grid sm:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="trxId">Transaction ID</Label>
-                                <Input id="trxId" placeholder="Enter TrxID" value={trxId} onChange={(e) => setTrxId(e.target.value)} />
+                                <Input id="trxId" placeholder="Enter TrxID" value={trxId} onChange={(e) => setTrxId(e.target.value)} required={selectedMethod === 'mobile-banking'} />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="mobileLast4">Your Mobile No. (Last 4 Digits)</Label>
-                                <Input id="mobileLast4" placeholder="e.g., 1234" value={mobileLast4} onChange={(e) => setMobileLast4(e.target.value)} />
+                                <Input id="mobileLast4" placeholder="e.g., 1234" value={mobileLast4} onChange={(e) => setMobileLast4(e.target.value)} required={selectedMethod === 'mobile-banking'} />
                             </div>
                         </div>
                     </div>
@@ -271,7 +271,7 @@ export default function PaymentPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                 <Button onClick={handlePayment} className="w-full h-12 text-lg" disabled={isProcessing || total < 0}>
+                 <Button onClick={handlePayment} className="w-full h-12 text-lg" disabled={isProcessing || total < 0 || (selectedMethod === 'mobile-banking' && (!trxId || !mobileLast4))}>
                     {isProcessing ? 'Processing...' : `Pay $${total.toFixed(2)}`}
                 </Button>
               </CardFooter>
