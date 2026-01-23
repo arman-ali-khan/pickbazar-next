@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -12,12 +13,14 @@ import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
+type UserRole = 'customer' | 'manager' | 'admin' | 'super-admin';
 interface UserProfile {
     id: string;
     full_name: string | null;
     email: string | null;
     avatar_url: string | null;
     created_at: string;
+    role: UserRole;
 }
 
 interface Address {
@@ -37,6 +40,23 @@ interface Order {
     status: string;
     total_amount: number;
 }
+
+const roleDisplayMap: Record<UserRole, string> = {
+  'customer': 'Customer',
+  'manager': 'Manager',
+  'admin': 'Admin',
+  'super-admin': 'Super Admin'
+};
+
+const getRoleVariant = (role: UserRole) => {
+    switch (role) {
+        case 'super-admin': return 'default';
+        case 'admin': return 'secondary';
+        case 'manager': return 'outline';
+        default: return 'secondary';
+    }
+}
+
 
 export default function ViewUserPage() {
     const router = useRouter();
@@ -67,7 +87,7 @@ export default function ViewUserPage() {
             notFound();
             return;
         }
-        setUser(userData[0]);
+        setUser(userData[0] as UserProfile);
 
         const { data: addressesData } = addressesRes;
         if (addressesData) {
@@ -134,9 +154,9 @@ export default function ViewUserPage() {
                                     <span className="text-muted-foreground">Joined</span>
                                     <span suppressHydrationWarning>{format(new Date(user.created_at), 'PP')}</span>
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Status</span>
-                                    <Badge variant="secondary">Active</Badge>
+                                 <div className="flex justify-between items-center">
+                                    <span className="text-muted-foreground">Role</span>
+                                    <Badge variant={getRoleVariant(user.role)}>{roleDisplayMap[user.role]}</Badge>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Total Orders</span>

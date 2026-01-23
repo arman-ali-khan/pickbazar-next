@@ -12,15 +12,22 @@ async function checkAdminRole() {
     if (!user) {
         return false;
     }
-
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single();
     
+    // Fetch the user's role directly from the profiles table.
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    
+    if (error) {
+        console.error('Error checking admin role:', error.message);
+        return false;
+    }
+    
+    const role = profile?.role;
     const allowedRoles = ['admin', 'manager', 'super-admin'];
-    return allowedRoles.includes(profile?.role || '');
+    return allowedRoles.includes(role || '');
 }
 
 export default async function AdminLayout({

@@ -151,11 +151,14 @@ export async function answerQuestion(formData: FormData) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    // In a real app, you'd have a more robust role check.
-    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user!.id).single();
+    if (!user) {
+      return { error: 'Authentication required' };
+    }
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    const role = profile?.role;
     
-    const allowedRoles = ['admin', 'manager', 'super-admin'];
-    if (!user || !allowedRoles.includes(profile?.role || '')) {
+    if (!role || !['admin', 'manager', 'super-admin'].includes(role)) {
         return { error: 'You do not have permission to perform this action.' };
     }
 
@@ -298,13 +301,13 @@ export async function requestRefund(formData: FormData) {
 
 export async function updateRefundStatus(formData: FormData) {
   const supabase = createClient();
-  // Role check should be done inside the server action
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Authentication required' };
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    const role = profile?.role;
   
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-  const allowedRoles = ['admin', 'manager', 'super-admin'];
-  if (!allowedRoles.includes(profile?.role || '')) {
+  if (!role || !['admin', 'manager', 'super-admin'].includes(role)) {
       return { error: 'You do not have permission to perform this action.' };
   }
 
@@ -359,6 +362,7 @@ export async function updateUserRole(formData: FormData) {
     if (!user) return { error: 'Authentication required.' };
     
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    
     if (profile?.role !== 'super-admin') {
         return { error: 'You do not have permission to perform this action.' };
     }
@@ -384,7 +388,6 @@ export async function updateUserRole(formData: FormData) {
         return { error: error.message };
     }
 
-    revalidatePath('/admin/admins');
-    revalidatePath('/admin/admins/create');
+    revalidatePath('/admin/users');
     return { success: true };
 }
