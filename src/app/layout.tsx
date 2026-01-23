@@ -74,9 +74,11 @@ export default function RootLayout({
       <body className="font-body antialiased pb-16 md:pb-0">
         <SupabaseProvider>
           <ReduxProvider>
-            <Suspense fallback={<ProgressBar />}>
-              {children}
+            {/* The ProgressBar needs to be wrapped in Suspense to use navigation hooks */}
+            <Suspense fallback={null}>
+              <ProgressBar />
             </Suspense>
+            {children}
             <Toaster />
             <FlyToCartAnimation />
             <BottomNavbar />
