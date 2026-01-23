@@ -54,6 +54,7 @@ const navItems = [
   { href: '/admin/refunds', icon: RefreshCcw, label: 'Refunds' },
   { href: '/admin/transactions', icon: Banknote, label: 'Transactions' },
   { href: '/admin/users', icon: Users, label: 'Users' },
+  { href: '/admin/admins', icon: Users, label: 'Admins' },
   { href: '/admin/reviews', icon: Star, label: 'Reviews' },
   { href: '/admin/questions', icon: HelpCircle, label: 'Questions' },
   { href: '/admin/offers', icon: Gift, label: 'Offers' },

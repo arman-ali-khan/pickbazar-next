@@ -1,3 +1,4 @@
+
 'use client';
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -34,19 +35,14 @@ export default function AdminHeader() {
 
     useEffect(() => {
         const fetchNotifications = async () => {
-            const { data, error } = await supabase
-                .from('notifications')
-                .select('*')
-                .eq('is_read', false)
-                .order('created_at', { ascending: false });
+            const { data, error } = await supabase.rpc('get_admin_notifications');
 
             if (error) {
                 console.error("Error fetching notifications for header:", error);
             } else if (data) {
-                setNotifications(data.slice(0, 5));
-                
-                const { count } = await supabase.from('notifications').select('*', { count: 'exact', head: true }).eq('is_read', false);
-                setUnreadCount(count ?? 0);
+                const unreadNotifications = data.filter((n: any) => !n.is_read);
+                setNotifications(unreadNotifications.slice(0, 5));
+                setUnreadCount(unreadNotifications.length);
             }
         };
 

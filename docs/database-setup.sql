@@ -1,309 +1,188 @@
+-- Drop existing policies, triggers, and functions to avoid conflicts.
+-- The CASCADE option will automatically drop dependent objects.
 
--- Drop functions with CASCADE to handle dependencies
-DROP FUNCTION IF EXISTS public.is_admin(user_id uuid) CASCADE;
-DROP FUNCTION IF EXISTS public.get_admins() CASCADE;
-DROP FUNCTION IF EXISTS public.get_potential_admins() CASCADE;
-DROP FUNCTION IF EXISTS public.get_all_users() CASCADE;
-DROP FUNCTION IF EXISTS public.get_user_details(p_user_id uuid) CASCADE;
-DROP FUNCTION IF EXISTS public.get_my_role() CASCADE;
-DROP FUNCTION IF EXISTS public.create_order(p_user_id uuid, p_total_amount numeric, p_shipping_details jsonb, p_items jsonb, p_payment_method text, p_transaction_details jsonb, p_coupon_code text, p_discount_amount numeric) CASCADE;
-DROP FUNCTION IF EXISTS public.get_admin_orders() CASCADE;
-DROP FUNCTION IF EXISTS public.get_admin_transactions() CASCADE;
-DROP FUNCTION IF EXISTS public.get_user_transactions(p_user_id uuid) CASCADE;
-
-
--- Recreate the is_admin function
-CREATE OR REPLACE FUNCTION public.is_admin(user_id uuid)
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT EXISTS (
-    SELECT 1
-    FROM profiles
-    WHERE profiles.id = user_id AND profiles.role IN ('admin', 'super-admin')
-  );
-$$;
-
-
--- Create or replace other functions
-CREATE OR REPLACE FUNCTION public.get_admins()
-RETURNS TABLE(id uuid, full_name text, email text, role text, avatar_url text)
-LANGUAGE sql
-AS $$
-  SELECT 
-    p.id, 
-    p.full_name, 
-    u.email,
-    p.role,
-    p.avatar_url
-  FROM 
-    profiles p 
-  JOIN 
-    auth.users u ON p.id = u.id
-  WHERE 
-    p.role IN ('admin', 'manager', 'super-admin');
-$$;
-
-CREATE OR REPLACE FUNCTION public.get_potential_admins()
-RETURNS TABLE(id uuid, full_name text, email text, avatar_url text)
-LANGUAGE sql
-AS $$
-  SELECT 
-    p.id, 
-    p.full_name, 
-    u.email,
-    p.avatar_url
-  FROM 
-    profiles p 
-  JOIN 
-    auth.users u ON p.id = u.id
-  WHERE 
-    p.role = 'customer';
-$$;
-
-CREATE OR REPLACE FUNCTION public.get_all_users()
-RETURNS TABLE(id uuid, full_name text, email text, avatar_url text, created_at timestamptz, role text)
-LANGUAGE sql
-AS $$
-  SELECT 
-    p.id, 
-    p.full_name, 
-    u.email,
-    p.avatar_url,
-    u.created_at,
-    p.role
-  FROM 
-    profiles p 
-  JOIN 
-    auth.users u ON p.id = u.id;
-$$;
-
-
-CREATE OR REPLACE FUNCTION public.get_user_details(p_user_id uuid)
-RETURNS TABLE(id uuid, full_name text, email text, avatar_url text, created_at timestamptz, role text)
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT 
-    p.id, 
-    p.full_name, 
-    u.email,
-    p.avatar_url,
-    u.created_at,
-    p.role
-  FROM 
-    profiles p 
-  JOIN 
-    auth.users u ON p.id = u.id
-  WHERE 
-    p.id = p_user_id;
-END;
-$$;
-
-
-CREATE OR REPLACE FUNCTION public.get_my_role()
-RETURNS TABLE(role text)
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  IF auth.uid() IS NOT NULL THEN
-    RETURN QUERY
-    SELECT p.role
-    FROM public.profiles p
-    WHERE p.id = auth.uid();
-  ELSE
-    -- Return a row with a null role if the user is not authenticated
-    RETURN QUERY SELECT NULL::text;
-  END IF;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.create_order(
-    p_user_id uuid,
-    p_total_amount numeric,
-    p_shipping_details jsonb,
-    p_items jsonb,
-    p_payment_method text,
-    p_transaction_details jsonb,
-    p_coupon_code text DEFAULT NULL,
-    p_discount_amount numeric DEFAULT 0
-)
-RETURNS text
-LANGUAGE plpgsql
-AS $$
-DECLARE
-    v_order_id bigint;
-    v_order_number text;
-    item jsonb;
-    v_transaction_id bigint;
-BEGIN
-    -- Generate Order Number
-    v_order_number := 'ORD-' || to_char(now(), 'YYYYMMDD') || '-' || nextval('orders_id_seq');
-
-    -- Insert into orders table
-    INSERT INTO public.orders (user_id, total_amount, status, shipping_details, order_number, coupon_code, discount_amount)
-    VALUES (p_user_id, p_total_amount, 'Pending', p_shipping_details, v_order_number, p_coupon_code, p_discount_amount)
-    RETURNING id INTO v_order_id;
-
-    -- Insert into order_items table
-    FOR item IN SELECT * FROM jsonb_array_elements(p_items)
-    LOOP
-        INSERT INTO public.order_items (order_id, product_id, quantity, price_at_purchase)
-        VALUES (v_order_id, (item->>'product_id')::bigint, (item->>'quantity')::integer, (item->>'price')::numeric);
-    END LOOP;
-
-    -- Insert into transactions table
-    INSERT INTO public.transactions (order_id, user_id, amount, payment_method, status, details)
-    VALUES (v_order_id, p_user_id, p_total_amount, p_payment_method, 'Completed', p_transaction_details)
-    RETURNING id INTO v_transaction_id;
-
-    RETURN v_order_number;
-END;
-$$;
-
-
-CREATE OR REPLACE FUNCTION public.get_admin_orders()
-RETURNS TABLE (
-    id bigint,
-    user_id uuid,
-    order_number text,
-    created_at timestamptz,
-    total_amount numeric,
-    status text,
-    customer_name text,
-    customer_email text,
-    customer_avatar_url text
-)
-LANGUAGE sql
-AS $$
-  SELECT 
-    o.id,
-    o.user_id,
-    o.order_number,
-    o.created_at,
-    o.total_amount,
-    o.status,
-    p.full_name AS customer_name,
-    u.email AS customer_email,
-    p.avatar_url AS customer_avatar_url
-  FROM 
-    public.orders o
-  JOIN 
-    public.profiles p ON o.user_id = p.id
-  JOIN
-    auth.users u ON o.user_id = u.id
-  ORDER BY
-    o.created_at DESC;
-$$;
-
-
-CREATE OR REPLACE FUNCTION public.get_admin_transactions()
-RETURNS TABLE (
-    id bigint,
-    order_id bigint,
-    order_number text,
-    customer_name text,
-    customer_avatar text,
-    amount numeric,
-    payment_method text,
-    status text,
-    created_at timestamptz
-)
-LANGUAGE sql
-AS $$
-  SELECT 
-      t.id,
-      t.order_id,
-      o.order_number,
-      p.full_name as customer_name,
-      p.avatar_url as customer_avatar,
-      t.amount,
-      t.payment_method,
-      t.status,
-      t.created_at
-  FROM 
-      public.transactions t
-  JOIN 
-      public.orders o ON t.order_id = o.id
-  JOIN
-      public.profiles p ON t.user_id = p.id
-  ORDER BY 
-      t.created_at DESC;
-$$;
-
-
-CREATE OR REPLACE FUNCTION public.get_user_transactions(p_user_id uuid)
-RETURNS TABLE (
-    id bigint,
-    order_id bigint,
-    order_number text,
-    amount numeric,
-    payment_method text,
-    status text,
-    created_at timestamptz
-)
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT 
-      t.id,
-      t.order_id,
-      o.order_number,
-      t.amount,
-      t.payment_method,
-      t.status,
-      t.created_at
-  FROM 
-      public.transactions t
-  JOIN
-      public.orders o ON t.order_id = o.id
-  WHERE 
-      t.user_id = p_user_id
-  ORDER BY 
-      t.created_at DESC;
-END;
-$$;
-
-
--- Grant permissions
-GRANT EXECUTE ON FUNCTION public.is_admin(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_admins() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_potential_admins() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_all_users() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_user_details(uuid) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_my_role() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.create_order(p_user_id uuid, p_total_amount numeric, p_shipping_details jsonb, p_items jsonb, p_payment_method text, p_transaction_details jsonb, p_coupon_code text, p_discount_amount numeric) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_admin_orders() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_admin_transactions() TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_user_transactions(p_user_id uuid) TO authenticated;
-
-
--- RLS Policies
-ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+-- Drop policies
 DROP POLICY IF EXISTS "Allow admin full access to settings" ON public.settings;
-CREATE POLICY "Allow admin full access to settings" ON public.settings
-FOR ALL
-USING (is_admin(auth.uid()))
-WITH CHECK (is_admin(auth.uid()));
-
-ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow admin select for contact messages" ON public.contact_messages;
-CREATE POLICY "Allow admin select for contact messages" ON public.contact_messages
-FOR SELECT
-USING (is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Allow admin update for contact messages" ON public.contact_messages;
-CREATE POLICY "Allow admin update for contact messages" ON public.contact_messages
-FOR UPDATE
-USING (is_admin(auth.uid()));
-
+DROP POLICY IF EXISTS "Allow admin update for settings" ON public.settings;
 DROP POLICY IF EXISTS "Allow admin delete for contact messages" ON public.contact_messages;
-CREATE POLICY "Allow admin delete for contact messages" ON public.contact_messages
-FOR DELETE
-USING (is_admin(auth.uid()));
+DROP POLICY IF EXISTS "Allow admin update for contact messages" ON public.contact_messages;
+DROP POLICY IF EXISTS "Allow admin select for contact messages" ON public.contact_messages;
+DROP POLICY IF EXISTS "Allow admin full access" ON public.reviews;
+DROP POLICY IF EXISTS "Allow admin full access to questions" ON public.questions;
+DROP POLICY IF EXISTS "Allow admin full access" ON public.refunds;
+DROP POLICY IF EXISTS "Allow user to cancel own pending refund" ON public.refunds;
+DROP POLICY IF EXISTS "Allow admin to update roles" ON public.profiles;
 
--- Clean up old guest-related files that are no longer needed
+-- Drop triggers
+DROP TRIGGER IF EXISTS on_new_order ON public.orders;
+DROP TRIGGER IF EXISTS on_new_review ON public.reviews;
+DROP TRIGGER IF EXISTS on_new_message ON public.contact_messages;
+DROP TRIGGER IF EXISTS on_new_question ON public.questions;
+
+-- Drop functions (in reverse order of dependency if needed, but CASCADE helps)
+DROP FUNCTION IF EXISTS public.is_admin(p_user_id uuid);
+DROP FUNCTION IF EXISTS public.get_my_role();
+DROP FUNCTION IF EXISTS public.create_order_notification();
+DROP FUNCTION IF EXISTS public.create_review_notification();
+DROP FUNCTION IF EXISTS public.create_message_notification();
+DROP FUNCTION IF EXISTS public.create_question_notification();
+DROP FUNCTION IF EXISTS public.get_admin_notifications();
+
+-- Drop tables that will be recreated or might have issues
+DROP TABLE IF EXISTS public.notifications;
+
+-- 1. NOTIFICATIONS TABLE
+-- Stores notifications for admin users.
+CREATE TABLE notifications (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- Can be null for system-wide notifications
+    title TEXT NOT NULL,
+    message TEXT,
+    link TEXT,
+    is_read BOOLEAN DEFAULT FALSE NOT NULL,
+    type TEXT, -- e.g., 'new_order', 'new_review'
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- 2. RLS for Notifications Table
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow admin full access to notifications" ON notifications
+    FOR ALL
+    USING (is_admin(auth.uid()))
+    WITH CHECK (is_admin(auth.uid()));
+
+-- 3. NOTIFICATION HELPER FUNCTIONS & TRIGGERS
+
+-- Function to create notification on new order
+CREATE OR REPLACE FUNCTION create_order_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+    order_data RECORD;
+BEGIN
+    SELECT * INTO order_data FROM orders WHERE id = NEW.id;
+    INSERT INTO notifications (title, message, link, type)
+    VALUES (
+        'New Order Received!',
+        'Order ' || order_data.order_number || ' has been placed for $' || order_data.total_amount,
+        '/admin/orders/' || order_data.order_number,
+        'new_order'
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger for new orders
+CREATE TRIGGER on_new_order
+    AFTER INSERT ON orders
+    FOR EACH ROW
+    EXECUTE FUNCTION create_order_notification();
+
+-- Function to create notification on new review
+CREATE OR REPLACE FUNCTION create_review_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+    product_name_text TEXT;
+BEGIN
+    SELECT name INTO product_name_text FROM products WHERE id = NEW.product_id;
+    INSERT INTO notifications (title, message, link, type)
+    VALUES (
+        'New Review Submitted',
+        'A new ' || NEW.rating || '-star review for "' || product_name_text || '" is pending approval.',
+        '/admin/reviews',
+        'new_review'
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger for new reviews
+CREATE TRIGGER on_new_review
+    AFTER INSERT ON reviews
+    FOR EACH ROW
+    EXECUTE FUNCTION create_review_notification();
+
+-- Function to create notification on new message
+CREATE OR REPLACE FUNCTION create_message_notification()
+RETURNS TRIGGER AS $$
+BEGIN
+    INSERT INTO notifications (title, message, link, type)
+    VALUES (
+        'New Contact Message',
+        'From: ' || NEW.name || ' - Subject: ' || NEW.subject,
+        '/admin/messages/view/' || NEW.id,
+        'new_message'
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger for new messages
+CREATE TRIGGER on_new_message
+    AFTER INSERT ON contact_messages
+    FOR EACH ROW
+    EXECUTE FUNCTION create_message_notification();
+    
+-- Function to create notification on new question
+CREATE OR REPLACE FUNCTION create_question_notification()
+RETURNS TRIGGER AS $$
+DECLARE
+    product_name_text TEXT;
+BEGIN
+    SELECT name INTO product_name_text FROM products WHERE id = NEW.product_id;
+
+    INSERT INTO notifications (title, message, link, type)
+    VALUES (
+        'New Question Asked',
+        'A new question was asked about "' || product_name_text || '".',
+        '/admin/questions',
+        'new_question'
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger for new questions
+CREATE TRIGGER on_new_question
+    AFTER INSERT ON questions
+    FOR EACH ROW
+    EXECUTE FUNCTION create_question_notification();
+
+-- 4. RPC FUNCTION to get notifications
+CREATE OR REPLACE FUNCTION get_admin_notifications()
+RETURNS TABLE(
+    id BIGINT,
+    title TEXT,
+    message TEXT,
+    link TEXT,
+    is_read BOOLEAN,
+    created_at TIMESTAMPTZ,
+    type TEXT
+) AS $$
+BEGIN
+    IF is_admin(auth.uid()) THEN
+        RETURN QUERY
+        SELECT 
+            n.id,
+            n.title,
+            n.message,
+            n.link,
+            n.is_read,
+            n.created_at,
+            n.type
+        FROM notifications n
+        ORDER BY n.created_at DESC;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Re-create policies that were dropped
+CREATE POLICY "Allow admin full access to settings" ON public.settings FOR ALL USING (is_admin(auth.uid())) WITH CHECK (is_admin(auth.uid()));
+CREATE POLICY "Allow admin update for settings" ON public.settings FOR UPDATE USING (is_admin(auth.uid())) WITH CHECK (is_admin(auth.uid()));
+CREATE POLICY "Allow admin delete for contact messages" ON public.contact_messages FOR DELETE USING (is_admin(auth.uid()));
+CREATE POLICY "Allow admin update for contact messages" ON public.contact_messages FOR UPDATE USING (is_admin(auth.uid())) WITH CHECK (is_admin(auth.uid()));
+CREATE POLICY "Allow admin select for contact messages" ON public.contact_messages FOR SELECT USING (is_admin(auth.uid()));
+CREATE POLICY "Allow admin full access" ON public.reviews FOR ALL USING (is_admin(auth.uid()));
+CREATE POLICY "Allow admin full access to questions" ON public.questions FOR ALL USING (is_admin(auth.uid()));
+CREATE POLICY "Allow admin full access" ON public.refunds FOR ALL USING (is_admin(auth.uid()));
+CREATE POLICY "Allow user to cancel own pending refund" ON public.refunds FOR DELETE USING (((auth.uid() = user_id) AND (status = 'Pending'::text)));
+CREATE POLICY "Allow admin to update roles" ON public.profiles FOR UPDATE USING ((get_my_role() = 'super-admin'::text));
