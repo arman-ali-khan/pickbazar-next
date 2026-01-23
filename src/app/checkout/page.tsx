@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
@@ -54,7 +53,8 @@ export default function CheckoutPage() {
     const [couponCode, setCouponCode] = useState('');
     const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
     const [couponMessage, setCouponMessage] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
-    const [isApplyingCoupon, startTransition] = useTransition();
+    const [isApplyingCoupon, startCouponTransition] = useTransition();
+    const [isProceeding, startProceedingTransition] = useTransition();
 
     const shippingCost = 5.00;
     const discountAmount = appliedDiscount?.discount || 0;
@@ -84,7 +84,7 @@ export default function CheckoutPage() {
     };
 
     const handleApplyCoupon = () => {
-        startTransition(async () => {
+        startCouponTransition(async () => {
             setCouponMessage(null);
             const simpleCartItems = cartItems.map(item => ({ id: item.id, price: item.price, quantity: item.quantity }));
             const result = await applyCoupon(couponCode, simpleCartItems);
@@ -101,13 +101,15 @@ export default function CheckoutPage() {
     };
     
     const handleProceedToPayment = () => {
-        localStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
-        if (appliedDiscount) {
-            localStorage.setItem('appliedDiscount', JSON.stringify(appliedDiscount));
-        } else {
-            localStorage.removeItem('appliedDiscount');
-        }
-        router.push('/checkout/payment');
+        startProceedingTransition(() => {
+            localStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
+            if (appliedDiscount) {
+                localStorage.setItem('appliedDiscount', JSON.stringify(appliedDiscount));
+            } else {
+                localStorage.removeItem('appliedDiscount');
+            }
+            router.push('/checkout/payment');
+        });
     };
     
     const renderOrderSummary = () => (
@@ -259,7 +261,7 @@ export default function CheckoutPage() {
                     <DialogTrigger asChild>
                       <Button className="w-full h-12">Login or Register</Button>
                     </DialogTrigger>
-                    <LoginDialog />
+                    <LoginDialog onLoginSuccess={() => router.refresh()} />
                   </Dialog>
                 </CardContent>
               </Card>
@@ -268,8 +270,8 @@ export default function CheckoutPage() {
           <div>
             {renderOrderSummary()}
             {user && (
-              <Button onClick={handleProceedToPayment} className="w-full mt-6 h-12">
-                  Proceed to Payment
+              <Button onClick={handleProceedToPayment} className="w-full mt-6 h-12" disabled={isProceeding}>
+                  {isProceeding ? 'Processing...' : 'Proceed to Payment'}
               </Button>
             )}
           </div>
