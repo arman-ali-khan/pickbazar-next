@@ -30,6 +30,10 @@ type QuickViewProduct = Product & {
 function RelatedProductCard({ product }: { product: RelatedProduct }) {
     const dispatch = useAppDispatch();
     const quantity = useAppSelector(selectItemQuantity(product.id));
+    const [isMounted, setIsMounted] = useState(false);
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
 
     return (
@@ -59,16 +63,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
                     </h3>
                 </div>
                 <div className="mt-4">
-                    {quantity === 0 ? (
-                        <Button
-                            variant="outline"
-                            className="w-full flex items-center justify-between bg-gray-100 border-gray-200 hover:bg-gray-200 hover:border-gray-300 text-gray-700"
-                            onClick={() => dispatch(addToCart({ product: product as Product }))}
-                        >
-                            <span>Add</span>
-                            <Plus className="h-4 w-4" />
-                        </Button>
-                    ) : (
+                    {isMounted && quantity > 0 ? (
                         <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-10">
                             <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity - 1 }))}>
                                 <Minus className="h-4 w-4" />
@@ -78,6 +73,15 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
                                 <Plus className="h-4 w-4" />
                             </Button>
                         </div>
+                    ) : (
+                        <Button
+                            variant="outline"
+                            className="w-full flex items-center justify-between bg-gray-100 border-gray-200 hover:bg-gray-200 hover:border-gray-300 text-gray-700"
+                            onClick={() => dispatch(addToCart({ product: product as Product }))}
+                        >
+                            <span>Add</span>
+                            <Plus className="h-4 w-4" />
+                        </Button>
                     )}
                 </div>
             </CardContent>
@@ -136,6 +140,11 @@ export default function ProductQuickView({ product, children }: { product: Produ
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isScrolled, setIsScrolled] = useState(false);
     const imageRef = useRef<HTMLDivElement>(null);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const handleOpenChange = async (isOpen: boolean) => {
         setOpen(isOpen);
@@ -211,9 +220,7 @@ export default function ProductQuickView({ product, children }: { product: Produ
                                     <p className="font-bold text-primary text-xl">${product.price.toFixed(2)}</p>
                                     {hasDiscount && <p className="text-base line-through text-muted-foreground">${productToDisplay.originalPrice?.toFixed(2)}</p>}
                                 </div>
-                                {quantity === 0 ? (
-                                    <Button className="h-10 px-6" onClick={handleQuantityIncrease}>Add to cart</Button>
-                                ) : (
+                                {isMounted && quantity > 0 ? (
                                     <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-10 w-28">
                                         <Button size="icon" variant="ghost" className="h-10 w-8 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity - 1 }))} disabled={quantity === 0}>
                                             <Minus className="h-4 w-4" />
@@ -223,6 +230,8 @@ export default function ProductQuickView({ product, children }: { product: Produ
                                             <Plus className="h-4 w-4" />
                                         </Button>
                                     </div>
+                                ) : (
+                                    <Button className="h-10 px-6" onClick={handleQuantityIncrease}>Add to cart</Button>
                                 )}
                             </div>
                        </div>
@@ -267,14 +276,13 @@ export default function ProductQuickView({ product, children }: { product: Produ
                                 {hasDiscount && <p className="text-lg line-through text-muted-foreground">${detailedProduct.originalPrice?.toFixed(2)}</p>}
                             </div>
                             <div className="flex items-center gap-4 mb-6">
-                               {quantity === 0 ? <Button className="h-12 text-base px-10" onClick={handleQuantityIncrease}>Add to cart</Button>
-                                : (
+                               {isMounted && quantity > 0 ? (
                                    <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-12 w-32">
                                         <Button size="icon" variant="ghost" className="h-12 w-10 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity - 1 }))}><Minus className="h-5 w-5" /></Button>
                                         <span className="font-bold text-base">{quantity}</span>
                                         <Button size="icon" variant="ghost" className="h-12 w-10 text-white hover:bg-primary/90" onClick={handleQuantityIncrease}><Plus className="h-5 w-5" /></Button>
                                     </div>
-                                )}
+                                ) : <Button className="h-12 text-base px-10" onClick={handleQuantityIncrease}>Add to cart</Button>}
                                 <p className="text-sm text-muted-foreground">{detailedProduct.stock} pieces available</p>
                             </div>
                             <Separator className="my-6"/>

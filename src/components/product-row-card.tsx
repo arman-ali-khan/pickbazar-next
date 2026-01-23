@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Plus, Minus } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Product } from '@/lib/data';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { addToCart, updateQuantity, selectItemQuantity, triggerFlyToCart } from '@/lib/redux/slices/cartSlice';
 
@@ -14,6 +14,11 @@ export default function ProductRowCard({ product }: { product: Product }) {
     const dispatch = useAppDispatch();
     const quantity = useAppSelector(selectItemQuantity(product.id));
     const imageRef = useRef<HTMLDivElement>(null);
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
@@ -67,16 +72,7 @@ export default function ProductRowCard({ product }: { product: Product }) {
                             {hasDiscount && <p className="text-md line-through text-muted-foreground">${product.originalPrice?.toFixed(2)}</p>}
                         </div>
                         <div className="w-full sm:w-32">
-                            {quantity === 0 ? (
-                                <Button
-                                    variant="outline"
-                                    className="w-full flex items-center justify-between"
-                                    onClick={handleAddToCart}
-                                >
-                                    <span>Add</span>
-                                    <Plus className="h-4 w-4" />
-                                </Button>
-                            ) : (
+                            {isMounted && quantity > 0 ? (
                                 <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-10">
                                     <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity - 1 }))}>
                                         <Minus className="h-4 w-4" />
@@ -86,6 +82,15 @@ export default function ProductRowCard({ product }: { product: Product }) {
                                         <Plus className="h-4 w-4" />
                                     </Button>
                                 </div>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    className="w-full flex items-center justify-between"
+                                    onClick={handleAddToCart}
+                                >
+                                    <span>Add</span>
+                                    <Plus className="h-4 w-4" />
+                                </Button>
                             )}
                         </div>
                     </div>
