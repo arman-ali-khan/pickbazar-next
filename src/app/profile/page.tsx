@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useSupabase } from '@/lib/supabase/provider';
@@ -20,6 +19,7 @@ import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { AddAddressDialog, type AddressFormValues } from '@/components/add-address-dialog';
 import { UpdateContactDialog } from '@/components/update-contact-dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Profile {
   full_name: string;
@@ -229,9 +229,33 @@ export default function ProfilePage() {
     return (
         <div className="bg-muted/20 min-h-screen">
             <Header />
-            <main className="container py-12">
-                <div className="flex justify-center items-center">
-                    <p>Loading your profile...</p>
+            <main className="container py-12 w-full mx-auto">
+                <div className="grid w-full md:grid-cols-[320px_1fr] gap-8 items-start">
+                    <div className="hidden md:block">
+                        <aside className="space-y-6">
+                            <Skeleton className="h-40 w-full" />
+                            <Skeleton className="h-96 w-full" />
+                        </aside>
+                    </div>
+                    <div className="space-y-8 w-full">
+                        <Card>
+                            <CardHeader><Skeleton className="h-6 w-24" /></CardHeader>
+                            <CardContent className="space-y-6">
+                                <Skeleton className="h-32 w-full" />
+                                <div className="relative w-28 h-28 -mt-20 ml-8">
+                                    <Skeleton className="h-full w-full rounded-full" />
+                                </div>
+                                <div className="space-y-4">
+                                    <div className="space-y-2"><Skeleton className="h-4 w-12" /><Skeleton className="h-10 w-full" /></div>
+                                    <div className="space-y-2"><Skeleton className="h-4 w-12" /><Skeleton className="h-20 w-full" /></div>
+                                    <div className="flex justify-end"><Skeleton className="h-10 w-20" /></div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card><CardHeader><Skeleton className="h-6 w-16" /></CardHeader><CardContent><Skeleton className="h-10 w-full" /></CardContent></Card>
+                        <Card><CardHeader><Skeleton className="h-6 w-32" /></CardHeader><CardContent><Skeleton className="h-10 w-full" /></CardContent></Card>
+                        <Card><CardHeader><Skeleton className="h-6 w-24" /></CardHeader><CardContent><Skeleton className="h-24 w-full" /></CardContent></Card>
+                    </div>
                 </div>
             </main>
             <Footer />

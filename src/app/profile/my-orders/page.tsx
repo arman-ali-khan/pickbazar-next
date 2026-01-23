@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -17,6 +16,7 @@ import Link from 'next/link';
 import type { OrderStatus } from '@/lib/data';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { RefundRequestDialog } from '@/components/refund-request-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export interface Order {
     id: number;
@@ -75,7 +75,63 @@ export default function MyOrdersPage() {
                     </CardHeader>
                     <CardContent>
                         {loading ? (
-                            <p>Loading your orders...</p>
+                             <>
+                                {/* Desktop Skeleton */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                <TableRow key={i}>
+                                                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                                    <TableCell className="space-x-2">
+                                                        <Skeleton className="h-9 w-24" />
+                                                        <Skeleton className="h-9 w-32" />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                                {/* Mobile Skeleton */}
+                                <div className="block md:hidden space-y-4">
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                        <Card key={i}>
+                                            <CardHeader>
+                                                <Skeleton className="h-5 w-3/4" />
+                                                <Skeleton className="h-4 w-1/2" />
+                                            </CardHeader>
+                                            <CardContent className="flex flex-col gap-4">
+                                                <div className="flex justify-between items-center">
+                                                    <div>
+                                                        <Skeleton className="h-3 w-10 mb-1" />
+                                                        <Skeleton className="h-6 w-20 rounded-full" />
+                                                    </div>
+                                                     <div>
+                                                        <Skeleton className="h-3 w-10 mb-1 text-right" />
+                                                        <Skeleton className="h-5 w-16 ml-auto" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex justify-end items-center gap-2">
+                                                    <Skeleton className="h-9 w-24" />
+                                                    <Skeleton className="h-9 w-32" />
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </>
                         ) : orders.length === 0 ? (
                             <p className="text-muted-foreground">You have not placed any orders yet.</p>
                         ) : (

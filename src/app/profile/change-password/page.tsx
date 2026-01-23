@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ChangePasswordPage() {
     const { supabase, user, loading: authLoading } = useSupabase();
@@ -84,8 +85,31 @@ export default function ChangePasswordPage() {
             <div className="bg-muted/20 min-h-screen">
                 <Header />
                 <main className="container py-12">
-                    <div className="flex justify-center items-center">
-                        <p>Loading...</p>
+                    <div className="grid sm:grid-cols-[320px_1fr] gap-8 items-start">
+                        <div className="hidden md:block">
+                            <aside className="space-y-6">
+                                <Skeleton className="h-40 w-full rounded-lg" />
+                                <Skeleton className="h-96 w-full rounded-lg" />
+                            </aside>
+                        </div>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle><Skeleton className="h-6 w-48" /></CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-6 max-w-lg">
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-24" />
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-40" />
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
+                                    <Skeleton className="h-10 w-36" />
+                                </div>
+                            </CardContent>
+                        </Card>
                     </div>
                 </main>
                 <Footer />

@@ -1,4 +1,3 @@
-
 'use client';
 
 import Header from '@/components/header';
@@ -16,6 +15,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function MyQuestionsPage() {
     const { supabase, user } = useSupabase();
@@ -54,7 +54,18 @@ export default function MyQuestionsPage() {
                         <CardDescription>A history of all the questions you have submitted.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {loading ? <p>Loading your questions...</p> :
+                        {loading ? (
+                             <div className="space-y-4">
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <Card key={i} className="p-4">
+                                        <div className="flex justify-between items-center">
+                                            <Skeleton className="h-5 w-3/4" />
+                                            <Skeleton className="h-6 w-20 rounded-full" />
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) :
                          questions.length > 0 ? (
                             <Accordion type="single" collapsible className="w-full space-y-4">
                                 {questions.map((q) => (

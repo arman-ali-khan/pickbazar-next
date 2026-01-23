@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -18,6 +17,7 @@ import { ChevronLeft } from 'lucide-react';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import type { OrderStatus } from '@/lib/data';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface OrderItem {
     id: number;
@@ -88,7 +88,64 @@ export default function MyOrderDetailsPage() {
     }, [getOrder]);
     
     if (loading) {
-        return <div className="bg-muted/20 min-h-screen"><Header /><main className="container py-12"><p>Loading order details...</p></main><Footer /><CartDrawer /></div>
+        return (
+            <div className="bg-muted/20 min-h-screen">
+              <Header />
+              <main className="container py-12">
+                <div className="grid sm:grid-cols-[320px_1fr] gap-8 items-start">
+                    <div className="hidden md:block">
+                         <aside className="space-y-6">
+                            <Skeleton className="h-40 w-full" />
+                            <Skeleton className="h-96 w-full" />
+                        </aside>
+                    </div>
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-4">
+                            <Skeleton className="h-7 w-7 rounded-md" />
+                            <Skeleton className="h-6 w-40" />
+                        </div>
+                        <Card>
+                            <CardHeader className="flex-row justify-between items-center">
+                                <div>
+                                    <Skeleton className="h-6 w-48" />
+                                    <Skeleton className="h-4 w-32 mt-2" />
+                                </div>
+                                <Skeleton className="h-7 w-24 rounded-full" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                    {Array.from({ length: 2 }).map((_, i) => (
+                                    <div key={i} className="flex items-center gap-4">
+                                        <Skeleton className="h-16 w-16 rounded-md" />
+                                        <div className="flex-1 space-y-2">
+                                            <Skeleton className="h-4 w-3/4" />
+                                            <Skeleton className="h-3 w-1/4" />
+                                        </div>
+                                        <Skeleton className="h-5 w-16" />
+                                    </div>
+                                    ))}
+                                </div>
+                                <Separator className="my-4" />
+                                <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between"><Skeleton className="h-4 w-20" /><Skeleton className="h-4 w-16" /></div>
+                                    <div className="flex justify-between"><Skeleton className="h-4 w-20" /><Skeleton className="h-4 w-16" /></div>
+                                    <Separator className="my-2" />
+                                    <div className="flex justify-between"><Skeleton className="h-5 w-12" /><Skeleton className="h-5 w-20" /></div>
+                                </div>
+                                <Separator className="my-4" />
+                                <div>
+                                    <Skeleton className="h-5 w-32 mb-2" />
+                                    <div className="space-y-1"><Skeleton className="h-4 w-40" /><Skeleton className="h-4 w-48" /></div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+              </main>
+              <Footer />
+              <CartDrawer />
+            </div>
+        );
     }
 
     if (!order) {

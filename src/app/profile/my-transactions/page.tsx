@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface UserTransaction {
     id: number;
@@ -70,7 +71,56 @@ export default function MyTransactionsPage() {
                     </CardHeader>
                     <CardContent>
                         {loading ? (
-                            <p>Loading your transactions...</p>
+                            <>
+                                {/* Desktop Skeleton */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                <TableRow key={i}>
+                                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                                    <TableCell><Skeleton className="h-9 w-24" /></TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
+                                {/* Mobile Skeleton */}
+                                <div className="block md:hidden space-y-4">
+                                    {Array.from({ length: 3 }).map((_, i) => (
+                                        <Card key={i}>
+                                            <CardHeader>
+                                                <Skeleton className="h-5 w-3/4" />
+                                                <Skeleton className="h-4 w-1/2" />
+                                            </CardHeader>
+                                            <CardContent className="space-y-2">
+                                                 <div className="flex justify-between items-center text-sm">
+                                                    <Skeleton className="h-4 w-24" />
+                                                    <Skeleton className="h-6 w-20 rounded-full" />
+                                                </div>
+                                                <div className="flex justify-between items-center">
+                                                    <Skeleton className="h-4 w-20" />
+                                                    <Skeleton className="h-5 w-16" />
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    ))}
+                                </div>
+                            </>
                         ) : transactions.length === 0 ? (
                             <p className="text-muted-foreground">You have not made any transactions yet.</p>
                         ) : (

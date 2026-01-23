@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -16,6 +15,7 @@ import { format } from 'date-fns';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import type { UserReview } from '@/lib/data';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const getStatusVariant = (status: string) => {
     switch (status) {
@@ -67,7 +67,29 @@ export default function MyReviewsPage() {
                         <CardDescription>A history of all the reviews you have submitted.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        {loading ? <p>Loading reviews...</p> : 
+                        {loading ? (
+                            <div className="space-y-6">
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <Card key={i} className="p-4">
+                                        <div className="flex items-start gap-4">
+                                            <Skeleton className="h-16 w-16 rounded-md" />
+                                            <div className="flex-1 space-y-2">
+                                                <div className="flex justify-between items-start">
+                                                    <div className="space-y-1">
+                                                        <Skeleton className="h-5 w-40" />
+                                                        <Skeleton className="h-4 w-24" />
+                                                    </div>
+                                                    <Skeleton className="h-6 w-20 rounded-full" />
+                                                </div>
+                                                <Skeleton className="h-4 w-full" />
+                                                <Skeleton className="h-4 w-4/5" />
+                                                <Skeleton className="h-3 w-28" />
+                                            </div>
+                                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        ) : 
                          reviews.length > 0 ? (
                             <div className="space-y-6">
                                 {reviews.map(review => (

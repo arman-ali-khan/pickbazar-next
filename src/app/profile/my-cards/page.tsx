@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface SavedCard {
   id: number;
@@ -83,7 +84,21 @@ export default function MyCardsPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {loading ? (
-                            <p>Loading cards...</p>
+                            <div className="space-y-4">
+                                {Array.from({ length: 2 }).map((_, i) => (
+                                    <Card key={i} className="p-4 flex justify-between items-center">
+                                        <div className="flex items-center gap-4">
+                                            <Skeleton className="h-8 w-8" />
+                                            <div className="space-y-2">
+                                                <Skeleton className="h-4 w-24" />
+                                                <Skeleton className="h-3 w-32" />
+                                                <Skeleton className="h-3 w-20" />
+                                            </div>
+                                        </div>
+                                        <Skeleton className="h-9 w-24" />
+                                    </Card>
+                                ))}
+                            </div>
                         ) : cards.length > 0 ? (
                             cards.map(card => (
                                 <Card key={card.id} className="p-4 flex justify-between items-center">
