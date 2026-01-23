@@ -21,6 +21,25 @@ import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { submitReview, submitQuestion } from '@/app/actions';
 import { format } from 'date-fns';
+import WishlistButton from './wishlist-button';
+
+interface ProductPageContentProps {
+  product: Product & {
+    images: ImagePlaceholder[];
+    stock: number;
+    rating: number;
+    reviewsCount: number;
+    ratingDistribution: { rating: number; count: number }[];
+    reviews: ProductReview[];
+    questions: Question[];
+    shortDescription: string;
+    description: string;
+    category: string;
+    tags: string[];
+    sku: string;
+  };
+  relatedProducts: RelatedProduct[];
+}
 
 function ReviewForm({ productId }: { productId: number }) {
     const { user } = useSupabase();
@@ -233,6 +252,7 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                                 </Button>
                             </div>
                         )}
+                        <WishlistButton productId={product.id} />
                         <p className="text-sm text-green-600 font-semibold">{product.stock} in stock</p>
                     </div>
 

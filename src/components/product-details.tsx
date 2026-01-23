@@ -10,6 +10,7 @@ import ProductQuickView from './product-quick-view';
 import { useRef, useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { addToCart, updateQuantity, selectItemQuantity, triggerFlyToCart } from '@/lib/redux/slices/cartSlice';
+import WishlistButton from './wishlist-button';
 
 export default function ProductCard({ product }: { product: Product }) {
     const dispatch = useAppDispatch();
@@ -46,6 +47,9 @@ export default function ProductCard({ product }: { product: Product }) {
             <CardContent className="p-4 flex flex-col flex-grow">
                 <ProductQuickView product={product}>
                     <div ref={imageRef} className="bg-gray-50 rounded-md overflow-hidden aspect-[3/2] relative mb-4 cursor-pointer">
+                        <div className="absolute top-2 left-2 z-10">
+                            <WishlistButton productId={product.id} className="h-8 w-8" />
+                        </div>
                         {hasDiscount && (
                             <Badge className="absolute top-3 right-3 z-10 bg-yellow-400 text-yellow-900 rounded-md px-2 text-xs font-semibold border-none">
                                 {discountPercentage}%

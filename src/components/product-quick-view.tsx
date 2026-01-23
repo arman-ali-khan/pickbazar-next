@@ -15,6 +15,7 @@ import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { addToCart, updateQuantity, selectItemQuantity, triggerFlyToCart } from '@/lib/redux/slices/cartSlice';
 import { getQuickViewData } from '@/app/actions';
 import { Skeleton } from './ui/skeleton';
+import WishlistButton from './wishlist-button';
 
 type QuickViewProduct = Product & {
     images: ImagePlaceholder[];
@@ -260,7 +261,7 @@ export default function ProductQuickView({ product, children }: { product: Produ
                             <div className="flex justify-between items-start mb-2">
                                  <h2 className="text-3xl font-bold">{detailedProduct.name}</h2>
                                  <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="icon" className="rounded-full w-10 h-10 border-gray-300"><Heart className="h-5 w-5 text-gray-500" /></Button>
+                                    <WishlistButton productId={detailedProduct.id} />
                                     <Badge className="bg-primary text-primary-foreground text-sm font-bold flex items-center gap-1">
                                         {detailedProduct.rating.toFixed(1)}
                                         <Star className="h-4 w-4 fill-white" />

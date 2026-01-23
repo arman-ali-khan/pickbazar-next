@@ -5,13 +5,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
-import { ChevronLeft, Edit } from 'lucide-react';
+import { ChevronLeft, Edit, Heart } from 'lucide-react';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import { useSupabase } from '@/lib/supabase/provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Image from 'next/image';
 
 type UserRole = 'customer' | 'manager' | 'admin' | 'super-admin';
 interface UserProfile {
@@ -41,6 +42,12 @@ interface Order {
     total_amount: number;
 }
 
+interface WishlistItem {
+    id: number;
+    name: string;
+    featured_image_url: string;
+}
+
 const roleDisplayMap: Record<UserRole, string> = {
   'customer': 'Customer',
   'manager': 'Manager',
@@ -67,6 +74,7 @@ export default function ViewUserPage() {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+    const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
     const [loading, setLoading] = useState(true);
 
     const fetchData = useCallback(async () => {
@@ -76,10 +84,11 @@ export default function ViewUserPage() {
         }
         setLoading(true);
 
-        const [userRes, addressesRes, ordersRes] = await Promise.all([
+        const [userRes, addressesRes, ordersRes, wishlistRes] = await Promise.all([
             supabase.rpc('get_user_details', { p_user_id: userId }),
             supabase.from('addresses').select('*').eq('user_id', userId),
-            supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5)
+            supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
+            supabase.rpc('get_admin_user_wishlist', { p_user_id: userId })
         ]);
 
         const { data: userData, error: userError } = userRes;
@@ -97,6 +106,11 @@ export default function ViewUserPage() {
         const { data: ordersData } = ordersRes;
         if (ordersData) {
             setRecentOrders(ordersData as Order[]);
+        }
+
+        const { data: wishlistData } = wishlistRes;
+        if (wishlistData) {
+            setWishlist(wishlistData);
         }
         
         setLoading(false);
@@ -216,6 +230,43 @@ export default function ViewUserPage() {
                             </Table>
                         </CardContent>
                     </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Heart className="h-5 w-5 text-destructive" />
+                                User's Wishlist
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {wishlist.length > 0 ? (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead>Product</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {wishlist.map(item => (
+                                            <TableRow key={item.id}>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="relative h-12 w-12 rounded-md border">
+                                                            <Image src={item.featured_image_url || ''} alt={item.name} fill className="object-contain p-1" />
+                                                        </div>
+                                                        <div>
+                                                            <Link href={`/products/${item.id}`} className="font-medium hover:underline">{item.name}</Link>
+                                                        </div>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            ) : <p className="text-muted-foreground text-sm">This user has not wishlisted any items.</p>}
+                        </CardContent>
+                    </Card>
+
                 </div>
             </div>
         </main>

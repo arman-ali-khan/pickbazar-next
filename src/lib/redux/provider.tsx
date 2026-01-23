@@ -4,9 +4,19 @@ import React, { useEffect, useRef } from 'react';
 import { Provider } from 'react-redux';
 import { store } from './store';
 import { hydrateCart, type CartItem } from './slices/cartSlice';
+import { fetchWishlist } from './slices/wishlistSlice';
+import { useSupabase } from '../supabase/provider';
+
 
 const StoreSync = () => {
     const isInitialRender = useRef(true);
+    const { user } = useSupabase();
+
+    useEffect(() => {
+        if (user) {
+            store.dispatch(fetchWishlist());
+        }
+    }, [user]);
 
     useEffect(() => {
         try {

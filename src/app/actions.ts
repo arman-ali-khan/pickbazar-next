@@ -494,3 +494,48 @@ export async function updateSettings(settings: { key: string; value: string | nu
   revalidatePath('/'); 
   return { success: true };
 }
+
+export async function toggleWishlistItem(productId: number) {
+  const supabase = createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: 'You must be logged in to modify your wishlist.' };
+  }
+
+  const { data, error } = await supabase.rpc('toggle_wishlist_item', {
+    p_user_id: user.id,
+    p_product_id: productId,
+  });
+
+  if (error) {
+    return { error: `Database error: ${error.message}` };
+  }
+
+  // Revalidate paths that show wishlist status
+  revalidatePath('/');
+  revalidatePath('/shop');
+  revalidatePath('/search');
+  revalidatePath(`/products/${productId}`);
+  revalidatePath('/profile/my-wishlists');
+
+  return { success: true, status: (data as any).status };
+}
+
+export async function getWishlistIds() {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return [];
+    }
+
+    const { data, error } = await supabase.rpc('get_user_wishlist_ids', { p_user_id: user.id });
+
+    if (error) {
+        console.error("Error fetching wishlist IDs:", error);
+        return [];
+    }
+
+    return (data || []).map(item => item.product_id);
+}
