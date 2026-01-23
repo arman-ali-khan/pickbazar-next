@@ -92,14 +92,14 @@ export default function PaymentPage() {
         const transactionDetails = selectedMethod === 'mobile-banking' ? { trxId, mobileLast4 } : null;
 
         const { data: orderNumber, error } = await supabase.rpc('create_order', {
-            p_user_id: user?.id || null,
+            p_user_id: user?.id,
             p_total_amount: total,
             p_shipping_details: shippingInfo,
             p_items: orderItems,
             p_payment_method: selectedMethod,
             p_transaction_details: transactionDetails,
-            p_coupon_code: appliedDiscount?.code || null,
-            p_discount_amount: appliedDiscount?.discount || 0,
+            p_coupon_code: appliedDiscount?.code,
+            p_discount_amount: appliedDiscount?.discount,
         });
 
         if (error) {
@@ -115,6 +115,9 @@ export default function PaymentPage() {
         dispatch(clearCart());
         localStorage.removeItem('shippingInfo');
         localStorage.removeItem('appliedDiscount');
+        if (!user) {
+            localStorage.removeItem('guestEmail');
+        }
         
         router.push(`/checkout/success?order_number=${orderNumber}`);
     };
@@ -276,3 +279,5 @@ export default function PaymentPage() {
     </div>
   );
 }
+
+    

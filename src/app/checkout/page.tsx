@@ -58,8 +58,12 @@ export default function CheckoutPage() {
     const total = subtotal + shippingCost - discountAmount;
 
     useEffect(() => {
+        // Pre-fill email for logged-in users, otherwise use localStorage or keep blank
+        const guestEmail = localStorage.getItem('guestEmail');
+        const defaultEmail = user?.email || guestEmail || '';
+        setShippingInfo(prev => ({ ...prev, email: defaultEmail }));
+
         if (user) {
-            setShippingInfo(prev => ({ ...prev, email: user.email || '' }));
             const fetchUserData = async () => {
                 const { data: profileData } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
                 if (profileData) {
@@ -78,6 +82,9 @@ export default function CheckoutPage() {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
         setShippingInfo(prev => ({ ...prev, [id]: value }));
+        if (!user && id === 'email') {
+            localStorage.setItem('guestEmail', value);
+        }
     };
 
     const handleApplyCoupon = () => {
@@ -124,34 +131,34 @@ export default function CheckoutPage() {
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="firstName">First Name</Label>
-                        <Input id="firstName" placeholder="John" value={shippingInfo.firstName} onChange={handleInputChange} />
+                        <Input id="firstName" placeholder="John" value={shippingInfo.firstName} onChange={handleInputChange} required />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="lastName">Last Name</Label>
-                        <Input id="lastName" placeholder="Doe" value={shippingInfo.lastName} onChange={handleInputChange} />
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input id="address" placeholder="123 Market St" value={shippingInfo.address} onChange={handleInputChange} />
-                </div>
-                 <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="city">City</Label>
-                        <Input id="city" placeholder="San Francisco" value={shippingInfo.city} onChange={handleInputChange} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="state">State</Label>
-                        <Input id="state" placeholder="CA" value={shippingInfo.state} onChange={handleInputChange} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="zip">ZIP Code</Label>
-                        <Input id="zip" placeholder="94103" value={shippingInfo.zip} onChange={handleInputChange} />
+                        <Input id="lastName" placeholder="Doe" value={shippingInfo.lastName} onChange={handleInputChange} required />
                     </div>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="you@example.com" value={shippingInfo.email} onChange={handleInputChange} />
+                    <Input id="email" type="email" placeholder="you@example.com" value={shippingInfo.email} onChange={handleInputChange} required />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="address">Address</Label>
+                    <Input id="address" placeholder="123 Market St" value={shippingInfo.address} onChange={handleInputChange} required />
+                </div>
+                 <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="city">City</Label>
+                        <Input id="city" placeholder="San Francisco" value={shippingInfo.city} onChange={handleInputChange} required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="state">State</Label>
+                        <Input id="state" placeholder="CA" value={shippingInfo.state} onChange={handleInputChange} required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="zip">ZIP Code</Label>
+                        <Input id="zip" placeholder="94103" value={shippingInfo.zip} onChange={handleInputChange} required />
+                    </div>
                 </div>
               </CardContent>
             </Card>
@@ -231,3 +238,5 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+    

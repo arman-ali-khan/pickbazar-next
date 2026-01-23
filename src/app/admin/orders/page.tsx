@@ -42,18 +42,14 @@ import type { OrderStatus } from '@/lib/data';
 type OrderWithCustomer = {
     id: number;
     user_id: string | null;
+    non_user_id: number | null;
     order_number: string;
     created_at: string;
     total_amount: number;
     status: OrderStatus;
-    shipping_details: {
-        email: string;
-        firstName: string;
-        lastName: string;
-    };
-    profiles: {
-        avatar_url: string | null;
-    } | null;
+    customer_name: string;
+    customer_email: string;
+    customer_avatar_url: string | null;
 }
 
 const getStatusVariant = (status: OrderStatus) => {
@@ -85,12 +81,12 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                         <CardHeader className="flex flex-row items-center justify-between p-4">
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarImage src={order.profiles?.avatar_url || undefined} alt={order.shipping_details.firstName} />
-                                    <AvatarFallback>{order.shipping_details.firstName.charAt(0)}</AvatarFallback>
+                                    <AvatarImage src={order.customer_avatar_url || undefined} alt={order.customer_name} />
+                                    <AvatarFallback>{order.customer_name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
                                     <p className="font-semibold flex items-center gap-2">
-                                        {order.shipping_details.firstName} {order.shipping_details.lastName}
+                                        {order.customer_name}
                                         {!order.user_id && <Badge variant="outline">Guest</Badge>}
                                     </p>
                                     <p className="text-xs text-muted-foreground">{order.order_number}</p>
@@ -150,15 +146,15 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         <Avatar className="h-8 w-8">
-                                            <AvatarImage src={order.profiles?.avatar_url || undefined} alt={order.shipping_details.firstName} />
-                                            <AvatarFallback>{order.shipping_details.firstName.charAt(0)}</AvatarFallback>
+                                            <AvatarImage src={order.customer_avatar_url || undefined} alt={order.customer_name} />
+                                            <AvatarFallback>{order.customer_name.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <p className="font-medium flex items-center gap-2">
-                                                {order.shipping_details.firstName} {order.shipping_details.lastName}
+                                                {order.customer_name}
                                                 {!order.user_id && <Badge variant="outline">Guest</Badge>}
                                             </p>
-                                            <p className="text-xs text-muted-foreground">{order.shipping_details.email}</p>
+                                            <p className="text-xs text-muted-foreground">{order.customer_email}</p>
                                         </div>
                                     </div>
                                 </TableCell>
@@ -209,19 +205,7 @@ export default function AdminOrdersPage() {
         if (error) {
             toast({ variant: 'destructive', title: 'Error fetching orders', description: error.message });
         } else if (data) {
-            const transformedData = data.map((order: any) => ({
-                id: order.id,
-                user_id: order.user_id,
-                order_number: order.order_number,
-                created_at: order.created_at,
-                total_amount: order.total_amount,
-                status: order.status,
-                shipping_details: order.shipping_details,
-                profiles: {
-                    avatar_url: order.customer_avatar_url
-                }
-            }));
-            setAllOrders(transformedData as OrderWithCustomer[]);
+            setAllOrders(data as OrderWithCustomer[]);
         }
         setLoading(false);
     }, [supabase, toast]);
@@ -240,8 +224,8 @@ export default function AdminOrdersPage() {
             const lowercasedTerm = searchTerm.toLowerCase();
             filtered = filtered.filter(order =>
                 order.order_number.toLowerCase().includes(lowercasedTerm) ||
-                `${order.shipping_details.firstName} ${order.shipping_details.lastName}`.toLowerCase().includes(lowercasedTerm) ||
-                order.shipping_details.email.toLowerCase().includes(lowercasedTerm)
+                order.customer_name.toLowerCase().includes(lowercasedTerm) ||
+                order.customer_email.toLowerCase().includes(lowercasedTerm)
             );
         }
         return filtered;
@@ -336,3 +320,5 @@ export default function AdminOrdersPage() {
         </main>
     );
 }
+
+    
