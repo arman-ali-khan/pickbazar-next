@@ -1,50 +1,49 @@
-'use client'
+'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
-import NProgress from 'nprogress'
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+import NProgress from 'nprogress';
 
 export default function ProgressBar() {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    NProgress.done()
-  }, [pathname, searchParams])
+    // When the route changes, we're done.
+    NProgress.done();
+  }, [pathname, searchParams]);
 
   useEffect(() => {
-    // This is a workaround to trigger NProgress on route changes in Next.js App Router.
-    // It monkey-patches the history API to call NProgress.start() on pushState and replaceState.
-    const originalPushState = history.pushState
-    const originalReplaceState = history.replaceState
+    const handleAnchorClick = (event: MouseEvent) => {
+      try {
+        const target = event.target as HTMLElement;
+        const anchor = target.closest('a');
 
-    const handleStateChange = () => {
-      NProgress.start()
-    }
-    
-    history.pushState = function(...args) {
-      handleStateChange()
-      return originalPushState.apply(history, args)
-    }
+        // Ensure anchor and href exist, and it's not a button or other element without an href
+        if (anchor && anchor.href) {
+          const url = new URL(anchor.href);
+          const currentUrl = new URL(window.location.href);
 
-    history.replaceState = function(...args) {
-      handleStateChange()
-      return originalReplaceState.apply(history, args)
-    }
-    
-    const handlePopState = () => {
-      handleStateChange()
-    }
+          // Check if it's an internal link
+          if (url.origin === currentUrl.origin) {
+            // Check if it's a different page and not just a hash link
+            if (url.pathname !== currentUrl.pathname || url.search !== currentUrl.search) {
+               NProgress.start();
+            }
+          }
+        }
+      } catch (err) {
+        // Ignore errors from invalid URLS (e.g. `mailto:`)
+        NProgress.start();
+      }
+    };
 
-    window.addEventListener('popstate', handlePopState)
+    document.addEventListener('click', handleAnchorClick);
 
     return () => {
-      // Restore original functions on unmount
-      history.pushState = originalPushState
-      history.replaceState = originalReplaceState
-      window.removeEventListener('popstate', handlePopState)
-    }
-  }, [])
+      document.removeEventListener('click', handleAnchorClick);
+    };
+  }, []); // Empty dependency array ensures this runs only once on mount
 
-  return null
+  return null;
 }
