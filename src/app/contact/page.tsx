@@ -21,8 +21,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useSupabase } from '@/lib/supabase/provider';
+import { submitContactMessage } from '@/app/actions';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -41,6 +42,7 @@ export default function ContactPage() {
   const { toast } = useToast();
   const { supabase } = useSupabase();
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     const fetchContactInfo = async () => {
@@ -63,12 +65,29 @@ export default function ContactPage() {
   });
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    toast({
-      title: "Message Sent!",
-      description: "Thank you for contacting us. We'll get back to you shortly.",
+    startTransition(async () => {
+        const formData = new FormData();
+        formData.append('name', values.name);
+        formData.append('email', values.email);
+        formData.append('subject', values.subject);
+        formData.append('message', values.message);
+
+        const result = await submitContactMessage(formData);
+        
+        if (result?.error) {
+            toast({
+                variant: 'destructive',
+                title: "Submission Failed",
+                description: result.error,
+            });
+        } else {
+            toast({
+                title: "Message Sent!",
+                description: "Thank you for contacting us. We'll get back to you shortly.",
+            });
+            form.reset();
+        }
     });
-    form.reset();
   }
 
   return (
@@ -178,9 +197,8 @@ export default function ContactPage() {
                         </FormItem>
                       )}
                     />
-                    <Button type="submit" className="w-full h-12 text-lg font-semibold">
-                      <Send className="mr-2 h-5 w-5" />
-                      Send Message
+                    <Button type="submit" className="w-full h-12 text-lg font-semibold" disabled={isPending}>
+                      {isPending ? "Sending..." : <><Send className="mr-2 h-5 w-5" />Send Message</>}
                     </Button>
                   </form>
                 </Form>

@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useTransition } from 'react';
 import {
     Card,
     CardHeader,
@@ -26,25 +27,73 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MoreHorizontal, Trash2, Eye, MailOpen } from "lucide-react";
 import Link from 'next/link';
-import { messages as initialMessages } from '@/lib/data';
-import type { Message } from '@/lib/data';
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useSupabase } from '@/lib/supabase/provider';
+import { useToast } from '@/hooks/use-toast';
+import { updateMessageStatus, deleteContactMessage } from '@/app/actions';
+
+interface Message {
+    id: number;
+    senderName: string;
+    senderEmail: string;
+    subject: string;
+    message: string;
+    date: string;
+    status: 'read' | 'unread' | string;
+}
 
 const getStatusVariant = (status: Message['status']) => {
     return status === 'read' ? 'secondary' : 'default';
 };
 
 export default function AdminMessagesPage() {
-    const [messages, setMessages] = useState(initialMessages);
+    const { supabase } = useSupabase();
+    const { toast } = useToast();
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [isPending, startTransition] = useTransition();
+
+    const fetchMessages = useCallback(async () => {
+        setLoading(true);
+        const { data, error } = await supabase.rpc('get_contact_messages');
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error fetching messages', description: error.message });
+        } else {
+            setMessages(data as Message[]);
+        }
+        setLoading(false);
+    }, [supabase, toast]);
+
+    useEffect(() => {
+        fetchMessages();
+    }, [fetchMessages]);
+
 
     const handleDelete = (messageId: number) => {
-        setMessages(messages.filter(m => m.id !== messageId));
+        startTransition(async () => {
+            const result = await deleteContactMessage(messageId);
+            if(result?.error) {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+            } else {
+                toast({ title: 'Message deleted' });
+                fetchMessages();
+            }
+        });
     };
     
-    const toggleReadStatus = (messageId: number) => {
-        setMessages(messages.map(m => m.id === messageId ? { ...m, status: m.status === 'read' ? 'unread' : 'read' } : m));
+    const toggleReadStatus = (messageId: number, currentStatus: Message['status']) => {
+        startTransition(async () => {
+            const newStatus = currentStatus === 'read' ? 'unread' : 'read';
+            const result = await updateMessageStatus(messageId, newStatus);
+            if(result?.error) {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+            } else {
+                toast({ title: 'Status updated' });
+                fetchMessages();
+            }
+        });
     }
 
     return (
@@ -55,6 +104,8 @@ export default function AdminMessagesPage() {
                     <CardDescription>View and manage your customer messages.</CardDescription>
                 </CardHeader>
                 <CardContent>
+                    {loading ? <p>Loading messages...</p> : messages.length === 0 ? <p className="text-center text-muted-foreground py-8">No messages found.</p> : (
+                    <>
                     {/* Desktop View */}
                     <div className="hidden md:block">
                         <Table>
@@ -73,7 +124,6 @@ export default function AdminMessagesPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-9 w-9">
-                                                    <AvatarImage src={message.avatar.imageUrl} alt={message.senderName} data-ai-hint={message.avatar.imageHint} />
                                                     <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div>
@@ -93,7 +143,7 @@ export default function AdminMessagesPage() {
                                         <TableCell>
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon">
+                                                    <Button variant="ghost" size="icon" disabled={isPending}>
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
@@ -103,7 +153,7 @@ export default function AdminMessagesPage() {
                                                             <Eye className="mr-2 h-4 w-4" /> View/Reply
                                                         </Link>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => toggleReadStatus(message.id)}>
+                                                    <DropdownMenuItem onClick={() => toggleReadStatus(message.id, message.status)}>
                                                         <MailOpen className="mr-2 h-4 w-4" /> Mark as {message.status === 'read' ? 'Unread' : 'Read'}
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(message.id)}>
@@ -124,7 +174,6 @@ export default function AdminMessagesPage() {
                             <Card key={message.id} className={cn(message.status === 'unread' && 'border-primary')}>
                                 <CardHeader className="flex flex-row items-start gap-4 space-y-0 p-4">
                                     <Avatar className="h-10 w-10">
-                                        <AvatarImage src={message.avatar.imageUrl} alt={message.senderName} data-ai-hint={message.avatar.imageHint} />
                                         <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1">
@@ -136,7 +185,7 @@ export default function AdminMessagesPage() {
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="-mt-2 -mr-2">
+                                            <Button variant="ghost" size="icon" className="-mt-2 -mr-2" disabled={isPending}>
                                                 <MoreHorizontal className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
@@ -146,7 +195,7 @@ export default function AdminMessagesPage() {
                                                     <Eye className="mr-2 h-4 w-4" /> View/Reply
                                                 </Link>
                                             </DropdownMenuItem>
-                                             <DropdownMenuItem onClick={() => toggleReadStatus(message.id)}>
+                                             <DropdownMenuItem onClick={() => toggleReadStatus(message.id, message.status)}>
                                                 <MailOpen className="mr-2 h-4 w-4" /> Mark as {message.status === 'read' ? 'Unread' : 'Read'}
                                             </DropdownMenuItem>
                                             <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(message.id)}>
@@ -162,6 +211,8 @@ export default function AdminMessagesPage() {
                             </Card>
                         ))}
                     </div>
+                    </>
+                    )}
                 </CardContent>
             </Card>
         </main>

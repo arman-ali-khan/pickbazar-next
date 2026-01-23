@@ -1,51 +1,87 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter, useParams, notFound } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { messages as initialMessages } from '@/lib/data';
-import type { Message } from '@/lib/data';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import TiptapEditor from '@/components/tiptap-editor';
+import { useSupabase } from '@/lib/supabase/provider';
+import { updateMessageStatus } from '@/app/actions';
+
+interface Message {
+    id: number;
+    senderName: string;
+    senderEmail: string;
+    subject: string;
+    message: string;
+    date: string;
+    status: 'read' | 'unread' | string;
+    avatar: {
+        imageUrl: string | null;
+        imageHint: string;
+    };
+}
 
 
 export default function ViewMessagePage() {
     const router = useRouter();
     const params = useParams<{ id: string }>();
     const { toast } = useToast();
+    const { supabase } = useSupabase();
     const messageId = parseInt(params.id, 10);
     
-    const [message, setMessage] = useState<Message | undefined>(() => initialMessages.find(q => q.id === messageId));
+    const [message, setMessage] = useState<Message | null>(null);
     const [reply, setReply] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    const getMessage = useCallback(async () => {
+        if (isNaN(messageId)) {
+            notFound();
+            return;
+        }
+        setLoading(true);
+
+        const { data, error } = await supabase.rpc('get_contact_message_details', { p_message_id: messageId });
+
+        if (error || !data || data.length === 0) {
+            toast({ variant: 'destructive', title: 'Error', description: 'Message not found.' });
+            notFound();
+            return;
+        }
+        
+        const fetchedMessage = data[0] as Message;
+        setMessage(fetchedMessage);
+
+        if (fetchedMessage.status === 'unread') {
+            await updateMessageStatus(fetchedMessage.id, 'read');
+        }
+
+        setLoading(false);
+    }, [messageId, supabase, toast]);
 
     useEffect(() => {
-        const foundMessage = initialMessages.find(q => q.id === messageId);
-        if (foundMessage) {
-            setMessage(foundMessage);
-        } else {
-            // In a real app, you'd show a not found page.
-            // For now, redirecting back.
-            router.push('/admin/messages');
-        }
-    }, [messageId, router]);
+        getMessage();
+    }, [getMessage]);
 
 
-    if (!message) {
-        return null; 
+    if (loading || !message) {
+        return <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8"><p>Loading message...</p></main>;
     }
     
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        // This is a mock action as email sending is not implemented
         console.log({ messageId: message.id, reply });
         toast({
-            title: "Reply Sent",
+            title: "Reply Sent (Mock)",
             description: `Your reply has been sent to ${message.senderEmail}.`,
         });
         setReply('');
@@ -71,7 +107,6 @@ export default function ViewMessagePage() {
                         <CardHeader className="border-b">
                              <div className="flex items-center gap-3">
                                 <Avatar className="h-10 w-10">
-                                    <AvatarImage src={message.avatar.imageUrl} alt={message.senderName} data-ai-hint={message.avatar.imageHint}/>
                                     <AvatarFallback>{message.senderName.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>

@@ -115,49 +115,6 @@ export const product = {
 export const relatedProducts = products.slice(1, 13).map(p => ({...p, id: p.id, name: p.name, price: p.price, image: p.image, weight: p.weight, tag: p.originalPrice ? `${Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}%` : undefined}));
 
 
-export const messages = [
-  {
-    id: 1,
-    senderName: 'Alice',
-    senderEmail: 'alice@example.com',
-    subject: 'Question about my order',
-    message: 'Hi, I have a question about my recent order #ORD-001. Can you please help me with the tracking information?',
-    date: '2024-07-29T10:00:00.000Z',
-    status: 'unread' as const,
-    avatar: getImage('avatar_1'),
-  },
-  {
-    id: 2,
-    senderName: 'Bob',
-    senderEmail: 'bob@example.com',
-    subject: 'Feedback on product',
-    message: 'Just wanted to say I love the fresh apples! They were delicious.',
-    date: '2024-07-28T15:30:00.000Z',
-    status: 'read' as const,
-    avatar: getImage('avatar_2'),
-  },
-  {
-    id: 3,
-    senderName: 'Charlie',
-    senderEmail: 'charlie@example.com',
-    subject: 'Partnership inquiry',
-    message: 'Hello, I am interested in partnering with Pickbazar. Who can I talk to about this?',
-    date: '2024-07-28T09:00:00.000Z',
-    status: 'read' as const,
-    avatar: getImage('avatar_3'),
-  },
-   {
-    id: 4,
-    senderName: 'Diana',
-    senderEmail: 'diana@example.com',
-    subject: 'Issue with delivery',
-    message: 'My order was marked as delivered, but I have not received it. Order ID is ORD-003.',
-    date: '2024-07-29T11:45:00.000Z',
-    status: 'unread' as const,
-    avatar: getImage('avatar_1'),
-  }
-];
-
 export const userNotifications = [
   {
     id: 1,
@@ -210,7 +167,6 @@ export type Admin = {
   avatar: ImagePlaceholder;
   status: 'active' | 'inactive';
 };
-export type Message = typeof messages[0];
 export type UserNotification = typeof userNotifications[0];
 
 export interface Question {
