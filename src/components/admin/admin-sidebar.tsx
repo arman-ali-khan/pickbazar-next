@@ -46,6 +46,7 @@ import Image from 'next/image';
 
 const navItems = [
   { href: '/admin', icon: LayoutGrid, label: 'Dashboard' },
+  { href: '/admin/notifications', icon: Bell, label: 'Notifications' },
   { href: '/admin/products', icon: Box, label: 'Products' },
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
   { href: '/admin/categories', icon: LayoutGrid, label: 'Categories' },
@@ -59,7 +60,6 @@ const navItems = [
   { href: '/admin/questions', icon: HelpCircle, label: 'Questions' },
   { href: '/admin/offers', icon: Gift, label: 'Offers' },
   { href: '/admin/messages', icon: MessageSquare, label: 'Messages' },
-  { href: '/admin/notifications', icon: Bell, label: 'Notifications' },
   { href: '/admin/pages', icon: Files, label: 'Page Manager' },
 ];
 
