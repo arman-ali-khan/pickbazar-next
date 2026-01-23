@@ -1,458 +1,347 @@
--- ### POLICIES ###
--- 1. Enable RLS for all tables
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.product_categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.product_tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.refunds ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.offers ENABLE ROW LEVEL SECURITY;
+-- =================================================================
+-- This script sets up the entire database schema for the application.
+-- It is designed to be run in its entirety.
+-- =================================================================
 
--- 2. profiles table
-DROP POLICY IF EXISTS "Users can view their own profile." ON public.profiles;
-CREATE POLICY "Users can view their own profile." ON public.profiles
-  FOR SELECT USING (auth.uid() = id);
+-- 1. PROFILES & USER MANAGEMENT
+-- =================================================================
+-- Create a table for public profiles
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users ON DELETE CASCADE,
+  full_name TEXT,
+  avatar_url TEXT,
+  bio TEXT,
+  contact_number TEXT,
+  role TEXT DEFAULT 'customer'
+);
+
+-- Set up Row Level Security (RLS)
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Policies for profiles
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone." ON public.profiles;
+CREATE POLICY "Public profiles are viewable by everyone." ON public.profiles
+  FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Users can insert their own profile." ON public.profiles;
+CREATE POLICY "Users can insert their own profile." ON public.profiles
+  FOR INSERT WITH CHECK (auth.uid() = id);
 
 DROP POLICY IF EXISTS "Users can update their own profile." ON public.profiles;
 CREATE POLICY "Users can update their own profile." ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
 
--- 3. addresses table
-DROP POLICY IF EXISTS "Users can manage their own addresses." ON public.addresses;
-CREATE POLICY "Users can manage their own addresses." ON public.addresses
-  FOR ALL USING (auth.uid() = user_id);
-
--- 4. cards table
-DROP POLICY IF EXISTS "Users can manage their own cards." ON public.cards;
-CREATE POLICY "Users can manage their own cards." ON public.cards
-  FOR ALL USING (auth.uid() = user_id);
-
--- 5. Public read-only for products, categories, tags
-DROP POLICY IF EXISTS "Allow public read access to products" ON public.products;
-CREATE POLICY "Allow public read access to products" ON public.products
-  FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Allow public read access to categories" ON public.categories;
-CREATE POLICY "Allow public read access to categories" ON public.categories
-  FOR SELECT USING (true);
-  
-DROP POLICY IF EXISTS "Allow public read access to tags" ON public.tags;
-CREATE POLICY "Allow public read access to tags" ON public.tags
-  FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Allow public read access to product_categories" ON public.product_categories;
-CREATE POLICY "Allow public read access to product_categories" ON public.product_categories
-  FOR SELECT USING (true);
-  
-DROP POLICY IF EXISTS "Allow public read access to product_tags" ON public.product_tags;
-CREATE POLICY "Allow public read access to product_tags" ON public.product_tags
-  FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Allow public read access to offers" ON public.offers;
-CREATE POLICY "Allow public read access to offers" ON public.offers
-  FOR SELECT USING (true);
-
-
--- 6. orders and order_items
-DROP POLICY IF EXISTS "Users can manage their own orders." ON public.orders;
-CREATE POLICY "Users can manage their own orders." ON public.orders
-  FOR ALL USING (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Users can view items in their own orders." ON public.order_items;
-CREATE POLICY "Users can view items in their own orders." ON public.order_items
-  FOR SELECT USING (
-    auth.uid() = (
-      SELECT user_id FROM public.orders WHERE id = order_id
-    )
+-- This trigger automatically creates a profile entry when a new user signs up
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.profiles (id, full_name, avatar_url, role)
+  VALUES (
+    NEW.id,
+    NEW.raw_user_meta_data->>'full_name',
+    NEW.raw_user_meta_data->>'avatar_url',
+    'customer'
   );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-DROP POLICY IF EXISTS "Allow authenticated users to create orders." ON public.orders;
-CREATE POLICY "Allow authenticated users to create orders." ON public.orders
-    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
-    
-DROP POLICY IF EXISTS "Allow authenticated users to create order items." ON public.order_items;
-CREATE POLICY "Allow authenticated users to create order items." ON public.order_items
-    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
+-- Drop existing trigger if it exists, then create it
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- 7. reviews and questions
-DROP POLICY IF EXISTS "Allow public read for reviews" ON public.reviews;
-CREATE POLICY "Allow public read for reviews" ON public.reviews
-  FOR SELECT USING (status = 'Approved');
-
-DROP POLICY IF EXISTS "Users can submit reviews and questions." ON public.reviews;
-CREATE POLICY "Users can submit reviews and questions." ON public.reviews
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-DROP POLICY IF EXISTS "Allow public read for questions" ON public.questions;
-CREATE POLICY "Allow public read for questions" ON public.questions
-  FOR SELECT USING (true);
-
-DROP POLICY IF EXISTS "Users can submit questions." ON public.questions;
-CREATE POLICY "Users can submit questions." ON public.questions
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- 8. refunds
-DROP POLICY IF EXISTS "Users can manage their own refund requests." ON public.refunds;
-CREATE POLICY "Users can manage their own refund requests." ON public.refunds
-    FOR ALL USING (auth.uid() = user_id)
-    WITH CHECK (status = 'Pending'); -- Users can only cancel if it's pending
-
-
--- Helper function for admin checks
-DROP FUNCTION IF EXISTS is_admin(user_id uuid);
+-- Helper function to check if a user is an admin or higher
 CREATE OR REPLACE FUNCTION is_admin(user_id uuid)
 RETURNS boolean AS $$
 DECLARE
   user_role TEXT;
 BEGIN
-  -- Use SECURITY DEFINER and a specific query to safely access the role from the profiles table.
   SELECT role::text INTO user_role FROM public.profiles WHERE id = user_id;
   RETURN user_role IN ('admin', 'manager', 'super-admin');
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- 9. Admin policies
-DROP POLICY IF EXISTS "Admins have full access to products." ON public.products;
-CREATE POLICY "Admins have full access to products." ON public.products
-  FOR ALL USING (is_admin(auth.uid()));
 
-DROP POLICY IF EXISTS "Admins have full access to categories." ON public.categories;
-CREATE POLICY "Admins have full access to categories." ON public.categories
-  FOR ALL USING (is_admin(auth.uid()));
-  
-DROP POLICY IF EXISTS "Admins have full access to tags." ON public.tags;
-CREATE POLICY "Admins have full access to tags." ON public.tags
-  FOR ALL USING (is_admin(auth.uid()));
+-- 2. SETTINGS
+-- =================================================================
+CREATE TABLE IF NOT EXISTS public.settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+);
 
-DROP POLICY IF EXISTS "Admins have full access to orders." ON public.orders;
-CREATE POLICY "Admins have full access to orders." ON public.orders
-  FOR ALL USING (is_admin(auth.uid()));
+ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Admins have full access to order_items." ON public.order_items;
-CREATE POLICY "Admins have full access to order_items." ON public.order_items
-  FOR ALL USING (is_admin(auth.uid()));
+DROP POLICY IF EXISTS "Allow public read access for settings" ON public.settings;
+CREATE POLICY "Allow public read access for settings" ON public.settings
+    FOR SELECT USING (true);
 
-DROP POLICY IF EXISTS "Admins have full access to reviews." ON public.reviews;
-CREATE POLICY "Admins have full access to reviews." ON public.reviews
-  FOR ALL USING (is_admin(auth.uid()));
+DROP POLICY IF EXISTS "Allow admin update for settings" ON public.settings;
+CREATE POLICY "Allow admin update for settings" ON public.settings
+    FOR UPDATE USING (is_admin(auth.uid()));
 
-DROP POLICY IF EXISTS "Admins have full access to questions." ON public.questions;
-CREATE POLICY "Admins have full access to questions." ON public.questions
-  FOR ALL USING (is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Admins have full access to refunds." ON public.refunds;
-CREATE POLICY "Admins have full access to refunds." ON public.refunds
-  FOR ALL USING (is_admin(auth.uid()));
-  
-DROP POLICY IF EXISTS "Admins have full access to offers." ON public.offers;
-CREATE POLICY "Admins have full access to offers." ON public.offers
-  FOR ALL USING (is_admin(auth.uid()));
-
-DROP POLICY IF EXISTS "Admins can view all user profiles." ON public.profiles;
-CREATE POLICY "Admins can view all user profiles." ON public.profiles
-  FOR SELECT USING (is_admin(auth.uid()));
-  
--- ### VIEWS AND FUNCTIONS ###
-
--- 1. Handle new user
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+-- Function to get all settings as a single JSON object
+CREATE OR REPLACE FUNCTION get_all_settings()
+RETURNS JSONB AS $$
+DECLARE
+    settings_json JSONB;
 BEGIN
-  INSERT INTO public.profiles (id, full_name, avatar_url, role)
-  VALUES (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url', 'customer');
-  return new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- 2. Trigger for new user
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
-
--- 3. Get related products
-CREATE OR REPLACE FUNCTION get_related_products(p_id int, p_limit int)
-RETURNS TABLE (
-  id int,
-  name text,
-  price numeric,
-  original_price numeric,
-  featured_image_url text,
-  unit text
-) AS $$
-BEGIN
-  RETURN QUERY
-  WITH ProductCategories AS (
-      SELECT category_id
-      FROM product_categories
-      WHERE product_id = p_id
-  )
-  SELECT
-      p.id,
-      p.name,
-      p.price,
-      p.original_price,
-      p.featured_image_url,
-      p.unit
-  FROM products p
-  JOIN product_categories pc ON p.id = pc.product_id
-  WHERE pc.category_id IN (SELECT category_id FROM ProductCategories)
-    AND p.id != p_id
-  GROUP BY p.id
-  ORDER BY MAX(p.view_count) DESC, p.id
-  LIMIT p_limit;
-END;
-$$ LANGUAGE plpgsql;
-
--- 4. Get product reviews
-CREATE OR REPLACE FUNCTION get_product_reviews(p_product_id INT)
-RETURNS TABLE (
-    id BIGINT,
-    rating INT,
-    text TEXT,
-    created_at TIMESTAMPTZ,
-    author_name TEXT,
-    author_avatar TEXT
-) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT
-        r.id,
-        r.rating,
-        r.text,
-        r.created_at,
-        p.full_name AS author_name,
-        p.avatar_url AS author_avatar
-    FROM
-        public.reviews r
-    JOIN
-        public.profiles p ON r.user_id = p.id
-    WHERE
-        r.product_id = p_product_id
-        AND r.status = 'Approved'
-    ORDER BY
-        r.created_at DESC;
+    SELECT jsonb_object_agg(key, value)
+    INTO settings_json
+    FROM public.settings;
+    RETURN settings_json;
 END;
 $$ LANGUAGE plpgsql;
 
 
--- 5. Get product rating stats
-CREATE OR REPLACE FUNCTION get_product_rating_stats(p_product_id int)
-RETURNS TABLE (
-    avg_rating numeric,
-    total_reviews bigint,
-    rating_distribution jsonb
-) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT
-        AVG(r.rating)::numeric(3, 2) as avg_rating,
-        COUNT(r.id) as total_reviews,
-        (
-            SELECT jsonb_agg(ratings)
-            FROM (
-                SELECT
-                    rating,
-                    COUNT(id) as count
-                FROM public.reviews
-                WHERE product_id = p_product_id AND status = 'Approved'
-                GROUP BY rating
-                ORDER BY rating
-            ) as ratings
-        ) as rating_distribution
-    FROM public.reviews r
-    WHERE r.product_id = p_product_id AND r.status = 'Approved';
-END;
-$$ LANGUAGE plpgsql;
+-- 3. CONTACT MESSAGES
+-- =================================================================
+CREATE TABLE IF NOT EXISTS public.contact_messages (
+    id BIGINT PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    message TEXT NOT NULL,
+    status TEXT DEFAULT 'unread' NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
 
--- 6. Get product questions
-CREATE OR REPLACE FUNCTION get_product_questions(p_product_id int)
-RETURNS TABLE (
-    id bigint,
-    question_text text,
-    answer_text text,
-    created_at timestamptz,
-    author_name text
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT
-      q.id,
-      q.question_text,
-      q.answer_text,
-      q.created_at,
-      p.full_name AS author_name
-  FROM questions q
-  JOIN profiles p ON q.user_id = p.id
-  WHERE q.product_id = p_product_id AND q.status = 'Answered'
-  ORDER BY q.answered_at DESC;
-END;
-$$ LANGUAGE plpgsql;
+ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
 
--- 7. Get all admin users
-DROP FUNCTION IF EXISTS get_admins();
-CREATE OR REPLACE FUNCTION get_admins()
-RETURNS TABLE (
-    id uuid,
-    full_name text,
-    email text,
-    role user_role,
-    avatar_url text
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT
-      p.id,
-      p.full_name,
-      u.email,
-      p.role,
-      p.avatar_url
-  FROM profiles p
-  JOIN auth.users u ON p.id = u.id
-  WHERE p.role IN ('admin', 'manager', 'super-admin');
-END;
-$$ LANGUAGE plpgsql;
+DROP POLICY IF EXISTS "Allow public insert for contact messages" ON public.contact_messages;
+CREATE POLICY "Allow public insert for contact messages" ON public.contact_messages
+    FOR INSERT WITH CHECK (true);
 
--- 8. Get potential admins (customers)
-DROP FUNCTION IF EXISTS get_potential_admins();
-CREATE OR REPLACE FUNCTION get_potential_admins()
-RETURNS TABLE (
-    id uuid,
-    full_name text,
-    email text,
-    avatar_url text
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT
-      p.id,
-      p.full_name,
-      u.email,
-      p.avatar_url
-  FROM profiles p
-  JOIN auth.users u ON p.id = u.id
-  WHERE p.role = 'customer'
-  ORDER BY u.created_at DESC;
-END;
-$$ LANGUAGE plpgsql;
+DROP POLICY IF EXISTS "Allow admin select for contact messages" ON public.contact_messages;
+CREATE POLICY "Allow admin select for contact messages" ON public.contact_messages
+    FOR SELECT USING (is_admin(auth.uid()));
 
--- Securely get the role of the currently authenticated user
-CREATE OR REPLACE FUNCTION get_my_role()
-RETURNS TABLE (
-    role user_role
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT p.role FROM public.profiles p WHERE p.id = auth.uid();
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+DROP POLICY IF EXISTS "Allow admin update for contact messages" ON public.contact_messages;
+CREATE POLICY "Allow admin update for contact messages" ON public.contact_messages
+    FOR UPDATE USING (is_admin(auth.uid()));
 
--- get_all_users function
+DROP POLICY IF EXISTS "Allow admin delete for contact messages" ON public.contact_messages;
+CREATE POLICY "Allow admin delete for contact messages" ON public.contact_messages
+    FOR DELETE USING (is_admin(auth.uid()));
+
+
+-- 4. ORDERS & TRANSACTIONS
+-- =================================================================
+-- Create orders table
+CREATE TABLE IF NOT EXISTS public.orders (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
+    order_number TEXT UNIQUE NOT NULL,
+    total_amount NUMERIC(10, 2) NOT NULL,
+    status TEXT NOT NULL,
+    shipping_details JSONB NOT NULL,
+    coupon_code TEXT,
+    discount_amount NUMERIC(10, 2),
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+
+-- Create order_items table
+CREATE TABLE IF NOT EXISTS public.order_items (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    order_id BIGINT NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+    product_id BIGINT NOT NULL, -- No direct FK to allow product deletion without breaking order history
+    quantity INT NOT NULL,
+    price_at_purchase NUMERIC(10, 2) NOT NULL
+);
+
+-- Create transactions table with NULLABLE user_id
+CREATE TABLE IF NOT EXISTS public.transactions (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    order_id BIGINT NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES public.users(id) ON DELETE SET NULL, -- <<<<<<<<<<<< FIX: Allow NULL
+    amount NUMERIC(10, 2) NOT NULL,
+    payment_method TEXT NOT NULL,
+    status TEXT NOT NULL,
+    transaction_details JSONB,
+    created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+);
+-- Ensure user_id can be NULL
+ALTER TABLE public.transactions ALTER COLUMN user_id DROP NOT NULL;
+
+
+-- Enable RLS for tables
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+
+-- Policies for orders
+DROP POLICY IF EXISTS "Users can view their own orders" ON public.orders;
+CREATE POLICY "Users can view their own orders" ON public.orders
+    FOR SELECT USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Admins can manage all orders" ON public.orders;
+CREATE POLICY "Admins can manage all orders" ON public.orders
+    FOR ALL USING (is_admin(auth.uid()));
+
+-- Policies for order_items (users can view items for orders they own)
+DROP POLICY IF EXISTS "Users can view their own order items" ON public.order_items;
+CREATE POLICY "Users can view their own order items" ON public.order_items
+    FOR SELECT USING (
+        (SELECT user_id FROM public.orders WHERE id = order_id) = auth.uid()
+    );
+
+DROP POLICY IF EXISTS "Admins can manage all order items" ON public.order_items;
+CREATE POLICY "Admins can manage all order items" ON public.order_items
+    FOR ALL USING (is_admin(auth.uid()));
+
+-- Policies for transactions
+DROP POLICY IF EXISTS "Users can view their own transactions" ON public.transactions;
+CREATE POLICY "Users can view their own transactions" ON public.transactions
+    FOR SELECT USING (auth.uid() = user_id);
+    
+DROP POLICY IF EXISTS "Admins can manage all transactions" ON public.transactions;
+CREATE POLICY "Admins can manage all transactions" ON public.transactions
+    FOR ALL USING (is_admin(auth.uid()));
+
+-- Function to create a new order
+CREATE OR REPLACE FUNCTION create_order(
+    p_user_id UUID,
+    p_total_amount NUMERIC,
+    p_shipping_details JSONB,
+    p_items JSONB,
+    p_payment_method TEXT,
+    p_transaction_details JSONB,
+    p_coupon_code TEXT,
+    p_discount_amount NUMERIC
+) RETURNS TEXT
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    new_order_id BIGINT;
+    new_order_number TEXT;
+    item JSONB;
+BEGIN
+    -- Generate a unique order number
+    new_order_number := 'PB-' || to_char(NOW(), 'YYMMDD') || '-' || substr(md5(random()::text), 1, 6);
+
+    -- Insert into orders table
+    INSERT INTO public.orders (user_id, order_number, total_amount, status, shipping_details, coupon_code, discount_amount)
+    VALUES (p_user_id, new_order_number, p_total_amount, 'Pending', p_shipping_details, p_coupon_code, p_discount_amount)
+    RETURNING id INTO new_order_id;
+
+    -- Insert into order_items table
+    FOR item IN SELECT * FROM jsonb_array_elements(p_items)
+    LOOP
+        INSERT INTO public.order_items (order_id, product_id, quantity, price_at_purchase)
+        VALUES (new_order_id, (item->>'product_id')::BIGINT, (item->>'quantity')::INT, (item->>'price')::NUMERIC);
+    END LOOP;
+
+    -- Insert into transactions table
+    INSERT INTO public.transactions(order_id, user_id, amount, payment_method, status, transaction_details)
+    VALUES (new_order_id, p_user_id, p_total_amount, p_payment_method, 'Completed', p_transaction_details);
+
+    RETURN new_order_number;
+END;
+$$;
+
+-- 5. RPC FUNCTIONS FOR ADMIN DASHBOARD
+-- =================================================================
+-- Get all users with their roles
 CREATE OR REPLACE FUNCTION get_all_users()
 RETURNS TABLE (
-    id uuid,
-    full_name text,
-    email text,
-    avatar_url text,
-    created_at timestamptz,
-    role user_role
-) AS $$
+    id UUID,
+    full_name TEXT,
+    email TEXT,
+    avatar_url TEXT,
+    created_at TIMESTAMPTZ,
+    role TEXT
+)
+LANGUAGE plpgsql
+AS $$
 BEGIN
-  RETURN QUERY
-  SELECT
-      p.id,
-      p.full_name,
-      u.email,
-      p.avatar_url,
-      u.created_at,
-      p.role
-  FROM profiles p
-  JOIN auth.users u ON p.id = u.id
-  ORDER BY u.created_at DESC;
+    RETURN QUERY
+    SELECT
+        u.id,
+        p.full_name,
+        u.email,
+        p.avatar_url,
+        u.created_at,
+        p.role
+    FROM auth.users u
+    LEFT JOIN public.profiles p ON u.id = p.id
+    ORDER BY u.created_at DESC;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
--- get_user_details function
-CREATE OR REPLACE FUNCTION get_user_details(p_user_id uuid)
-RETURNS TABLE (
-    id uuid,
-    full_name text,
-    email text,
-    avatar_url text,
-    created_at timestamptz,
-    role user_role
-) AS $$
-BEGIN
-  RETURN QUERY
-  SELECT
-      p.id,
-      p.full_name,
-      u.email,
-      p.avatar_url,
-      u.created_at,
-      p.role
-  FROM profiles p
-  JOIN auth.users u ON p.id = u.id
-  WHERE p.id = p_user_id;
-END;
-$$ LANGUAGE plpgsql;
 
--- Get admin order details
-CREATE OR REPLACE FUNCTION get_admin_order_details(p_order_number TEXT)
+-- Get all contact messages
+CREATE OR REPLACE FUNCTION get_contact_messages()
 RETURNS TABLE (
     id BIGINT,
-    order_number TEXT,
-    created_at TIMESTAMPTZ,
-    total_amount NUMERIC,
-    status order_status,
-    shipping_details JSONB,
-    order_items JSONB,
-    profiles JSONB,
-    coupon_code TEXT,
-    discount_amount NUMERIC
+    senderName TEXT,
+    senderEmail TEXT,
+    subject TEXT,
+    message TEXT,
+    status TEXT,
+    date TIMESTAMPTZ
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-  RETURN QUERY
-  SELECT
-    o.id,
-    o.order_number,
-    o.created_at,
-    o.total_amount,
-    o.status,
-    o.shipping_details,
-    (SELECT jsonb_agg(jsonb_build_object(
-      'id', oi.id,
-      'quantity', oi.quantity,
-      'price_at_purchase', oi.price,
-      'products', (SELECT jsonb_build_object(
-        'name', p.name,
-        'featured_image_url', p.featured_image_url
-      ) FROM public.products p WHERE p.id = oi.product_id)
-    )) FROM public.order_items oi WHERE oi.order_id = o.id),
-    (SELECT jsonb_build_object(
-      'full_name', pr.full_name,
-      'avatar_url', pr.avatar_url
-    ) FROM public.profiles pr WHERE pr.id = o.user_id),
-    o.coupon_code,
-    o.discount_amount
-  FROM public.orders o
-  WHERE o.order_number = p_order_number
-  LIMIT 1;
+    IF NOT is_admin(auth.uid()) THEN
+        RAISE EXCEPTION 'Only admins can access contact messages.';
+    END IF;
+
+    RETURN QUERY
+    SELECT
+        cm.id,
+        cm.name as senderName,
+        cm.email as senderEmail,
+        cm.subject,
+        cm.message,
+        cm.status,
+        cm.created_at as date
+    FROM public.contact_messages cm
+    ORDER BY cm.created_at DESC;
 END;
 $$;
 
+-- Get details for a single contact message
+CREATE OR REPLACE FUNCTION get_contact_message_details(p_message_id BIGINT)
+RETURNS TABLE (
+    id BIGINT,
+    senderName TEXT,
+    senderEmail TEXT,
+    subject TEXT,
+    message TEXT,
+    status TEXT,
+    date TIMESTAMPTZ,
+    avatar JSONB
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    IF NOT is_admin(auth.uid()) THEN
+        RAISE EXCEPTION 'Only admins can access contact messages.';
+    END IF;
+    
+    RETURN QUERY
+    SELECT
+        cm.id,
+        cm.name as senderName,
+        cm.email as senderEmail,
+        cm.subject,
+        cm.message,
+        cm.status,
+        cm.created_at as date,
+        jsonb_build_object(
+            'imageUrl', NULL,
+            'imageHint', 'person icon'
+        ) as avatar
+    FROM public.contact_messages cm
+    WHERE cm.id = p_message_id;
+END;
+$$;
 
--- Get admin orders
+-- Get all orders for admin
 CREATE OR REPLACE FUNCTION get_admin_orders()
 RETURNS TABLE (
     id BIGINT,
@@ -460,7 +349,7 @@ RETURNS TABLE (
     order_number TEXT,
     created_at TIMESTAMPTZ,
     total_amount NUMERIC,
-    status order_status,
+    status TEXT,
     shipping_details JSONB,
     customer_avatar_url TEXT
 )
@@ -468,6 +357,10 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
+    IF NOT is_admin(auth.uid()) THEN
+        RAISE EXCEPTION 'Only admins can access orders.';
+    END IF;
+
     RETURN QUERY
     SELECT
         o.id,
@@ -484,371 +377,34 @@ BEGIN
 END;
 $$;
 
--- Get Admin Reviews
-CREATE OR REPLACE FUNCTION get_admin_reviews()
+-- Get guest orders
+CREATE OR REPLACE FUNCTION get_guest_orders()
 RETURNS TABLE (
     id BIGINT,
-    rating INT,
-    text TEXT,
-    status review_status,
-    created_at TIMESTAMPTZ,
-    author JSONB,
-    product JSONB
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-    RETURN QUERY
-    SELECT
-        r.id,
-        r.rating,
-        r.text,
-        r.status,
-        r.created_at,
-        jsonb_build_object(
-            'name', p.full_name,
-            'avatar_url', p.avatar_url
-        ) as author,
-        jsonb_build_object(
-            'id', prod.id,
-            'name', prod.name,
-            'featured_image_url', prod.featured_image_url
-        ) as product
-    FROM public.reviews r
-    JOIN public.profiles p ON r.user_id = p.id
-    JOIN public.products prod ON r.product_id = prod.id
-    ORDER BY r.created_at DESC;
-END;
-$$;
-
--- Get admin refunds
-CREATE OR REPLACE FUNCTION get_admin_refunds()
-RETURNS TABLE (
-    id BIGINT,
-    order_id BIGINT,
     order_number TEXT,
-    amount NUMERIC,
-    status refund_status,
-    reason TEXT,
     created_at TIMESTAMPTZ,
-    user_id UUID,
-    customer_name TEXT,
-    customer_avatar_url TEXT
+    total_amount NUMERIC,
+    status TEXT,
+    shipping_details JSONB
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
-    RETURN QUERY
-    SELECT
-        rf.id,
-        rf.order_id,
-        o.order_number,
-        rf.amount,
-        rf.status,
-        rf.reason,
-        rf.created_at,
-        rf.user_id,
-        p.full_name,
-        p.avatar_url
-    FROM public.refunds rf
-    JOIN public.orders o ON rf.order_id = o.id
-    JOIN public.profiles p ON rf.user_id = p.id
-    ORDER BY rf.created_at DESC;
-END;
-$$;
-
--- Get admin questions
-CREATE OR REPLACE FUNCTION get_admin_questions()
-RETURNS TABLE (
-    id BIGINT,
-    question TEXT,
-    answer TEXT,
-    status question_status,
-    date TIMESTAMPTZ,
-    author JSONB,
-    product JSONB
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  RETURN QUERY
-    SELECT
-        q.id,
-        q.question_text as question,
-        q.answer_text as answer,
-        q.status,
-        q.created_at as date,
-        jsonb_build_object(
-            'name', p.full_name,
-            'avatar', jsonb_build_object(
-                'imageUrl', p.avatar_url,
-                'imageHint', 'person face'
-            )
-        ) as author,
-        jsonb_build_object(
-            'id', prod.id,
-            'name', prod.name,
-            'image', jsonb_build_object(
-                'imageUrl', prod.featured_image_url,
-                'imageHint', 'product'
-            )
-        ) as product
-    FROM public.questions q
-    JOIN public.profiles p ON q.user_id = p.id
-    JOIN public.products prod ON q.product_id = prod.id
-    ORDER BY q.created_at DESC;
-END;
-$$;
-
--- get_admin_question_details
-CREATE OR REPLACE FUNCTION get_admin_question_details(p_question_id BIGINT)
-RETURNS TABLE (
-    id BIGINT,
-    question TEXT,
-    answer TEXT,
-    status question_status,
-    date TIMESTAMPTZ,
-    author JSONB,
-    product JSONB
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  RETURN QUERY
-    SELECT
-        q.id,
-        q.question_text as question,
-        q.answer_text as answer,
-        q.status,
-        q.created_at as date,
-        jsonb_build_object(
-            'name', p.full_name,
-            'avatar', jsonb_build_object(
-                'imageUrl', p.avatar_url,
-                'imageHint', 'person face'
-            )
-        ) as author,
-        jsonb_build_object(
-            'id', prod.id,
-            'name', prod.name,
-            'image', jsonb_build_object(
-                'imageUrl', prod.featured_image_url,
-                'imageHint', 'product'
-            )
-        ) as product
-    FROM public.questions q
-    JOIN public.profiles p ON q.user_id = p.id
-    JOIN public.products prod ON q.product_id = prod.id
-    WHERE q.id = p_question_id;
-END;
-$$;
-
--- get_user_reviews
-CREATE OR REPLACE FUNCTION get_user_reviews(p_user_id UUID)
-RETURNS TABLE (
-    id BIGINT,
-    rating INT,
-    text TEXT,
-    status review_status,
-    created_at TIMESTAMPTZ,
-    product_name TEXT,
-    product_image TEXT,
-    product_id BIGINT
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  RETURN QUERY
-    SELECT
-        r.id,
-        r.rating,
-        r.text,
-        r.status,
-        r.created_at,
-        p.name,
-        p.featured_image_url,
-        p.id
-    FROM public.reviews r
-    JOIN public.products p ON r.product_id = p.id
-    WHERE r.user_id = p_user_id
-    ORDER BY r.created_at DESC;
-END;
-$$;
-
--- get_user_questions
-CREATE OR REPLACE FUNCTION get_user_questions(p_user_id UUID)
-RETURNS TABLE (
-    id BIGINT,
-    question_text TEXT,
-    answer_text TEXT,
-    status question_status,
-    created_at TIMESTAMPTZ,
-    product_name TEXT,
-    product_id BIGINT,
-    product_image TEXT
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  RETURN QUERY
-    SELECT
-        q.id,
-        q.question_text,
-        q.answer_text,
-        q.status,
-        q.created_at,
-        p.name,
-        p.id,
-        p.featured_image_url
-    FROM public.questions q
-    JOIN public.products p ON q.product_id = p.id
-    WHERE q.user_id = p_user_id
-    ORDER BY q.created_at DESC;
-END;
-$$;
-
-
--- get_user_refunds
-CREATE OR REPLACE FUNCTION get_user_refunds(p_user_id UUID)
-RETURNS TABLE (
-    id BIGINT,
-    order_id BIGINT,
-    order_number TEXT,
-    amount NUMERIC,
-    status refund_status,
-    reason TEXT,
-    created_at TIMESTAMPTZ
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  RETURN QUERY
-    SELECT
-        r.id,
-        r.order_id,
-        o.order_number,
-        r.amount,
-        r.status,
-        r.reason,
-        r.created_at
-    FROM public.refunds r
-    JOIN public.orders o ON r.order_id = o.id
-    WHERE r.user_id = p_user_id
-    ORDER BY r.created_at DESC;
-END;
-$$;
-
-
--- get_user_transactions
-CREATE OR REPLACE FUNCTION get_user_transactions(p_user_id UUID)
-RETURNS TABLE (
-    id BIGINT,
-    order_id BIGINT,
-    order_number TEXT,
-    amount NUMERIC,
-    payment_method TEXT,
-    status transaction_status,
-    created_at TIMESTAMPTZ
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  RETURN QUERY
-    SELECT
-        t.id,
-        t.order_id,
-        o.order_number,
-        t.amount,
-        t.payment_method,
-        t.status,
-        t.created_at
-    FROM public.transactions t
-    JOIN public.orders o ON t.order_id = o.id
-    WHERE o.user_id = p_user_id
-    ORDER BY t.created_at DESC;
-END;
-$$;
-
-
--- get_admin_transactions
-CREATE OR REPLACE FUNCTION get_admin_transactions()
-RETURNS TABLE (
-    id BIGINT,
-    order_id BIGINT,
-    order_number TEXT,
-    customer_name TEXT,
-    customer_avatar TEXT,
-    amount NUMERIC,
-    payment_method TEXT,
-    status transaction_status,
-    created_at TIMESTAMPTZ
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-AS $$
-BEGIN
-  RETURN QUERY
-    SELECT
-        t.id,
-        t.order_id,
-        o.order_number,
-        COALESCE(p.full_name, (o.shipping_details->>'firstName') || ' ' || (o.shipping_details->>'lastName')),
-        p.avatar_url,
-        t.amount,
-        t.payment_method,
-        t.status,
-        t.created_at
-    FROM public.transactions t
-    JOIN public.orders o ON t.order_id = o.id
-    LEFT JOIN public.profiles p ON o.user_id = p.id
-    ORDER BY t.created_at DESC;
-END;
-$$;
-
--- RLS policy for settings table
-ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS "Allow full access to admins" ON public.settings;
-CREATE POLICY "Allow full access to admins" ON public.settings
-  FOR ALL USING (is_admin(auth.uid()));
-  
--- Get all settings function
-CREATE OR REPLACE FUNCTION get_all_settings()
-RETURNS jsonb AS $$
-DECLARE
-    settings_json jsonb;
-BEGIN
-    SELECT jsonb_object_agg(key, value)
-    INTO settings_json
-    FROM public.settings;
-    RETURN settings_json;
-END;
-$$ LANGUAGE plpgsql;
-
--- update_home_sections
-CREATE OR REPLACE FUNCTION update_home_sections(sections_data jsonb)
-RETURNS void AS $$
-BEGIN
-    -- Ensure the user is an admin
     IF NOT is_admin(auth.uid()) THEN
-        RAISE EXCEPTION 'Only admins can modify home page sections';
+        RAISE EXCEPTION 'Only admins can access guest orders.';
     END IF;
 
-    -- Delete existing sections
-    DELETE FROM public.home_page_sections;
-
-    -- Insert new sections from the provided JSON data
-    INSERT INTO public.home_page_sections (category_id, display_order)
+    RETURN QUERY
     SELECT
-        (value->>'category_id')::INT,
-        (value->>'display_order')::INT
-    FROM jsonb_array_elements(sections_data);
+        o.id,
+        o.order_number,
+        o.created_at,
+        o.total_amount,
+        o.status,
+        o.shipping_details
+    FROM public.orders o
+    WHERE o.user_id IS NULL
+    ORDER BY o.created_at DESC;
 END;
-$$ LANGUAGE plpgsql;
+$$;
