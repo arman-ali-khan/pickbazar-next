@@ -72,11 +72,11 @@ export default function PaymentPage() {
     }, [router, cartItems]);
     
     const handlePayment = async () => {
-        if (!user || !shippingInfo) {
+        if (!shippingInfo) {
             toast({
                 variant: 'destructive',
                 title: 'Error',
-                description: 'User or shipping information is missing.',
+                description: 'Shipping information is missing. Please go back to the previous step.',
             });
             return;
         }
@@ -92,7 +92,7 @@ export default function PaymentPage() {
         const transactionDetails = selectedMethod === 'mobile-banking' ? { trxId, mobileLast4 } : null;
 
         const { data: orderNumber, error } = await supabase.rpc('create_order', {
-            p_user_id: user.id,
+            p_user_id: user?.id || null,
             p_total_amount: total,
             p_shipping_details: shippingInfo,
             p_items: orderItems,
