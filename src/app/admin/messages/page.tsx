@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
 import { updateMessageStatus, deleteContactMessage } from '@/app/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Message {
     id: number;
@@ -104,7 +105,41 @@ export default function AdminMessagesPage() {
                     <CardDescription>View and manage your customer messages.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {loading ? <p>Loading messages...</p> : messages.length === 0 ? <p className="text-center text-muted-foreground py-8">No messages found.</p> : (
+                    {loading ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-32" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Skeleton className="h-9 w-9 rounded-full" />
+                                                <div>
+                                                    <Skeleton className="h-4 w-32" />
+                                                    <Skeleton className="h-3 w-40 mt-1" />
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="max-w-xs">
+                                             <Skeleton className="h-4 w-48" />
+                                             <Skeleton className="h-3 w-56 mt-1" />
+                                        </TableCell>
+                                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                        <TableCell><Skeleton className="h-6 w-16 rounded-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : messages.length === 0 ? <p className="text-center text-muted-foreground py-8">No messages found.</p> : (
                     <>
                     {/* Desktop View */}
                     <div className="hidden md:block">

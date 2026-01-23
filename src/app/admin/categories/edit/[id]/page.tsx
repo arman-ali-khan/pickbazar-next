@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { iconList } from '@/lib/icon-list';
 import LucideIcon from '@/components/lucide-icon';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Category {
   id: number;
@@ -107,7 +109,47 @@ export default function EditCategoryPage() {
     };
 
     if (loading) {
-        return <p>Loading category...</p>
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-6 w-32" />
+                </div>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-4 w-64" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-6">
+                             <div className="grid gap-3">
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                            <div className="grid gap-3">
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                            <div className="grid gap-3">
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                             <div className="grid gap-3">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                            <div className="grid gap-3">
+                                <Skeleton className="h-4 w-24" />
+                                <Skeleton className="h-20 w-full" />
+                            </div>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="justify-end border-t pt-6">
+                        <Skeleton className="h-10 w-32" />
+                    </CardFooter>
+                </Card>
+            </main>
+        );
     }
 
     return (

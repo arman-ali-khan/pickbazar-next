@@ -13,8 +13,9 @@ import type { AdminReview } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Image from 'next/image';
 import { format } from 'date-fns';
-import { useSupabase } from '@/lib/supabase/provider';
-import { useToast } from '@/hooks/use-toast';
+import { useSupabase } from "@/lib/supabase/provider";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from '@/components/ui/skeleton';
 
 const getStatusVariant = (status: AdminReview['status']) => {
     switch (status) {
@@ -72,7 +73,58 @@ export default function AdminReviewsPage() {
     };
 
     if (loading) {
-        return <p>Loading reviews...</p>;
+        return (
+             <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-7 w-64" />
+                        <Skeleton className="h-4 w-full" />
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead><Skeleton className="h-4 w-32" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-32" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-48" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell>
+                                             <div className="flex items-center gap-3">
+                                                <Skeleton className="h-12 w-12 rounded-md" />
+                                                <div className="space-y-1">
+                                                    <Skeleton className="h-4 w-24" />
+                                                    <Skeleton className="h-3 w-16" />
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                             <div className="flex items-center gap-3">
+                                                <Skeleton className="h-9 w-9 rounded-full" />
+                                                <Skeleton className="h-4 w-24" />
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <Skeleton className="h-4 w-12 mb-1" />
+                                            <Skeleton className="h-3 w-40" />
+                                        </TableCell>
+                                        <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                                        <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </main>
+        );
     }
 
     return (

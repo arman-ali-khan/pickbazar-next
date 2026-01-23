@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -8,6 +9,7 @@ import { ArrowUp, ArrowDown, Trash2, GripVertical } from "lucide-react";
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import LucideIcon from '@/components/lucide-icon';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Category {
   id: number;
@@ -119,7 +121,44 @@ export default function HomeSectionsManagerPage() {
     };
 
     if (loading) {
-        return <p>Loading section manager...</p>;
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-7 w-64" />
+                        <Skeleton className="h-4 w-full" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            {Array.from({ length: 4 }).map((_, i) => (
+                                <div key={i} className="flex items-center gap-4 p-3 border rounded-lg bg-muted/50">
+                                    <Skeleton className="h-5 w-5" />
+                                    <Skeleton className="h-5 w-5" />
+                                    <Skeleton className="h-5 w-48 flex-1" />
+                                    <div className="flex items-center gap-1">
+                                        <Skeleton className="h-9 w-9" />
+                                        <Skeleton className="h-9 w-9" />
+                                        <Skeleton className="h-9 w-9" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                    <CardFooter className="border-t pt-6 flex-col sm:flex-row items-center gap-4">
+                        <div className="flex-1 w-full sm:w-auto">
+                            <Skeleton className="h-5 w-32 mb-2" />
+                            <div className="flex gap-2">
+                                 <Skeleton className="h-10 flex-1" />
+                                <Skeleton className="h-10 w-20" />
+                            </div>
+                        </div>
+                         <div className="pt-4 sm:pt-0 self-end">
+                            <Skeleton className="h-12 w-36" />
+                        </div>
+                    </CardFooter>
+                </Card>
+            </main>
+        );
     }
 
     return (

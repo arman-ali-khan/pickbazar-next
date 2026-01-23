@@ -13,6 +13,7 @@ import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type UserRole = 'customer' | 'manager' | 'admin' | 'super-admin';
 interface UserProfile {
@@ -121,7 +122,63 @@ export default function ViewUserPage() {
     }, [fetchData]);
 
     if (loading) {
-        return <p>Loading user profile...</p>;
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-9 w-28 ml-auto" />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid auto-rows-max gap-4 lg:col-span-1">
+                        <Card>
+                            <CardHeader>
+                                <div className="flex flex-col items-center gap-4">
+                                    <Skeleton className="h-24 w-24 rounded-full" />
+                                    <div className="text-center space-y-1">
+                                        <Skeleton className="h-6 w-32" />
+                                        <Skeleton className="h-4 w-40" />
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="text-sm">
+                                <div className="grid gap-2">
+                                    <div className="flex justify-between"><Skeleton className="h-4 w-12" /><Skeleton className="h-4 w-24" /></div>
+                                     <div className="flex justify-between items-center"><Skeleton className="h-4 w-12" /><Skeleton className="h-6 w-20 rounded-full" /></div>
+                                    <div className="flex justify-between"><Skeleton className="h-4 w-24" /><Skeleton className="h-4 w-8" /></div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader><Skeleton className="h-6 w-28" /></CardHeader>
+                            <CardContent className="space-y-4">
+                                <Skeleton className="h-12 w-full" />
+                                <Skeleton className="h-12 w-full" />
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div className="grid auto-rows-max gap-4 lg:col-span-2">
+                        <Card>
+                            <CardHeader>
+                                <Skeleton className="h-6 w-40" />
+                                <Skeleton className="h-4 w-64" />
+                            </CardHeader>
+                            <CardContent>
+                                <Skeleton className="h-40 w-full" />
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <Skeleton className="h-6 w-40" />
+                            </CardHeader>
+                            <CardContent>
+                                <Skeleton className="h-40 w-full" />
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </main>
+        );
     }
 
     if (!user) {

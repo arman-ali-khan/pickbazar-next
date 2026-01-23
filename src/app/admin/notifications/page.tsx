@@ -10,6 +10,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Bell, ShoppingCart, Star, CheckCheck, MailOpen } from "lucide-react";
 import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Notification {
     id: number;
@@ -107,7 +108,21 @@ export default function AdminNotificationsPage() {
                     </Button>
                 </CardHeader>
                 <CardContent>
-                    {loading ? <p>Loading notifications...</p> : 
+                    {loading ? (
+                        <div className="space-y-4">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <div key={i} className="flex items-start gap-4 p-4 rounded-lg border">
+                                    <Skeleton className="h-5 w-5 mt-1" />
+                                    <div className="flex-1 space-y-1">
+                                        <Skeleton className="h-5 w-1/2" />
+                                        <Skeleton className="h-4 w-full" />
+                                        <Skeleton className="h-3 w-1/3 mt-1" />
+                                    </div>
+                                    <Skeleton className="h-8 w-8" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : 
                      notifications.length === 0 ? (
                         <div className="text-center py-20 text-muted-foreground">
                             <Bell className="mx-auto h-12 w-12" />

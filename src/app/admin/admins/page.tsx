@@ -43,6 +43,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import { updateUserRole } from "@/app/actions";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Admin = {
     id: string;
@@ -113,7 +114,34 @@ export default function AdminAdminsPage() {
                     </Button>
                 </CardHeader>
                 <CardContent>
-                    {loading ? <p>Loading admins...</p> : (
+                    {loading ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Skeleton className="h-9 w-9 rounded-full" />
+                                                <div>
+                                                    <Skeleton className="h-4 w-32" />
+                                                    <Skeleton className="h-3 w-40 mt-1" />
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                                        <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
                         <>
                         {/* Desktop View */}
                         <div className="hidden md:block">

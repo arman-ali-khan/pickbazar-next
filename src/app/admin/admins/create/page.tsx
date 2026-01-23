@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { updateUserRole } from '@/app/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface PotentialAdmin {
     id: string;
@@ -79,7 +80,34 @@ export default function PromoteUserPage() {
                     <CardDescription>Select a user to promote to an admin or manager role.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {loading ? <p>Loading users...</p> : (
+                    {loading ? (
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                <Skeleton className="h-9 w-9 rounded-full" />
+                                                <div>
+                                                    <Skeleton className="h-4 w-32" />
+                                                    <Skeleton className="h-3 w-40 mt-1" />
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <Skeleton className="h-9 w-24 ml-auto" />
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    ) : (
                         <Table>
                             <TableHeader>
                                 <TableRow>

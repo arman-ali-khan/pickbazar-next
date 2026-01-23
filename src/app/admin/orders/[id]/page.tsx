@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { useSupabase } from '@/lib/supabase/provider';
 import type { OrderStatus } from '@/lib/data';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface OrderItem {
     id: number;
@@ -107,7 +108,84 @@ export default function OrderDetailsPage() {
     };
 
     if (loading) {
-        return <div>Loading order details...</div>;
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-6 w-40" />
+                    <div className="hidden items-center gap-2 md:ml-auto md:flex">
+                        <Skeleton className="h-9 w-24" />
+                        <Skeleton className="h-9 w-40" />
+                    </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                     <div className="grid auto-rows-max gap-4 lg:col-span-2">
+                        <Card>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <Skeleton className="h-6 w-48" />
+                                <Skeleton className="h-6 w-24 rounded-full" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="space-y-4">
+                                     {Array.from({ length: 2 }).map((_, i) => (
+                                        <div key={i} className="flex items-center gap-4">
+                                            <Skeleton className="h-16 w-16 rounded-md" />
+                                            <div className="flex-1 space-y-2">
+                                                <Skeleton className="h-4 w-3/4" />
+                                                <Skeleton className="h-3 w-1/4" />
+                                            </div>
+                                            <Skeleton className="h-5 w-16" />
+                                        </div>
+                                    ))}
+                                </div>
+                                <Separator className="my-4" />
+                                 <div className="space-y-2 text-sm">
+                                    <div className="flex justify-between"><Skeleton className="h-4 w-20" /><Skeleton className="h-4 w-16" /></div>
+                                    <div className="flex justify-between"><Skeleton className="h-4 w-20" /><Skeleton className="h-4 w-16" /></div>
+                                    <Separator className="my-2" />
+                                    <div className="flex justify-between"><Skeleton className="h-5 w-12" /><Skeleton className="h-5 w-20" /></div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                     </div>
+                     <div className="grid auto-rows-max gap-4">
+                        <Card>
+                            <CardHeader>
+                                <Skeleton className="h-6 w-40" />
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                 <div className="flex items-center gap-4">
+                                    <Skeleton className="h-12 w-12 rounded-full" />
+                                    <div className="space-y-1">
+                                        <Skeleton className="h-4 w-32" />
+                                        <Skeleton className="h-3 w-40" />
+                                    </div>
+                                </div>
+                                <Separator />
+                                <div>
+                                    <Skeleton className="h-5 w-32 mb-2" />
+                                    <div className="space-y-1">
+                                        <Skeleton className="h-4 w-40" />
+                                        <Skeleton className="h-4 w-48" />
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                 <Skeleton className="h-6 w-32" />
+                            </CardHeader>
+                            <CardContent>
+                                <Skeleton className="h-10 w-full" />
+                            </CardContent>
+                            <CardFooter>
+                                <Skeleton className="h-10 w-full" />
+                            </CardFooter>
+                        </Card>
+                     </div>
+                </div>
+            </main>
+        );
     }
 
     if (!order) {

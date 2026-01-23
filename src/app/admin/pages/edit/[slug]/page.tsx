@@ -14,6 +14,7 @@ import { useSupabase } from '@/lib/supabase/provider';
 import TiptapEditor from '@/components/tiptap-editor';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type PageData = {
     slug: string;
@@ -199,7 +200,28 @@ const PageEditor = () => {
         }
     };
 
-    if (loading) return <p>Loading editor...</p>;
+    if (loading) {
+        return (
+             <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-6 w-32" />
+                </div>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-8 w-1/2" />
+                        <Skeleton className="h-4 w-1/3" />
+                    </CardHeader>
+                    <CardContent>
+                        <Skeleton className="h-96 w-full" />
+                    </CardContent>
+                    <CardFooter className="justify-end border-t pt-6">
+                        <Skeleton className="h-10 w-32" />
+                    </CardFooter>
+                </Card>
+            </main>
+        );
+    }
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">

@@ -14,6 +14,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from 'next/link';
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Page {
   slug: string;
@@ -44,7 +45,24 @@ export default function AdminPagesManager() {
     }, [getPages]);
 
     if (loading) {
-        return <p>Loading page manager...</p>
+        return (
+             <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-7 w-40" />
+                        <Skeleton className="h-4 w-64" />
+                    </CardHeader>
+                    <CardContent className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {Array.from({length: 6}).map((_, i) => (
+                             <Card key={i} className="flex items-center justify-between p-4">
+                                <Skeleton className="h-5 w-32" />
+                                <Skeleton className="h-9 w-24" />
+                            </Card>
+                        ))}
+                    </CardContent>
+                </Card>
+            </main>
+        )
     }
 
     return (

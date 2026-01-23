@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import TiptapEditor from '@/components/tiptap-editor';
 import { useSupabase } from '@/lib/supabase/provider';
 import { updateMessageStatus } from '@/app/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Message {
     id: number;
@@ -73,7 +74,44 @@ export default function ViewMessagePage() {
 
 
     if (loading || !message) {
-        return <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8"><p>Loading message...</p></main>;
+        return (
+             <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-6 w-20 ml-auto rounded-full" />
+                </div>
+                <div className="grid gap-4">
+                    <Card>
+                        <CardHeader className="border-b">
+                             <div className="flex items-center gap-3">
+                                <Skeleton className="h-10 w-10 rounded-full" />
+                                <div className="space-y-1">
+                                    <Skeleton className="h-4 w-32" />
+                                    <Skeleton className="h-3 w-40" />
+                                </div>
+                                <Skeleton className="h-4 w-24 ml-auto" />
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-6 pt-6">
+                            <div className="space-y-2">
+                                <Skeleton className="h-6 w-1/2" />
+                                <Skeleton className="h-4 w-full" />
+                                 <Skeleton className="h-4 w-4/5" />
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <Skeleton className="h-6 w-24" />
+                                <Skeleton className="h-36 w-full" />
+                            </div>
+                        </CardContent>
+                        <CardFooter className="justify-end border-t pt-6">
+                            <Skeleton className="h-10 w-28" />
+                        </CardFooter>
+                    </Card>
+                </div>
+            </main>
+        );
     }
     
     const handleSubmit = (e: React.FormEvent) => {

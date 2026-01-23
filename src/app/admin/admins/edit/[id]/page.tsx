@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useSupabase } from '@/lib/supabase/provider';
 import { updateUserRole } from '@/app/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Admin {
     id: string;
@@ -89,7 +90,39 @@ export default function EditAdminPage() {
     };
 
     if (loading) {
-        return <p>Loading admin details...</p>;
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-6 w-32" />
+                </div>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-4 w-64" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid gap-6">
+                            <div className="grid gap-3">
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                            <div className="grid gap-3">
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                            <div className="grid gap-3">
+                                <Skeleton className="h-4 w-12" />
+                                <Skeleton className="h-10 w-full" />
+                            </div>
+                        </div>
+                    </CardContent>
+                    <CardFooter className="justify-end border-t pt-6">
+                        <Skeleton className="h-10 w-28" />
+                    </CardFooter>
+                </Card>
+            </main>
+        );
     }
     
     if (!admin) {

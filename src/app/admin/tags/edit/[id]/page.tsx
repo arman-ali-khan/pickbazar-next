@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,6 +11,7 @@ import { ChevronLeft } from 'lucide-react';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabase } from '@/lib/supabase/provider';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EditTagPage() {
     const router = useRouter();
@@ -75,7 +77,33 @@ export default function EditTagPage() {
     };
 
     if (loading) {
-        return <p>Loading tag...</p>
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-6 w-24" />
+                </div>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-24" />
+                        <Skeleton className="h-4 w-48" />
+                    </CardHeader>
+                    <CardContent className="grid gap-6">
+                        <div className="grid gap-3">
+                            <Skeleton className="h-4 w-12" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                        <div className="grid gap-3">
+                            <Skeleton className="h-4 w-12" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                    </CardContent>
+                    <CardFooter className="justify-end border-t pt-6">
+                        <Skeleton className="h-10 w-28" />
+                    </CardFooter>
+                </Card>
+            </main>
+        );
     }
 
     return (
