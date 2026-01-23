@@ -38,6 +38,7 @@ import { format } from "date-fns";
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import type { OrderStatus } from '@/lib/data';
+import { Skeleton } from "@/components/ui/skeleton";
 
 type OrderWithCustomer = {
     id: number;
@@ -287,7 +288,77 @@ export default function AdminOrdersPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
-                    {loading ? <p>Loading orders...</p> : <OrderList orders={paginatedOrders} />}
+                    {loading ? (
+                        <>
+                            {/* Mobile Skeleton */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:hidden">
+                                {Array.from({ length: 4 }).map((_, i) => (
+                                    <Card key={i} className="overflow-hidden">
+                                        <CardHeader className="flex flex-row items-center justify-between p-4">
+                                            <div className="flex items-center gap-3">
+                                                <Skeleton className="h-10 w-10 rounded-full" />
+                                                <div className="space-y-1">
+                                                    <Skeleton className="h-4 w-24" />
+                                                    <Skeleton className="h-3 w-20" />
+                                                </div>
+                                            </div>
+                                            <Skeleton className="h-8 w-8" />
+                                        </CardHeader>
+                                        <CardContent className="p-4 pt-0 space-y-2">
+                                                <div className="flex justify-between items-center text-sm">
+                                                <Skeleton className="h-4 w-12" />
+                                                <Skeleton className="h-5 w-20" />
+                                            </div>
+                                            <div className="flex justify-between items-center text-sm">
+                                                <Skeleton className="h-4 w-16" />
+                                                <Skeleton className="h-4 w-24" />
+                                            </div>
+                                                <div className="flex justify-between items-center text-sm">
+                                                <Skeleton className="h-4 w-12" />
+                                                <Skeleton className="h-6 w-20 rounded-full" />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                ))}
+                            </div>
+
+                            {/* Desktop Skeleton */}
+                            <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-32" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                                                <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                                                <TableHead><span className="sr-only">Actions</span></TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {Array.from({ length: 5 }).map((_, i) => (
+                                                <TableRow key={i}>
+                                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-2">
+                                                            <Skeleton className="h-8 w-8 rounded-full" />
+                                                            <div className="space-y-1">
+                                                                <Skeleton className="h-4 w-24" />
+                                                                <Skeleton className="h-3 w-32" />
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-24" /></TableCell>
+                                                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                                    <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                                                    <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                            </div>
+                        </>
+                    ) : <OrderList orders={paginatedOrders} />}
                 </CardContent>
                 <CardFooter>
                     <div className="flex items-center justify-between w-full">
