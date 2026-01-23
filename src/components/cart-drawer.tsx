@@ -20,6 +20,7 @@ import {
     selectTotalItems, 
     selectSubtotal 
 } from '@/lib/redux/slices/cartSlice';
+import { useState, useEffect } from 'react';
 
 
 export default function CartDrawer() {
@@ -28,6 +29,11 @@ export default function CartDrawer() {
   const isCartOpen = useAppSelector(state => state.cart.isCartOpen);
   const totalItems = useAppSelector(selectTotalItems);
   const subtotal = useAppSelector(selectSubtotal);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   return (
     <>
@@ -35,10 +41,10 @@ export default function CartDrawer() {
         <Button onClick={() => dispatch(openCart())} className="h-auto p-0 flex flex-col gap-0 rounded-l-md rounded-r-none shadow-lg">
           <div className="flex items-center gap-2 px-3 py-2">
             <ShoppingBag className="h-5 w-5" />
-            <span className="text-sm font-medium">{totalItems} Items</span>
+            <span className="text-sm font-medium">{isMounted ? totalItems : 0} Items</span>
           </div>
           <div className="bg-white text-primary rounded-md mx-4 py-1 px-4 text-sm font-bold m-1">
-            ${subtotal.toFixed(2)}
+            ${isMounted ? subtotal.toFixed(2) : '0.00'}
           </div>
         </Button>
       </div>
@@ -48,7 +54,7 @@ export default function CartDrawer() {
           <div className="flex items-center justify-between p-6 border-b">
             <SheetTitle className="flex items-center gap-3 text-primary">
               <ShoppingBag className="h-6 w-6" />
-              <span className="text-lg font-semibold text-gray-800">{totalItems} Items</span>
+              <span className="text-lg font-semibold text-gray-800">{isMounted ? totalItems : 0} Items</span>
             </SheetTitle>
           </div>
           
@@ -96,7 +102,7 @@ export default function CartDrawer() {
                   <Link href="/checkout" className="flex items-center justify-center text-white">
                       Checkout
                       <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-primary rounded-full px-5 py-2.5 text-sm font-bold">
-                          ${subtotal.toFixed(2)}
+                          ${isMounted ? subtotal.toFixed(2) : '0.00'}
                       </span>
                   </Link>
               </Button>
