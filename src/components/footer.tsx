@@ -1,19 +1,28 @@
 import Link from 'next/link';
 import { Leaf, Facebook, Twitter, Instagram } from 'lucide-react';
 import { Button } from './ui/button';
+import { createClient } from '@/lib/supabase/server';
+import Image from 'next/image';
 
-export default function Footer() {
+export default async function Footer() {
+  const supabase = createClient();
+  const { data: settings } = await supabase.rpc('get_all_settings');
+
   return (
     <footer className="bg-muted/40">
-      <div className="container py-8">
+      <div className="container py-8 mx-auto px-4">
         <div className="grid md:grid-cols-3 gap-8">
           <div>
             <div className="flex items-center space-x-2 mb-4">
-              <Leaf className="h-7 w-7 text-primary" />
-              <span className="font-bold text-xl">Pickbazar</span>
+              {settings?.logo_url ? (
+                  <Image src={settings.logo_url} alt={settings.site_title || 'Logo'} width={28} height={28} className="h-7 w-auto"/>
+              ) : (
+                  <Leaf className="h-7 w-7 text-primary" />
+              )}
+              <span className="font-bold text-xl">{settings?.site_title || 'Pickbazar'}</span>
             </div>
             <p className="text-muted-foreground text-sm max-w-xs">
-              Your one-stop shop for fresh, high-quality groceries delivered to your door.
+              {settings?.site_subtitle || 'Your one-stop shop for fresh, high-quality groceries delivered to your door.'}
             </p>
           </div>
           <div className="grid grid-cols-2 md:col-span-2 gap-8">
@@ -38,18 +47,12 @@ export default function Footer() {
         </div>
         <div className="mt-8 pt-8 border-t flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground order-2 md:order-1 mt-4 md:mt-0">
-             © {new Date().getFullYear()} Pickbazar. All rights reserved.
+             © {new Date().getFullYear()} {settings?.site_title || 'Pickbazar'}. All rights reserved.
           </p>
           <div className="flex space-x-2 order-1 md:order-2">
-              <Button variant="ghost" size="icon" asChild>
-                <a href="#"><Facebook className="h-5 w-5 text-muted-foreground" /></a>
-              </Button>
-               <Button variant="ghost" size="icon" asChild>
-                <a href="#"><Twitter className="h-5 w-5 text-muted-foreground" /></a>
-              </Button>
-               <Button variant="ghost" size="icon" asChild>
-                <a href="#"><Instagram className="h-5 w-5 text-muted-foreground" /></a>
-              </Button>
+              {settings?.social_facebook_url && <Button variant="ghost" size="icon" asChild><a href={settings.social_facebook_url} target="_blank" rel="noopener noreferrer"><Facebook className="h-5 w-5 text-muted-foreground" /></a></Button>}
+              {settings?.social_twitter_url && <Button variant="ghost" size="icon" asChild><a href={settings.social_twitter_url} target="_blank" rel="noopener noreferrer"><Twitter className="h-5 w-5 text-muted-foreground" /></a></Button>}
+              {settings?.social_instagram_url && <Button variant="ghost" size="icon" asChild><a href={settings.social_instagram_url} target="_blank" rel="noopener noreferrer"><Instagram className="h-5 w-5 text-muted-foreground" /></a></Button>}
           </div>
         </div>
       </div>

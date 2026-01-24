@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { UploadCloud, Settings as SettingsIcon, Search, CreditCard, Wrench, Megaphone, X } from "lucide-react";
+import { UploadCloud, Settings as SettingsIcon, Search, CreditCard, Wrench, Megaphone, X, Share2 } from "lucide-react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense, useState, useEffect, useCallback, useTransition } from "react";
 import { useSupabase } from "@/lib/supabase/provider";
@@ -40,6 +40,9 @@ interface AllSettings {
     maintenance_cover_image_url: string | null;
     maintenance_end_date: string | null;
     enable_promo_popup: boolean;
+    social_facebook_url: string | null;
+    social_twitter_url: string | null;
+    social_instagram_url: string | null;
 }
 
 function SettingsContent() {
@@ -182,12 +185,13 @@ function SettingsContent() {
 
     return (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
                 <TabsTrigger value="general" className="flex items-center gap-2"><SettingsIcon className="h-4 w-4" /><span className="hidden md:inline">General</span></TabsTrigger>
                 <TabsTrigger value="seo" className="flex items-center gap-2"><Search className="h-4 w-4" /><span className="hidden md:inline">SEO</span></TabsTrigger>
                 <TabsTrigger value="payments" className="flex items-center gap-2"><CreditCard className="h-4 w-4" /><span className="hidden md:inline">Payments</span></TabsTrigger>
                 <TabsTrigger value="maintenance" className="flex items-center gap-2"><Wrench className="h-4 w-4" /><span className="hidden md:inline">Maintenance</span></TabsTrigger>
                 <TabsTrigger value="promo" className="flex items-center gap-2"><Megaphone className="h-4 w-4" /><span className="hidden md:inline">Promotions</span></TabsTrigger>
+                <TabsTrigger value="social" className="flex items-center gap-2"><Share2 className="h-4 w-4" /><span className="hidden md:inline">Social</span></TabsTrigger>
             </TabsList>
             
             <TabsContent value="general">
@@ -299,6 +303,36 @@ function SettingsContent() {
                         </CardContent>
                          <CardFooter className="border-t pt-6">
                             <Button onClick={handleSaveChanges} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>
+                        </CardFooter>
+                    </Card>
+                )}
+            </TabsContent>
+
+            <TabsContent value="social">
+                {loading ? renderSkeleton() : (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Social Media Links</CardTitle>
+                            <CardDescription>Manage the social media links shown in your site's footer.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2">
+                                <Label htmlFor="social_facebook_url">Facebook URL</Label>
+                                <Input id="social_facebook_url" value={settings.social_facebook_url || ''} onChange={handleInputChange} placeholder="https://facebook.com/your-page" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="social_twitter_url">Twitter URL</Label>
+                                <Input id="social_twitter_url" value={settings.social_twitter_url || ''} onChange={handleInputChange} placeholder="https://twitter.com/your-handle" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="social_instagram_url">Instagram URL</Label>
+                                <Input id="social_instagram_url" value={settings.social_instagram_url || ''} onChange={handleInputChange} placeholder="https://instagram.com/your-profile" />
+                            </div>
+                        </CardContent>
+                        <CardFooter className="border-t pt-6">
+                            <Button onClick={handleSaveChanges} disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save Changes'}
+                            </Button>
                         </CardFooter>
                     </Card>
                 )}
