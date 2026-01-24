@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,6 +20,7 @@ import Link from 'next/link';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ShippingInfo {
   firstName: string;
@@ -50,6 +52,8 @@ export default function PaymentPage() {
     const [trxId, setTrxId] = useState('');
     const [mobileLast4, setMobileLast4] = useState('');
     const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
+    const [paymentSettings, setPaymentSettings] = useState<any>(null);
+    const [loadingSettings, setLoadingSettings] = useState(true);
 
     const shippingCost = 5.00;
     const discountAmount = appliedDiscount?.discount || 0;
@@ -75,7 +79,17 @@ export default function PaymentPage() {
             // If no shipping info but we have cart items, something is wrong, go back
             router.push('/checkout');
         }
-    }, [router, cartItems, authLoading, user, toast]);
+
+        const fetchSettings = async () => {
+            setLoadingSettings(true);
+            const { data } = await supabase.rpc('get_all_settings');
+            if (data && data[0]) {
+                setPaymentSettings(data[0]);
+            }
+            setLoadingSettings(false);
+        };
+        fetchSettings();
+    }, [router, cartItems, authLoading, user, toast, supabase]);
     
     const handlePayment = async () => {
         if (!shippingInfo || !user) {
@@ -123,6 +137,13 @@ export default function PaymentPage() {
         localStorage.removeItem('appliedDiscount');
         
         router.push(`/checkout/success?order_number=${orderNumber}`);
+    };
+
+    const mobileBankingLogos: { [key: string]: string } = {
+        'bKash': 'https://asset.brandfetch.io/id20mQ50A0/id40b59bE4.png',
+        'Nagad': 'https://asset.brandfetch.io/id5nLd0s5A/id_3t9Uq23.png',
+        'Rocket': 'https://asset.brandfetch.io/idBBlpmsiS/idR3Gk8qjO.png',
+        'Upay': 'https://play-lh.googleusercontent.com/y-3mZt5yFf3Q0-5y5dU83o21mmp0vQpPH3p23jLdE_p6Q-f9Lw8aCwsz9Qy_5B2e_g',
     };
 
   return (
@@ -209,22 +230,40 @@ export default function PaymentPage() {
                   </Label>
                   {selectedMethod === 'mobile-banking' && (
                     <div className="p-4 border border-t-0 rounded-b-md bg-muted/20 space-y-4 -mt-4">
-                        <p className="text-sm text-muted-foreground">
-                            1. Go to your bKash/Nagad/Rocket App and select 'Send Money'.<br/>
-                            2. Enter the agent number: <strong className="text-primary">01xxxxxxxxx</strong><br/>
-                            3. Enter the total amount: <strong className="text-primary">${total.toFixed(2)}</strong><br/>
-                            4. Complete the transaction and enter the details below.
-                        </p>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="trxId">Transaction ID</Label>
-                                <Input id="trxId" placeholder="Enter TrxID" value={trxId} onChange={(e) => setTrxId(e.target.value)} required={selectedMethod === 'mobile-banking'} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="mobileLast4">Your Mobile No. (Last 4 Digits)</Label>
-                                <Input id="mobileLast4" placeholder="e.g., 1234" value={mobileLast4} onChange={(e) => setMobileLast4(e.target.value)} required={selectedMethod === 'mobile-banking'} />
-                            </div>
-                        </div>
+                        {loadingSettings ? <Skeleton className="h-24 w-full" /> : 
+                         paymentSettings?.enable_mobile_banking && paymentSettings?.mobile_banking_number ? (
+                            <>
+                                {paymentSettings.mobile_banking_options?.length > 0 && (
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <p className="text-sm font-medium">Pay with:</p>
+                                        {paymentSettings.mobile_banking_options.map((opt: string) => (
+                                            <div key={opt} className="flex items-center gap-1.5 p-1.5 bg-background rounded-md border text-xs">
+                                                {mobileBankingLogos[opt] && <Image src={mobileBankingLogos[opt]} alt={opt} width={16} height={16} />}
+                                                <span>{opt}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <p className="text-sm text-muted-foreground">
+                                    1. Go to your mobile banking app and select 'Send Money'.<br/>
+                                    2. Enter the number: <strong className="text-primary">{paymentSettings.mobile_banking_number}</strong><br/>
+                                    3. Enter the total amount: <strong className="text-primary">${total.toFixed(2)}</strong><br/>
+                                    4. Complete the transaction and enter the details below.
+                                </p>
+                                <div className="grid sm:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="trxId">Transaction ID</Label>
+                                        <Input id="trxId" placeholder="Enter TrxID" value={trxId} onChange={(e) => setTrxId(e.target.value)} required={selectedMethod === 'mobile-banking'} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="mobileLast4">Your Mobile No. (Last 4 Digits)</Label>
+                                        <Input id="mobileLast4" placeholder="e.g., 1234" value={mobileLast4} onChange={(e) => setMobileLast4(e.target.value)} required={selectedMethod === 'mobile-banking'} />
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">Mobile banking is not available at this moment. Please choose another method.</p>
+                        )}
                     </div>
                   )}
 

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -20,6 +21,7 @@ import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { iconList } from "@/lib/icon-list";
 import LucideIcon from "@/components/lucide-icon";
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
 
 interface SocialLink {
     url: string;
@@ -49,6 +51,8 @@ interface AllSettings {
     maintenance_end_date: string | null;
     enable_promo_popup: boolean;
     social_links: SocialLink[] | null;
+    mobile_banking_number: string | null;
+    mobile_banking_options: string[];
 }
 
 function SettingsContent() {
@@ -60,6 +64,7 @@ function SettingsContent() {
 
     const [settings, setSettings] = useState<Partial<AllSettings>>({});
     const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+    const [mobileBankingOptions, setMobileBankingOptions] = useState<string[]>([]);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [faviconFile, setFaviconFile] = useState<File | null>(null);
     const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -81,11 +86,8 @@ function SettingsContent() {
         } else if (data && data.length > 0) {
             const settingsData = data[0];
             setSettings(settingsData);
-            if (Array.isArray(settingsData.social_links)) {
-                setSocialLinks(settingsData.social_links);
-            } else {
-                setSocialLinks([]);
-            }
+            setSocialLinks(Array.isArray(settingsData.social_links) ? settingsData.social_links : []);
+            setMobileBankingOptions(Array.isArray(settingsData.mobile_banking_options) ? settingsData.mobile_banking_options : []);
         }
         setLoading(false);
     }, [supabase, toast]);
@@ -143,7 +145,7 @@ function SettingsContent() {
                 if (maintenanceCoverFile) updatedSettings.maintenance_cover_image_url = await uploadImage(maintenanceCoverFile);
                 
                 const settingsToUpdate = Object.entries(updatedSettings)
-                    .filter(([key]) => key !== 'social_links')
+                    .filter(([key]) => !['social_links', 'mobile_banking_options'].includes(key))
                     .map(([key, value]) => ({
                         key,
                         value: value === null || value === undefined ? null : String(value),
@@ -152,6 +154,10 @@ function SettingsContent() {
                 settingsToUpdate.push({
                     key: 'social_links',
                     value: JSON.stringify(socialLinks)
+                });
+                settingsToUpdate.push({
+                    key: 'mobile_banking_options',
+                    value: JSON.stringify(mobileBankingOptions)
                 });
 
                 const result = await updateSettings(settingsToUpdate);
@@ -179,6 +185,14 @@ function SettingsContent() {
     const removeSocialLink = (index: number) => {
         setSocialLinks(socialLinks.filter((_, i) => i !== index));
     }
+
+    const handleMobileBankingOptionChange = (option: string) => {
+        setMobileBankingOptions(prev => 
+            prev.includes(option)
+            ? prev.filter(item => item !== option)
+            : [...prev, option]
+        );
+    };
     
     const renderImageUploader = (label: string, key: keyof AllSettings, fileSetter: React.Dispatch<React.SetStateAction<File | null>>) => (
         <div className="space-y-2">
@@ -216,6 +230,8 @@ function SettingsContent() {
         </Card>
     )
 
+    const availableMobileProviders = ['bKash', 'Nagad', 'Rocket', 'Upay'];
+
     return (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
             <TabsList className="sm:grdi flex justify-between w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
@@ -245,9 +261,11 @@ function SettingsContent() {
                                         <Input id="site_subtitle" value={settings.site_subtitle || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
-                                {renderImageUploader('Site Logo', 'logo_url', setLogoFile)}
+                               <div className='flex flex-col sm:flex-row w-full gap-6 *:w-full'>
+                               {renderImageUploader('Site Logo', 'logo_url', setLogoFile)}
                                 {renderImageUploader('Favicon', 'favicon_url', setFaviconFile)}
                                 {renderImageUploader('Link Preview Image', 'link_preview_image_url', setPreviewFile)}
+                               </div>
                         </CardContent>
                         <CardFooter className="border-t pt-6">
                             <Button onClick={handleSaveChanges} disabled={isSaving}>
@@ -292,6 +310,34 @@ function SettingsContent() {
                             <div className="flex items-center justify-between p-4 border rounded-lg"><Label htmlFor="enable_mobile_banking" className="flex flex-col gap-1"><span>Mobile Banking</span><span className="font-normal text-sm text-muted-foreground">Accept payments through mobile banking apps.</span></Label><Switch id="enable_mobile_banking" checked={settings.enable_mobile_banking} onCheckedChange={(c) => handleSwitchChange('enable_mobile_banking', c)} /></div>
                             <div className="flex items-center justify-between p-4 border rounded-lg"><Label htmlFor="enable_card_payment" className="flex flex-col gap-1"><span>Card Payment</span><span className="font-normal text-sm text-muted-foreground">Accept credit/debit card payments.</span></Label><Switch id="enable_card_payment" checked={settings.enable_card_payment} onCheckedChange={(c) => handleSwitchChange('enable_card_payment', c)} /></div>
                             <div className="flex items-center justify-between p-4 border rounded-lg"><Label htmlFor="enable_sslcommerz" className="flex flex-col gap-1"><span>SSLCommerz</span><span className="font-normal text-sm text-muted-foreground">Enable SSLCommerz payment gateway.</span></Label><Switch id="enable_sslcommerz" checked={settings.enable_sslcommerz} onCheckedChange={(c) => handleSwitchChange('enable_sslcommerz', c)} /></div>
+                            
+                            <div className="space-y-2 pt-4">
+                                <Label htmlFor="mobile_banking_number">Mobile Banking Number</Label>
+                                <Input id="mobile_banking_number" value={settings.mobile_banking_number || ''} onChange={handleInputChange} placeholder="e.g. 01234567890" />
+                                <p className="text-xs text-muted-foreground">The number customers will send money to.</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Enabled Mobile Banking Providers</Label>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start text-left font-normal h-auto">
+                                            {mobileBankingOptions.length > 0 ? `${mobileBankingOptions.length} providers selected` : "Select providers"}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="w-64 p-2">
+                                        {availableMobileProviders.map(opt => (
+                                            <DropdownMenuCheckboxItem
+                                                key={opt}
+                                                checked={mobileBankingOptions.includes(opt)}
+                                                onCheckedChange={() => handleMobileBankingOptionChange(opt)}
+                                                onSelect={(e) => e.preventDefault()}
+                                            >
+                                                {opt}
+                                            </DropdownMenuCheckboxItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
                         </CardContent>
                         <CardFooter className="border-t pt-6">
                             <Button onClick={handleSaveChanges} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>
