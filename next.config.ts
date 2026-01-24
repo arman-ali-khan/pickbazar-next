@@ -46,6 +46,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'asset.brandfetch.io',
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'play-lh.googleusercontent.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 };
