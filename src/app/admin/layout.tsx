@@ -51,7 +51,7 @@ export default async function AdminLayout({
                 <AdminSidebar logoUrl={settings?.logo_url} siteTitle={settings?.site_title} />
                 <div className="flex flex-col flex-1 w-0 pb-16 md:pb-0">
                     <AdminHeader />
-                    <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+                    <main className="flex-1 p-1 sm:p-6 lg:p-8 overflow-y-auto">
                         {children}
                     </main>
                 </div>
