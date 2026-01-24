@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -63,7 +64,6 @@ const CategoriesNav = () => {
                 .order('name');
             
             if (error) {
-                console.error("Error fetching categories:", error);
                 setCategories([]);
             } else if (data) {
                 const topLevel: HierarchicalCategory[] = data

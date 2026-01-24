@@ -391,7 +391,7 @@ export async function updateUserRole(formData: FormData) {
     }
     const myRole = roleData?.[0]?.role;
 
-    if (myRole !== 'super-admin') {
+    if (!myRole || !['admin', 'super-admin'].includes(myRole)) {
         return { error: 'You do not have permission to perform this action.' };
     }
 
