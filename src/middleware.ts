@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
         remove(name: string, options: CookieOptions) {
           request.cookies.set({
             name,
-            value,
+            value: '',
             ...options,
           })
           response = NextResponse.next({
@@ -64,6 +64,34 @@ export async function middleware(request: NextRequest) {
   )
 
   await supabase.auth.getSession()
+
+  // Maintenance mode check
+  try {
+    const { data: maintenanceSetting } = await supabase
+      .from('settings')
+      .select('value')
+      .eq('key', 'maintenance_mode')
+      .single();
+
+    const isMaintenanceMode = maintenanceSetting?.value === 'true';
+    const { pathname } = request.nextUrl;
+
+    if (isMaintenanceMode) {
+      const isAllowed = 
+        pathname === '/maintenance' ||
+        pathname.startsWith('/admin') ||
+        pathname.startsWith('/profile') ||
+        pathname.startsWith('/api') ||
+        pathname.startsWith('/auth');
+
+      if (!isAllowed) {
+        return NextResponse.rewrite(new URL('/maintenance', request.url));
+      }
+    }
+  } catch (error) {
+    // If settings table doesn't exist or there's an error, proceed normally.
+    console.error('Middleware error checking maintenance mode:', error);
+  }
 
   return response
 }
