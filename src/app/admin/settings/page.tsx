@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -77,10 +78,13 @@ function SettingsContent() {
         const { data, error } = await supabase.rpc('get_all_settings');
         if (error) {
             toast({ variant: 'destructive', title: 'Error fetching settings', description: error.message });
-        } else if (data) {
-            setSettings(data);
-            if (data.social_links && Array.isArray(data.social_links)) {
-                setSocialLinks(data.social_links);
+        } else if (data && data.length > 0) {
+            const settingsData = data[0];
+            setSettings(settingsData);
+            if (Array.isArray(settingsData.social_links)) {
+                setSocialLinks(settingsData.social_links);
+            } else {
+                setSocialLinks([]);
             }
         }
         setLoading(false);
