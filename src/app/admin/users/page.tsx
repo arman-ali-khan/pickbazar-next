@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -24,12 +23,12 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSub,
     DropdownMenuSubTrigger,
-    DropdownMenuSubContent,
     DropdownMenuPortal,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
+    DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -173,6 +172,9 @@ export default function AdminUsersPage() {
     if (loading) {
         return <p>Loading users...</p>;
     }
+    
+    const isAllSelected = selectedUserIds.length > 0 && selectedUserIds.length === filteredUsers.length;
+    const isSomeSelected = selectedUserIds.length > 0 && selectedUserIds.length < filteredUsers.length;
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
@@ -211,8 +213,7 @@ export default function AdminUsersPage() {
                                     <TableHead className="w-12">
                                         <Checkbox
                                             onCheckedChange={handleSelectAll}
-                                            checked={selectedUserIds.length > 0 && selectedUserIds.length === filteredUsers.length}
-                                            indeterminate={selectedUserIds.length > 0 && selectedUserIds.length < filteredUsers.length}
+                                            checked={isAllSelected ? true : isSomeSelected ? 'indeterminate' : false}
                                          />
                                     </TableHead>
                                     <TableHead>User</TableHead>
