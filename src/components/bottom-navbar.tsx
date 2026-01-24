@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Home, Search, Menu, User, ShoppingCart, ChevronDown, Settings, Leaf } from 'lucide-react';
+import { Home, Menu, User, ShoppingCart, ChevronDown, Settings, Leaf, Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
@@ -11,16 +11,20 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
-import { toggleSearch } from '@/lib/redux/slices/uiSlice';
 import { openCart, selectTotalItems } from '@/lib/redux/slices/cartSlice';
 import ProfileSidebar from './profile-sidebar';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useState, useEffect } from 'react';
 import LucideIcon from './lucide-icon';
+import { userNotifications as initialNotifications } from '@/lib/data';
+import type { UserNotification } from '@/lib/data';
+import { formatDistanceToNow } from 'date-fns';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
     <Link
@@ -167,6 +171,13 @@ export default function BottomNavbar() {
     const router = useRouter();
     const pathname = usePathname();
     const isProfilePage = pathname.startsWith('/profile');
+    
+    const [notifications, setNotifications] = useState(initialNotifications);
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+
+    const markAsRead = (id: number) => {
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    };
 
     const handleProfileClick = () => {
         if (user) {
@@ -221,10 +232,38 @@ export default function BottomNavbar() {
             <div className="grid h-full grid-cols-5 mx-auto">
                 <PagesDrawer />
 
-                <Button variant="ghost" className="flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={() => dispatch(toggleSearch())}>
-                    <Search className="h-6 w-6" />
-                    <span className="text-xs">Search</span>
-                </Button>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2">
+                            <Bell className="h-6 w-6" />
+                            <span className="text-xs">Alerts</span>
+                            {unreadCount > 0 && (
+                                <span className="absolute top-1 right-3.5 text-xs bg-primary text-primary-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">
+                                    {unreadCount}
+                                </span>
+                            )}
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="top" align="center" className="w-80 mb-2">
+                        <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {notifications.slice(0, 4).map((notification) => (
+                             <DropdownMenuItem key={notification.id} onSelect={() => markAsRead(notification.id)} asChild className="flex flex-col items-start gap-1 p-2 cursor-pointer">
+                                <Link href={notification.link}>
+                                    <p className="font-semibold text-sm">{notification.title}</p>
+                                    <p className="text-xs text-muted-foreground whitespace-normal">{notification.message}</p>
+                                    <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
+                                        {formatDistanceToNow(new Date(notification.date), { addSuffix: true })}
+                                    </p>
+                                </Link>
+                            </DropdownMenuItem>
+                        ))}
+                         <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                            <Link href="/profile/notifications" className="flex items-center justify-center text-sm p-2">See all notifications</Link>
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
 
                 <Link href="/" className="inline-flex flex-col items-center justify-center p-2 text-muted-foreground hover:bg-gray-50 dark:hover:bg-gray-800 group">
                     <div className="w-14 h-14 -mt-8 flex items-center justify-center rounded-full bg-primary text-white shadow-lg">
