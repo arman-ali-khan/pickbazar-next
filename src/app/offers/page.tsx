@@ -1,6 +1,5 @@
 
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -87,7 +86,6 @@ export default async function OffersPage() {
           )}
         </div>
       </main>
-      <Footer />
       <CartDrawer />
     </div>
   );

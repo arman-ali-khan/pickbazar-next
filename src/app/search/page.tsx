@@ -2,7 +2,6 @@
 
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import ProductCard from '@/components/product-details';
 import type { Product } from '@/lib/data';
@@ -232,7 +231,6 @@ export default function SearchPage() {
       <Suspense fallback={<div className="container py-12 text-center">Loading search results...</div>}>
         <SearchContent />
       </Suspense>
-      <Footer />
       <CartDrawer />
     </div>
   );

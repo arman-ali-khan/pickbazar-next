@@ -1,7 +1,6 @@
 'use client';
 
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import ProfileSidebar from '@/components/profile-sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -112,7 +111,6 @@ export default function MyQuestionsPage() {
                 </Card>
             </div>
           </main>
-          <Footer />
           <CartDrawer />
         </div>
     );

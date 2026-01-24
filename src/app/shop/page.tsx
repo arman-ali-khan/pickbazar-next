@@ -4,7 +4,6 @@
 import { useState, useCallback, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import ProductCard from '@/components/product-details';
 import type { Product } from '@/lib/data';
@@ -315,7 +314,6 @@ export default function ShopPage() {
           <ShopContent />
         </Suspense>
       </main>
-      <Footer />
       <CartDrawer />
     </div>
   );

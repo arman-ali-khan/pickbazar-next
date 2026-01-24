@@ -1,6 +1,5 @@
 
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/server';
@@ -37,7 +36,6 @@ export default async function PrivacyPolicyPage() {
           </Card>
         </div>
       </main>
-      <Footer />
       <CartDrawer />
     </div>
   );

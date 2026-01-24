@@ -1,7 +1,6 @@
 'use client';
 
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import ProfileSidebar from '@/components/profile-sidebar';
 import ProductCard from '@/components/product-details';
@@ -100,7 +99,6 @@ export default function MyWishlistPage() {
                 </Card>
             </div>
           </main>
-          <Footer />
           <CartDrawer />
         </div>
     );

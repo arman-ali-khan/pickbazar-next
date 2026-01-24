@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import ProfileSidebar from '@/components/profile-sidebar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -151,7 +150,6 @@ export default function MyOrderDetailsPage() {
                     </div>
                 </div>
               </main>
-              <Footer />
               <CartDrawer />
             </div>
         );
@@ -264,7 +262,6 @@ export default function MyOrderDetailsPage() {
                 </div>
             </div>
           </main>
-          <Footer />
           <CartDrawer />
         </div>
     );

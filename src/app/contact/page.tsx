@@ -5,7 +5,6 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import { Button } from '@/components/ui/button';
 import {
@@ -207,7 +206,6 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
-      <Footer />
       <CartDrawer />
     </div>
   );

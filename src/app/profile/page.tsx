@@ -4,7 +4,6 @@ import { useSupabase } from '@/lib/supabase/provider';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -258,7 +257,6 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </main>
-            <Footer />
             <CartDrawer />
         </div>
     );
@@ -391,7 +389,6 @@ export default function ProfilePage() {
             </div>
         </div>
       </main>
-      <Footer />
       <CartDrawer />
     </div>
   );

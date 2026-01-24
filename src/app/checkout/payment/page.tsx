@@ -3,7 +3,6 @@
 
 import { useState, useEffect } from 'react';
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -316,7 +315,6 @@ export default function PaymentPage() {
             </Card>
         </div>
       </main>
-      <Footer />
       <CartDrawer />
     </div>
   );

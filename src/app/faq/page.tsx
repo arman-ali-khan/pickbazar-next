@@ -1,6 +1,5 @@
 
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import {
   Accordion,
@@ -49,7 +48,6 @@ export default async function FaqPage() {
           )}
         </div>
       </main>
-      <Footer />
       <CartDrawer />
     </div>
   );

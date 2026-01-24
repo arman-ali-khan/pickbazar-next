@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useTransition } from 'react';
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -175,7 +174,6 @@ export default function CheckoutPage() {
                   <Skeleton className="h-96 w-full" />
               </div>
             </main>
-            <Footer />
             <CartDrawer />
           </div>
       );
@@ -277,7 +275,6 @@ export default function CheckoutPage() {
           </div>
         </div>
       </main>
-      <Footer />
       <CartDrawer />
     </div>
   );

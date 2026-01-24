@@ -1,7 +1,6 @@
 
 
 import CartDrawer from "@/components/cart-drawer";
-import Footer from "@/components/footer";
 import Header from "@/components/header";
 import HeroBanners from "@/components/product-image-gallery";
 import OfferCarousel, { type OfferForCarousel } from "@/components/offer-carousel";
@@ -77,7 +76,6 @@ export default async function Home() {
           </div>
         </section>
       </main>
-      <Footer />
       <CartDrawer />
     </div>
   );

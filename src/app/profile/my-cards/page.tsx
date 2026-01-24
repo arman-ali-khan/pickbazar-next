@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import ProfileSidebar from '@/components/profile-sidebar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -142,7 +141,6 @@ export default function MyCardsPage() {
                 </Card>
             </div>
           </main>
-          <Footer />
           <CartDrawer />
         </div>
     );

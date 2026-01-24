@@ -1,6 +1,5 @@
 
 import CartDrawer from "@/components/cart-drawer";
-import Footer from "@/components/footer";
 import Header from "@/components/header";
 import ProductPageContent from "@/components/product-page-content";
 import { createClient } from '@/lib/supabase/server';
@@ -165,7 +164,6 @@ export default async function ProductPage({ params }: { params: { id: string } }
       <main className="container px-2 sm:px-4 py-8">
         <ProductPageContent product={productToShow} relatedProducts={relatedProducts} />
       </main>
-      <Footer />
       <CartDrawer />
     </div>
   );

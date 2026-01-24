@@ -1,6 +1,5 @@
 
 import Header from '@/components/header';
-import Footer from '@/components/footer';
 import CartDrawer from '@/components/cart-drawer';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -127,7 +126,6 @@ export default async function AboutPage() {
           </div>
         </section>
       </main>
-      <Footer />
       <CartDrawer />
     </div>
   );

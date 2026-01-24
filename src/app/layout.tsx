@@ -11,6 +11,7 @@ import { isSupabaseConfigured } from '@/lib/supabase/config';
 import { SetupSupabase } from '@/components/setup-supabase';
 import { Suspense } from 'react';
 import ProgressBar from '@/components/progress-bar';
+import Footer from '@/components/footer';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -80,6 +81,7 @@ export default function RootLayout({
               <ProgressBar />
             </Suspense>
             {children}
+            <Footer />
             <Toaster />
             <FlyToCartAnimation />
             <BottomNavbar />
