@@ -1,4 +1,5 @@
 
+
 import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { SidebarProvider } from '@/components/ui/sidebar';
@@ -43,7 +44,8 @@ export default async function AdminLayout({
     }
     
     const supabase = createClient();
-    const { data: settings } = await supabase.rpc('get_all_settings');
+    const { data } = await supabase.rpc('get_all_settings');
+    const settings = data?.[0];
 
     return (
         <SidebarProvider>

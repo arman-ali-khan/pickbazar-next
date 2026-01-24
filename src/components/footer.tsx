@@ -12,7 +12,8 @@ interface SocialLink {
 
 export default async function Footer() {
   const supabase = createClient();
-  const { data: settings } = await supabase.rpc('get_all_settings');
+  const { data } = await supabase.rpc('get_all_settings');
+  const settings = data?.[0];
 
   const socialLinks: SocialLink[] = (settings?.social_links || []) as SocialLink[];
 

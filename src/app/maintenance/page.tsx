@@ -4,7 +4,8 @@ import Image from 'next/image';
 
 export default async function MaintenancePage() {
     const supabase = createClient();
-    const { data: settings } = await supabase.rpc('get_all_settings');
+    const { data } = await supabase.rpc('get_all_settings');
+    const settings = data?.[0];
 
     const maintenanceData = {
         title: settings?.maintenance_title || 'We are currently down for maintenance',

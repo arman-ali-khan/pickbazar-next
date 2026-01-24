@@ -23,7 +23,8 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   const supabase = createClient();
-  const { data: settings } = await supabase.rpc('get_all_settings');
+  const { data } = await supabase.rpc('get_all_settings');
+  const settings = data?.[0];
 
   const siteTitle = settings?.site_title || 'Pickbazar';
   const siteSubtitle = settings?.site_subtitle || 'An e-commerce storefront for fresh products.';

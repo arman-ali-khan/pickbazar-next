@@ -38,7 +38,8 @@ export default async function Home() {
 
   const { data: categoriesData, error: categoriesError } = await supabase.from('categories').select('id, name');
   
-  const { data: settings } = await supabase.rpc('get_all_settings');
+  const { data } = await supabase.rpc('get_all_settings');
+  const settings = data?.[0];
 
   let offers: OfferForCarousel[] = [];
   if (offersData && categoriesData) {
