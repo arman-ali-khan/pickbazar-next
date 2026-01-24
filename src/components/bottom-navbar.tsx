@@ -172,6 +172,7 @@ export default function BottomNavbar() {
     const isProfilePage = pathname.startsWith('/profile');
     
     const [notifications, setNotifications] = useState<UserNotification[]>([]);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const getNotifications = useCallback(async () => {
       if (!user) {
@@ -184,16 +185,31 @@ export default function BottomNavbar() {
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
       
-      if (data) {
-          setNotifications(data as UserNotification[]);
+      if (error) {
+        console.error("Error fetching notifications for bottom navbar:", error);
       }
+      setNotifications((data as UserNotification[]) || []);
     }, [user, supabase]);
 
     useEffect(() => {
-        getNotifications();
-    }, [getNotifications]);
+        if (user) {
+            getNotifications();
+            const channel = supabase.channel(`mobile-notifications:${user.id}`)
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+                (payload) => {
+                    getNotifications();
+                })
+                .subscribe();
 
-    const unreadCount = notifications.filter(n => !n.is_read).length;
+            return () => {
+                supabase.removeChannel(channel);
+            };
+        }
+    }, [user, supabase, getNotifications]);
+
+    useEffect(() => {
+        setUnreadCount(notifications.filter(n => !n.is_read).length);
+    }, [notifications]);
 
     const markAsRead = async (id: number) => {
         await supabase.from('notifications').update({ is_read: true }).eq('id', id);
@@ -264,7 +280,7 @@ export default function BottomNavbar() {
                             <span className="text-xs">Alerts</span>
                             {unreadCount > 0 && (
                                 <span className="absolute top-1 right-3.5 text-xs bg-primary text-primary-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">
-                                    {unreadCount}
+                                    {unreadCount > 9 ? '9+' : unreadCount}
                                 </span>
                             )}
                         </Button>
@@ -272,17 +288,21 @@ export default function BottomNavbar() {
                     <DropdownMenuContent side="top" align="center" className="w-80 mb-2">
                         <DropdownMenuLabel>Notifications</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {notifications.slice(0, 4).map((notification) => (
-                             <DropdownMenuItem key={notification.id} onSelect={() => markAsRead(notification.id)} asChild className="flex flex-col items-start gap-1 p-2 cursor-pointer">
-                                <Link href={notification.link || '#'}>
-                                    <p className="font-semibold text-sm">{notification.title}</p>
-                                    <p className="text-xs text-muted-foreground whitespace-normal">{notification.message}</p>
-                                    <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
-                                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                                    </p>
-                                </Link>
-                            </DropdownMenuItem>
-                        ))}
+                        {notifications.length > 0 ? (
+                            notifications.slice(0, 4).map((notification) => (
+                                 <DropdownMenuItem key={notification.id} onSelect={() => markAsRead(notification.id)} asChild className="flex flex-col items-start gap-1 p-2 cursor-pointer">
+                                    <Link href={notification.link || '#'}>
+                                        <p className="font-semibold text-sm">{notification.title}</p>
+                                        <p className="text-xs text-muted-foreground whitespace-normal">{notification.message}</p>
+                                        <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
+                                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                                        </p>
+                                    </Link>
+                                </DropdownMenuItem>
+                            ))
+                        ) : (
+                             <p className="p-4 text-center text-sm text-muted-foreground">No notifications yet.</p>
+                        )}
                          <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
                             <Link href="/profile/notifications" className="flex items-center justify-center text-sm p-2">See all notifications</Link>

@@ -10,12 +10,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
 import { Input } from './ui/input';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,8 @@ import { setSearchOpen } from '@/lib/redux/slices/uiSlice';
 import LucideIcon from './lucide-icon';
 import { Skeleton } from './ui/skeleton';
 import Image from 'next/image';
+import { formatDistanceToNow } from 'date-fns';
+import type { UserNotification } from '@/lib/data';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
   <Link
@@ -64,6 +67,7 @@ const CategoriesNav = () => {
                 .order('name');
             
             if (error) {
+                console.error("Error fetching categories:", error);
                 setCategories([]);
             } else if (data) {
                 const topLevel: HierarchicalCategory[] = data
@@ -170,7 +174,57 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
   const { toast } = useToast();
   const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
 
-  const [hasNewNotification, setHasNewNotification] = useState(true);
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const getNotifications = useCallback(async () => {
+      if (!user) return;
+
+      const { count, error: countError } = await supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id)
+          .eq('is_read', false);
+
+      if (countError) {
+          console.error("Error fetching notification count:", countError);
+      } else {
+          setUnreadCount(count ?? 0);
+      }
+
+      const { data, error: dataError } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(5);
+      
+      if (dataError) {
+          console.error("Error fetching notifications:", dataError);
+      } else {
+          setNotifications(data || []);
+      }
+  }, [user, supabase]);
+
+  useEffect(() => {
+      if (user) {
+          getNotifications();
+          const channel = supabase.channel(`header-notifications:${user.id}`)
+              .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: `user_id=eq.${user.id}` },
+              (payload) => {
+                  getNotifications();
+              })
+              .subscribe();
+
+          return () => {
+              supabase.removeChannel(channel);
+          };
+      } else {
+          setNotifications([]);
+          setUnreadCount(0);
+      }
+  }, [user, supabase, getNotifications]);
+
 
   useEffect(() => {
     const handleScroll = () => {
@@ -324,6 +378,47 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
                 <Button variant="ghost" size="icon" onClick={() => dispatch(setSearchOpen(true))}>
                     <Search className="h-5 w-5" />
                 </Button>
+                {user && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="relative">
+                        <Bell className="h-5 w-5" />
+                        {unreadCount > 0 && (
+                            <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-80">
+                      <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {notifications.length > 0 ? (
+                        notifications.map(n => (
+                          <DropdownMenuItem key={n.id} asChild className="cursor-pointer">
+                            <Link href={n.link || '/profile/notifications'}>
+                              <div className="flex flex-col">
+                                <p className="font-semibold text-sm">{n.title}</p>
+                                <p className="text-xs text-muted-foreground truncate">{n.message}</p>
+                                <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
+                                  {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                                </p>
+                              </div>
+                            </Link>
+                          </DropdownMenuItem>
+                        ))
+                      ) : (
+                        <p className="p-2 text-center text-sm text-muted-foreground">No new notifications</p>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/profile/notifications" className="flex items-center justify-center">
+                          See all notifications
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
                 {user ? (
                    <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -332,7 +427,7 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
                           <AvatarImage src={userAvatar || 'https://picsum.photos/seed/profile/200'} alt={userName || 'User'} />
                           <AvatarFallback>{userName ? userName[0].toUpperCase() : user.email?.[0].toUpperCase()}</AvatarFallback>
                         </Avatar>
-                        {hasNewNotification && <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />}
+                        {unreadCount > 0 && <span className="absolute top-0 right-0 block h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white" />}
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -354,18 +449,17 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
                           <span>My Wishlist</span>
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild onSelect={() => setHasNewNotification(false)}>
+                      <DropdownMenuItem asChild>
                         <Link href="/profile/notifications">
                           <Bell className="mr-2 h-4 w-4" />
                           <span>Notifications</span>
-                          {hasNewNotification && <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />}
+                          {unreadCount > 0 && <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />}
                         </Link>
                       </DropdownMenuItem>
-                       <DropdownMenuItem asChild onSelect={() => setHasNewNotification(false)}>
+                       <DropdownMenuItem asChild>
                         <Link href="/admin">
                           <Bell className="mr-2 h-4 w-4" />
                           <span>Admin Dahsboard</span>
-                          {hasNewNotification && <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />}
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
