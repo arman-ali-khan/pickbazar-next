@@ -1,4 +1,5 @@
 
+
 import CartDrawer from "@/components/cart-drawer";
 import Footer from "@/components/footer";
 import Header from "@/components/header";
@@ -9,9 +10,9 @@ import RecentlyAddedProducts from "@/components/recently-added-products";
 import CustomerReviews from "@/components/customer-reviews";
 import ContactSection from "@/components/contact-section";
 import FaqSection from "@/components/faq-section";
-import HomePageCategorySections from "@/components/home-page-category-sections";
 import { createClient } from '@/lib/supabase/server';
 import PromoDialog from "@/components/promo-dialog";
+import HomePageCategorySections from "@/components/home-page-category-sections";
 
 export default async function Home() {
   const supabase = createClient();
@@ -68,8 +69,8 @@ export default async function Home() {
         <RecentlyAddedProducts />
         <HomePageCategorySections sections={homeSections} />
         <CustomerReviews />
-        <section className="container py-16 bg-muted/20">
-          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
+        <section className="py-16 bg-muted/20">
+          <div className="container mx-auto grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
               <FaqSection />
               <ContactSection />
           </div>
