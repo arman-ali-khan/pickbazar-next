@@ -16,6 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { updateSettings } from "@/app/actions";
 import { Skeleton } from "@/components/ui/skeleton";
+import Link from "next/link";
 
 interface AllSettings {
     site_title: string;
@@ -300,7 +301,9 @@ function SettingsContent() {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex items-center justify-between p-4 border rounded-lg"><Label htmlFor="enable_promo_popup" className="flex flex-col gap-1"><span>Enable Promotional Popup</span><span className="font-normal text-sm text-muted-foreground">Show a promotional offer when users visit your site.</span></Label><Switch id="enable_promo_popup" checked={settings.enable_promo_popup} onCheckedChange={(c) => handleSwitchChange('enable_promo_popup', c)} /></div>
-                            <Button variant="outline">Promo Manager (Not Implemented)</Button>
+                            <Button asChild variant="outline">
+                                <Link href="/admin/promos">Manage Promos</Link>
+                            </Button>
                         </CardContent>
                          <CardFooter className="border-t pt-6">
                             <Button onClick={handleSaveChanges} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>

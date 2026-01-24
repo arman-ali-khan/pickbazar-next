@@ -32,7 +32,8 @@ import {
   ChevronDown,
   LayoutTemplate,
   Files,
-  Bell
+  Bell,
+  Megaphone
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -59,6 +60,7 @@ const navItems = [
   { href: '/admin/reviews', icon: Star, label: 'Reviews', countKey: 'reviews' },
   { href: '/admin/questions', icon: HelpCircle, label: 'Questions', countKey: 'questions' },
   { href: '/admin/offers', icon: Gift, label: 'Offers' },
+  { href: '/admin/promos', icon: Megaphone, label: 'Promos' },
   { href: '/admin/messages', icon: MessageSquare, label: 'Messages', countKey: 'messages' },
   { href: '/admin/pages', icon: Files, label: 'Page Manager' },
 ];
