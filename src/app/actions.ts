@@ -101,12 +101,12 @@ export async function submitReview(formData: FormData) {
     return { error: 'Product ID and rating are required.' }
   }
 
-  const { error } = await supabase.from('reviews').insert({
+  const { data: reviewData, error } = await supabase.from('reviews').insert({
     user_id: user.id,
     product_id: Number(productId),
     rating: Number(rating),
     text: String(text)
-  })
+  }).select().single();
 
   if (error) {
     // Handle unique constraint violation (user already reviewed)
@@ -115,6 +115,18 @@ export async function submitReview(formData: FormData) {
     }
     return { error: error.message }
   }
+  
+    // Notify admins
+    const { error: notificationError } = await supabase.from('notifications').insert({
+        title: `New review on a product`,
+        message: `A new ${rating}-star review was submitted.`,
+        link: `/admin/reviews`,
+        type: 'new_review'
+    });
+
+    if (notificationError) {
+        console.error("Failed to create admin notification for new review:", notificationError);
+    }
 
   revalidatePath(`/products/${productId}`)
   return { success: true }
@@ -147,8 +159,8 @@ export async function submitQuestion(formData: FormData) {
 
     // Notify admins
     const { error: notificationError } = await supabase.from('notifications').insert({
-        title: `New question on "${(questionData as any)?.product_name || 'a product'}"`,
-        message: `From: ${(questionData as any)?.author_name || 'a user'}. Q: ${questionText}`,
+        title: `New question on a product`,
+        message: `From: a user. Q: ${questionText}`,
         link: `/admin/questions`,
         type: 'new_question'
     });
@@ -332,6 +344,18 @@ export async function requestRefund(formData: FormData) {
   if (error) {
     return { error: `Refund request failed: ${error.message}` };
   }
+
+  // Notify admins
+  const { error: notificationError } = await supabase.from('notifications').insert({
+    title: `New refund request for order #${orderId}`,
+    message: `Amount: $${amount}. Reason: ${reason}`,
+    link: '/admin/refunds',
+    type: 'new_refund'
+  });
+  
+  if (notificationError) {
+    console.error("Failed to create admin notification for new refund:", notificationError);
+  }
   
   revalidatePath('/profile/my-refunds');
   revalidatePath('/admin/refunds');
@@ -468,6 +492,18 @@ export async function submitContactMessage(formData: FormData) {
 
   if (error) {
     return { error: `Database error: ${error.message}` };
+  }
+
+  // Notify Admins
+  const { error: notificationError } = await supabase.from('notifications').insert({
+    title: `New contact message from ${rawFormData.name}`,
+    message: String(rawFormData.subject),
+    link: '/admin/messages',
+    type: 'new_message'
+  });
+
+  if (notificationError) {
+    console.error("Failed to create admin notification for new contact message:", notificationError);
   }
 
   return { success: true };
