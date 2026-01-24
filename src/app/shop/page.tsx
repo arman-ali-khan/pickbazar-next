@@ -192,7 +192,7 @@ function ShopContent() {
         <div className="mb-8">
             <Skeleton className="h-48" />
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8 mx-auto">
             <div className="hidden lg:block space-y-6">
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-40 w-full" />
@@ -270,7 +270,7 @@ function ShopContent() {
 
               {currentProducts.length > 0 ? (
                 viewMode === 'grid' ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-2">
                       {currentProducts.map(product => (
                           <ProductCard key={product.id} product={product} />
                       ))}
@@ -305,7 +305,7 @@ export default function ShopPage() {
   return (
     <div className="bg-background min-h-screen">
       <Header />
-      <main className="container py-8">
+      <main className="container py-8 mx-auto">
         <div className="mb-8 text-center">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Shop</h1>
             <p className="text-muted-foreground mt-2">Browse our collection of fresh products.</p>

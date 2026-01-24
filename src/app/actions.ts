@@ -69,6 +69,9 @@ export async function getQuickViewData(productId: number) {
         description: p.name
       },
       weight: p.unit,
+      tag: p.original_price && p.price < p.original_price ? `${Math.round(((p.original_price - p.price) / p.original_price) * 100)}%` : undefined,
+      category: 'Related',
+      rating: 4.5,
     })),
     // Mock data for fields not in DB
     rating: 4.5,

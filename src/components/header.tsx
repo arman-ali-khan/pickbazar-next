@@ -218,7 +218,7 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
             "sticky top-0 z-50 w-full border-b transition-all duration-300",
             "bg-white border-gray-200 shadow-sm"
         )}>
-            <div className="container flex h-20 items-center justify-between">
+            <div className="container flex h-20 items-center justify-between px-2 mx-auto">
                 <div className="flex items-center gap-4">
                     <Skeleton className="h-10 w-10 md:hidden" />
                     <div className="hidden md:block">
@@ -253,7 +253,7 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
         "sticky top-0 z-50 w-full border-b transition-all duration-300",
         isScrolled ? 'bg-white border-gray-200 shadow-sm' : 'bg-transparent border-transparent'
     )}>
-      <div className="container flex h-20 items-center justify-between">
+      <div className="container flex h-auto py-2 items-center justify-between mx-auto px-2">
         {isSearchOpen ? (
            <div className="flex w-full items-center gap-2">
             <form onSubmit={handleSearch} className="flex w-full items-center rounded-lg border-2 border-primary bg-white">
