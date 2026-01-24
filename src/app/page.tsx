@@ -11,6 +11,7 @@ import ContactSection from "@/components/contact-section";
 import FaqSection from "@/components/faq-section";
 import HomePageCategorySections from "@/components/home-page-category-sections";
 import { createClient } from '@/lib/supabase/server';
+import PromoDialog from "@/components/promo-dialog";
 
 export default async function Home() {
   const supabase = createClient();
@@ -60,6 +61,7 @@ export default async function Home() {
     <div className="bg-background min-h-screen">
       <Header logoUrl={settings?.logo_url} siteTitle={settings?.site_title} />
       <main>
+        <PromoDialog />
         <HeroBanners />
         <OfferCarousel offers={offers} />
         <RecommendedProducts />

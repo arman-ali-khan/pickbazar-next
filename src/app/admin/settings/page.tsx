@@ -69,15 +69,7 @@ function SettingsContent() {
         if (error) {
             toast({ variant: 'destructive', title: 'Error fetching settings', description: error.message });
         } else if (data) {
-            const parsedData = { ...data };
-            for (const key in parsedData) {
-                if (parsedData[key] === 'true') {
-                    parsedData[key] = true;
-                } else if (parsedData[key] === 'false') {
-                    parsedData[key] = false;
-                }
-            }
-            setSettings(parsedData as AllSettings);
+            setSettings(data);
         }
         setLoading(false);
     }, [supabase, toast]);
