@@ -71,6 +71,7 @@ const settingsNavItems = [
     { href: '/admin/settings?tab=payments', label: 'Payments', tab: 'payments' },
     { href: '/admin/settings?tab=maintenance', label: 'Maintenance', tab: 'maintenance' },
     { href: '/admin/settings?tab=promo', label: 'Promotions', tab: 'promo' },
+    { href: '/admin/settings?tab=social', label: 'Social', tab: 'social' },
 ];
 
 const SidebarNavLink = ({ href, icon: Icon, label, count }: { href: string; icon: React.ElementType; label: string; count?: number; }) => {

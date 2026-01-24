@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -215,7 +214,7 @@ function SettingsContent() {
 
     return (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
+            <TabsList className="sm:grdi flex justify-between w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
                 <TabsTrigger value="general" className="flex items-center gap-2"><SettingsIcon className="h-4 w-4" /><span className="hidden md:inline">General</span></TabsTrigger>
                 <TabsTrigger value="seo" className="flex items-center gap-2"><Search className="h-4 w-4" /><span className="hidden md:inline">SEO</span></TabsTrigger>
                 <TabsTrigger value="payments" className="flex items-center gap-2"><CreditCard className="h-4 w-4" /><span className="hidden md:inline">Payments</span></TabsTrigger>

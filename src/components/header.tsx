@@ -361,6 +361,13 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
                           {hasNewNotification && <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />}
                         </Link>
                       </DropdownMenuItem>
+                       <DropdownMenuItem asChild onSelect={() => setHasNewNotification(false)}>
+                        <Link href="/admin">
+                          <Bell className="mr-2 h-4 w-4" />
+                          <span>Admin Dahsboard</span>
+                          {hasNewNotification && <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />}
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleLogout}>
                         Logout
