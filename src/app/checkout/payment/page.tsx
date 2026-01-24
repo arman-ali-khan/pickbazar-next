@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -45,7 +44,7 @@ export default function PaymentPage() {
     const cartItems = useAppSelector(selectCartItems);
     const subtotal = useAppSelector(selectSubtotal);
     
-    const [selectedMethod, setSelectedMethod] = useState('card');
+    const [selectedMethod, setSelectedMethod] = useState('');
     const [shippingInfo, setShippingInfo] = useState<ShippingInfo | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
     const [trxId, setTrxId] = useState('');
@@ -83,7 +82,18 @@ export default function PaymentPage() {
             setLoadingSettings(true);
             const { data } = await supabase.rpc('get_all_settings');
             if (data && data[0]) {
-                setPaymentSettings(data[0]);
+                const settings = data[0];
+                setPaymentSettings(settings);
+                // Set default payment method
+                if (settings.enable_card_payment) {
+                    setSelectedMethod('card');
+                } else if (settings.enable_mobile_banking) {
+                    setSelectedMethod('mobile-banking');
+                } else if (settings.enable_sslcommerz) {
+                    setSelectedMethod('sslcommerz');
+                } else if (settings.enable_cod) {
+                    setSelectedMethod('cod');
+                }
             }
             setLoadingSettings(false);
         };
@@ -136,13 +146,6 @@ export default function PaymentPage() {
         localStorage.removeItem('appliedDiscount');
         
         router.push(`/checkout/success?order_number=${orderNumber}`);
-    };
-
-    const mobileBankingLogos: { [key: string]: string } = {
-        'bKash': 'https://asset.brandfetch.io/id20mQ50A0/id40b59bE4.png',
-        'Nagad': 'https://asset.brandfetch.io/id5nLd0s5A/id_3t9Uq23.png',
-        'Rocket': 'https://asset.brandfetch.io/idBBlpmsiS/idR3Gk8qjO.png',
-        'Upay': 'https://play-lh.googleusercontent.com/y-3mZt5yFf3Q0-5y5dU83o21mmp0vQpPH3p23jLdE_p6Q-f9Lw8aCwsz9Qy_5B2e_g',
     };
 
   return (
@@ -204,85 +207,100 @@ export default function PaymentPage() {
               </CardHeader>
               <CardContent>
                 <RadioGroup value={selectedMethod} onValueChange={setSelectedMethod} className="space-y-4">
-                  <Label htmlFor="card" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
-                    <CreditCard className="h-6 w-6 text-primary" />
-                    <div className="flex-1">
-                      <p className="font-semibold">Credit/Debit Card</p>
-                      <p className="text-sm text-muted-foreground">Pay with Visa, Mastercard, or Amex</p>
+                  {loadingSettings ? (
+                     <div className="space-y-4">
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-20 w-full" />
+                        <Skeleton className="h-20 w-full" />
                     </div>
-                    <RadioGroupItem value="card" id="card" />
-                  </Label>
-
-                  <Label 
-                    htmlFor="mobile-banking" 
-                    className={cn(
-                        "flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary",
-                        selectedMethod === 'mobile-banking' && "rounded-b-none"
-                    )}
-                  >
-                    <Smartphone className="h-6 w-6 text-primary" />
-                    <div className="flex-1">
-                      <p className="font-semibold">Mobile Banking</p>
-                      <p className="text-sm text-muted-foreground">Pay with bKash, Nagad, Rocket</p>
-                    </div>
-                    <RadioGroupItem value="mobile-banking" id="mobile-banking" />
-                  </Label>
-                  {selectedMethod === 'mobile-banking' && (
-                    <div className="p-4 border border-t-0 rounded-b-md bg-muted/20 space-y-4 -mt-4">
-                        {loadingSettings ? <Skeleton className="h-24 w-full" /> : 
-                         paymentSettings?.enable_mobile_banking && paymentSettings?.mobile_banking_number ? (
-                            <>
-                                {paymentSettings.mobile_banking_options?.length > 0 && (
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <p className="text-sm font-medium">Pay with:</p>
-                                        {paymentSettings.mobile_banking_options.map((opt: string) => (
-                                            <div key={opt} className="flex items-center gap-1.5 p-1.5 bg-background rounded-md border text-xs">
-                                                {mobileBankingLogos[opt] && <Image src={mobileBankingLogos[opt]} alt={opt} width={16} height={16} />}
-                                                <span>{opt}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                                <p className="text-sm text-muted-foreground">
-                                    1. Go to your mobile banking app and select 'Send Money'.<br/>
-                                    2. Enter the number: <strong className="text-primary">{paymentSettings.mobile_banking_number}</strong><br/>
-                                    3. Enter the total amount: <strong className="text-primary">${total.toFixed(2)}</strong><br/>
-                                    4. Complete the transaction and enter the details below.
-                                </p>
-                                <div className="grid sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="trxId">Transaction ID</Label>
-                                        <Input id="trxId" placeholder="Enter TrxID" value={trxId} onChange={(e) => setTrxId(e.target.value)} required={selectedMethod === 'mobile-banking'} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="mobileLast4">Your Mobile No. (Last 4 Digits)</Label>
-                                        <Input id="mobileLast4" placeholder="e.g., 1234" value={mobileLast4} onChange={(e) => setMobileLast4(e.target.value)} required={selectedMethod === 'mobile-banking'} />
-                                    </div>
+                  ) : (
+                    <>
+                        {paymentSettings?.enable_card_payment && (
+                            <Label htmlFor="card" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                                <CreditCard className="h-6 w-6 text-primary" />
+                                <div className="flex-1">
+                                <p className="font-semibold">Credit/Debit Card</p>
+                                <p className="text-sm text-muted-foreground">Pay with Visa, Mastercard, or Amex</p>
                                 </div>
-                            </>
-                        ) : (
-                            <p className="text-sm text-muted-foreground text-center py-4">Mobile banking is not available at this moment. Please choose another method.</p>
+                                <RadioGroupItem value="card" id="card" />
+                            </Label>
                         )}
-                    </div>
+                        {paymentSettings?.enable_mobile_banking && (
+                           <>
+                            <Label 
+                                htmlFor="mobile-banking" 
+                                className={cn(
+                                    "flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary",
+                                    selectedMethod === 'mobile-banking' && "rounded-b-none"
+                                )}
+                            >
+                                <Smartphone className="h-6 w-6 text-primary" />
+                                <div className="flex-1">
+                                <p className="font-semibold">Mobile Banking</p>
+                                <p className="text-sm text-muted-foreground">Pay with bKash, Nagad, Rocket</p>
+                                </div>
+                                <RadioGroupItem value="mobile-banking" id="mobile-banking" />
+                            </Label>
+                            {selectedMethod === 'mobile-banking' && (
+                                <div className="p-4 border border-t-0 rounded-b-md bg-muted/20 space-y-4 -mt-4">
+                                    {paymentSettings?.enable_mobile_banking && paymentSettings?.mobile_banking_number ? (
+                                        <>
+                                            {paymentSettings.mobile_banking_options?.length > 0 && (
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <p className="text-sm font-medium">Pay with:</p>
+                                                    {paymentSettings.mobile_banking_options.map((opt: string) => (
+                                                        <div key={opt} className="flex items-center gap-1.5 p-1.5 bg-background rounded-md border text-xs">
+                                                            <span>{opt}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <p className="text-sm text-muted-foreground">
+                                                1. Go to your mobile banking app and select 'Send Money'.<br/>
+                                                2. Enter the number: <strong className="text-primary">{paymentSettings.mobile_banking_number}</strong><br/>
+                                                3. Enter the total amount: <strong className="text-primary">${total.toFixed(2)}</strong><br/>
+                                                4. Complete the transaction and enter the details below.
+                                            </p>
+                                            <div className="grid sm:grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="trxId">Transaction ID</Label>
+                                                    <Input id="trxId" placeholder="Enter TrxID" value={trxId} onChange={(e) => setTrxId(e.target.value)} required={selectedMethod === 'mobile-banking'} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="mobileLast4">Your Mobile No. (Last 4 Digits)</Label>
+                                                    <Input id="mobileLast4" placeholder="e.g., 1234" value={mobileLast4} onChange={(e) => setMobileLast4(e.target.value)} required={selectedMethod === 'mobile-banking'} />
+                                                </div>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground text-center py-4">Mobile banking is not available at this moment. Please choose another method.</p>
+                                    )}
+                                </div>
+                            )}
+                           </>
+                        )}
+                        {paymentSettings?.enable_sslcommerz && (
+                             <Label htmlFor="sslcommerz" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                                <ShieldCheck className="h-6 w-6 text-primary" />
+                                <div className="flex-1">
+                                <p className="font-semibold">SSLCommerz</p>
+                                <p className="text-sm text-muted-foreground">Secure online payment gateway</p>
+                                </div>
+                                <RadioGroupItem value="sslcommerz" id="sslcommerz" />
+                            </Label>
+                        )}
+                        {paymentSettings?.enable_cod && (
+                            <Label htmlFor="cod" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                                <Landmark className="h-6 w-6 text-primary" />
+                                <div className="flex-1">
+                                <p className="font-semibold">Cash on Delivery</p>
+                                <p className="text-sm text-muted-foreground">Pay with cash when your order arrives</p>
+                                </div>
+                                <RadioGroupItem value="cod" id="cod" />
+                            </Label>
+                        )}
+                    </>
                   )}
-
-                  <Label htmlFor="sslcommerz" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
-                    <ShieldCheck className="h-6 w-6 text-primary" />
-                    <div className="flex-1">
-                      <p className="font-semibold">SSLCommerz</p>
-                      <p className="text-sm text-muted-foreground">Secure online payment gateway</p>
-                    </div>
-                    <RadioGroupItem value="sslcommerz" id="sslcommerz" />
-                  </Label>
-
-                   <Label htmlFor="cod" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
-                    <Landmark className="h-6 w-6 text-primary" />
-                    <div className="flex-1">
-                      <p className="font-semibold">Cash on Delivery</p>
-                      <p className="text-sm text-muted-foreground">Pay with cash when your order arrives</p>
-                    </div>
-                    <RadioGroupItem value="cod" id="cod" />
-                  </Label>
                 </RadioGroup>
                 <Separator className="my-6" />
                 <div className="space-y-2">
