@@ -20,9 +20,8 @@ import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { openCart, selectTotalItems } from '@/lib/redux/slices/cartSlice';
 import ProfileSidebar from './profile-sidebar';
 import { useSupabase } from '@/lib/supabase/provider';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import LucideIcon from './lucide-icon';
-import { userNotifications as initialNotifications } from '@/lib/data';
 import type { UserNotification } from '@/lib/data';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -168,15 +167,37 @@ export default function BottomNavbar() {
     const pathname = usePathname();
     const dispatch = useAppDispatch();
     const totalItems = useAppSelector(selectTotalItems);
-    const { user } = useSupabase();
+    const { user, supabase } = useSupabase();
     const router = useRouter();
     const isProfilePage = pathname.startsWith('/profile');
     
-    const [notifications, setNotifications] = useState(initialNotifications);
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const [notifications, setNotifications] = useState<UserNotification[]>([]);
 
-    const markAsRead = (id: number) => {
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    const getNotifications = useCallback(async () => {
+      if (!user) {
+          setNotifications([]);
+          return;
+      }
+      const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+      
+      if (data) {
+          setNotifications(data as UserNotification[]);
+      }
+    }, [user, supabase]);
+
+    useEffect(() => {
+        getNotifications();
+    }, [getNotifications]);
+
+    const unreadCount = notifications.filter(n => !n.is_read).length;
+
+    const markAsRead = async (id: number) => {
+        await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     };
 
     const handleProfileClick = () => {
@@ -253,11 +274,11 @@ export default function BottomNavbar() {
                         <DropdownMenuSeparator />
                         {notifications.slice(0, 4).map((notification) => (
                              <DropdownMenuItem key={notification.id} onSelect={() => markAsRead(notification.id)} asChild className="flex flex-col items-start gap-1 p-2 cursor-pointer">
-                                <Link href={notification.link}>
+                                <Link href={notification.link || '#'}>
                                     <p className="font-semibold text-sm">{notification.title}</p>
                                     <p className="text-xs text-muted-foreground whitespace-normal">{notification.message}</p>
                                     <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
-                                        {formatDistanceToNow(new Date(notification.date), { addSuffix: true })}
+                                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                                     </p>
                                 </Link>
                             </DropdownMenuItem>

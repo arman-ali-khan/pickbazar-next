@@ -171,6 +171,16 @@ export async function answerQuestion(formData: FormData) {
     if (!questionId || !answerText) {
         return { error: 'Question ID and answer text are required.' };
     }
+    
+    const { data: questionData, error: questionError } = await supabase
+        .from('questions')
+        .select('user_id, product_id')
+        .eq('id', Number(questionId))
+        .single();
+    
+    if (questionError || !questionData) {
+        return { error: 'Question not found.' };
+    }
 
     const { error } = await supabase
         .from('questions')
@@ -185,7 +195,16 @@ export async function answerQuestion(formData: FormData) {
         return { error: error.message };
     }
 
+    await supabase.from('notifications').insert({
+        user_id: questionData.user_id,
+        title: 'Your question has been answered',
+        message: 'A question you asked about a product has been answered by our team.',
+        link: `/products/${questionData.product_id}`,
+        type: 'question_answered'
+    });
+
     revalidatePath('/admin/questions');
+    revalidatePath(`/products/${questionData.product_id}`);
     return { success: true };
 }
 
@@ -397,6 +416,14 @@ export async function updateUserRole(formData: FormData) {
         return { error: error.message };
     }
 
+    await supabase.from('notifications').insert({
+        user_id: userIdToUpdate,
+        title: 'Your role has been updated',
+        message: `Your account role has been changed to ${newRole}.`,
+        link: '/profile',
+        type: 'role_update'
+    });
+
     revalidatePath('/admin/users');
     return { success: true };
 }
@@ -541,4 +568,43 @@ export async function getWishlistIds() {
     }
 
     return (data || []).map(item => item.product_id);
+}
+
+export async function updateOrderStatus(orderId: number, status: string) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Authentication required' };
+
+    // Check if user is admin
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    if (!['admin', 'manager', 'super-admin'].includes(profile?.role || '')) {
+        return { error: 'Permission denied.' };
+    }
+
+    const { data: order, error: updateError } = await supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId)
+        .select()
+        .single();
+
+    if (updateError) {
+        return { error: updateError.message };
+    }
+
+    // Insert notification
+    if (order) {
+        await supabase.from('notifications').insert({
+            user_id: order.user_id,
+            title: 'Order Status Updated',
+            message: `Your order #${order.order_number} is now ${status}.`,
+            link: `/profile/my-orders/${order.order_number}`,
+            type: 'order_update'
+        });
+    }
+    
+    revalidatePath('/admin/orders');
+    revalidatePath(`/admin/orders/${order.order_number}`);
+    if (order) revalidatePath(`/profile/my-orders/${order.order_number}`);
+    return { success: true, orderNumber: order?.order_number };
 }

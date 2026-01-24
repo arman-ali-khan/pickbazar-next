@@ -114,46 +114,6 @@ export const product = {
 
 export const relatedProducts = products.slice(1, 13).map(p => ({...p, id: p.id, name: p.name, price: p.price, image: p.image, weight: p.weight, tag: p.originalPrice ? `${Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)}%` : undefined}));
 
-
-export const userNotifications = [
-  {
-    id: 1,
-    type: 'order_shipped' as const,
-    title: 'Order Shipped!',
-    message: 'Your order #ORD-12345 has been shipped and is on its way.',
-    date: '2024-08-01T10:00:00.000Z',
-    isRead: false,
-    link: '/profile/my-orders/ORD-12345'
-  },
-  {
-    id: 2,
-    type: 'promotion' as const,
-    title: 'Weekend Sale is Live',
-    message: 'Get 20% off on all fresh vegetables this weekend. Don\'t miss out!',
-    date: '2024-07-31T12:30:00.000Z',
-    isRead: false,
-    link: '/offers'
-  },
-  {
-    id: 3,
-    type: 'review_request' as const,
-    title: 'How was your purchase?',
-    message: 'We\'d love to hear your feedback on the "Fresh Apples" you recently purchased.',
-    date: '2024-07-30T18:00:00.000Z',
-    isRead: true,
-    link: '/products/1'
-  },
-  {
-    id: 4,
-    type: 'security' as const,
-    title: 'Password Changed Successfully',
-    message: 'Your password was changed from a new device. If this wasn\'t you, please secure your account.',
-    date: '2024-07-29T11:45:00.000Z',
-    isRead: true,
-    link: '/profile/change-password'
-  },
-];
-
 // --- Type Definitions ---
 
 export type OrderStatus = 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
@@ -167,7 +127,16 @@ export type Admin = {
   avatar: ImagePlaceholder;
   status: 'active' | 'inactive';
 };
-export type UserNotification = typeof userNotifications[0];
+
+export interface UserNotification {
+    id: number;
+    type: 'order_update' | 'question_answered' | 'role_update' | 'promotion' | 'review_request' | 'security' | string;
+    title: string;
+    message: string | null;
+    created_at: string;
+    is_read: boolean;
+    link: string | null;
+}
 
 export interface Question {
   id: number;

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useTransition } from 'react';
 import { notFound, useParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { useSupabase } from '@/lib/supabase/provider';
 import type { OrderStatus } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
+import { updateOrderStatus } from '@/app/actions';
 
 interface OrderItem {
     id: number;
@@ -73,6 +74,7 @@ export default function OrderDetailsPage() {
     const [order, setOrder] = useState<OrderDetails | null>(null);
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState<OrderStatus>('Pending');
+    const [isUpdating, startUpdateTransition] = useTransition();
 
     const fetchOrder = useCallback(async () => {
         setLoading(true);
@@ -96,20 +98,19 @@ export default function OrderDetailsPage() {
     
     const handleUpdate = async () => {
         if (!order) return;
-        const { error } = await supabase
-            .from('orders')
-            .update({ status: status })
-            .eq('id', order.id);
+        startUpdateTransition(async () => {
+            const result = await updateOrderStatus(order.id, status);
 
-        if (error) {
-            toast({ variant: "destructive", title: "Update Failed", description: error.message });
-        } else {
-            toast({
-                title: "Order Status Updated",
-                description: `Order ${order.order_number} is now ${status}. A notification has been sent.`,
-            });
-            fetchOrder(); // Re-fetch to confirm update
-        }
+            if (result.error) {
+                toast({ variant: "destructive", title: "Update Failed", description: result.error });
+            } else {
+                toast({
+                    title: "Order Status Updated",
+                    description: `Order #${result.orderNumber} is now ${status}. A notification has been sent.`,
+                });
+                fetchOrder(); // Re-fetch to confirm update
+            }
+        });
     };
 
     if (loading) {
@@ -214,9 +215,9 @@ export default function OrderDetailsPage() {
                 </h1>
                 <div className="hidden items-center gap-2 md:ml-auto md:flex">
                     <Button variant="outline" size="sm">Invoice</Button>
-                    <Button size="sm" onClick={handleUpdate}>
+                    <Button size="sm" onClick={handleUpdate} disabled={isUpdating}>
                         <Bell className="mr-2 h-4 w-4" />
-                        Send Notification
+                        {isUpdating ? 'Sending...' : 'Send Notification'}
                     </Button>
                 </div>
             </div>
@@ -331,7 +332,7 @@ export default function OrderDetailsPage() {
                             </Select>
                         </CardContent>
                         <CardFooter>
-                            <Button className="w-full" onClick={handleUpdate}>Update Status</Button>
+                            <Button className="w-full" onClick={handleUpdate} disabled={isUpdating}>{isUpdating ? 'Updating...' : 'Update Status'}</Button>
                         </CardFooter>
                     </Card>
                  </div>
