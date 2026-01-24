@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -90,10 +92,10 @@ export default function PromoDialog() {
             <span className="sr-only">Close</span>
         </Button>
         <div className="p-8 md:p-12 flex flex-col justify-center">
-            <h2 className="text-3xl font-bold mb-4">{promo.title || "Get 25% Discount"}</h2>
-            <p className="text-muted-foreground mb-8">
+            <DialogTitle className="text-3xl font-bold mb-4">{promo.title || "Get 25% Discount"}</DialogTitle>
+            <DialogDescription className="text-muted-foreground mb-8">
                 {promo.subtitle || "Subscribe to the mailing list to receive updates on new arrivals, special offers and our promotions."}
-            </p>
+            </DialogDescription>
             <form onSubmit={handleSubscribe}>
                 <div className="relative mb-6">
                     <Input 
