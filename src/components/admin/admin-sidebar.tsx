@@ -69,6 +69,7 @@ const settingsNavItems = [
     { href: '/admin/settings', label: 'General', tab: 'general' },
     { href: '/admin/settings?tab=seo', label: 'SEO', tab: 'seo' },
     { href: '/admin/settings?tab=payments', label: 'Payments', tab: 'payments' },
+    { href: '/admin/settings?tab=shipping', label: 'Shipping', tab: 'shipping' },
     { href: '/admin/settings?tab=maintenance', label: 'Maintenance', tab: 'maintenance' },
     { href: '/admin/settings?tab=promo', label: 'Promotions', tab: 'promo' },
     { href: '/admin/settings?tab=social', label: 'Social', tab: 'social' },
