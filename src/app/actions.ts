@@ -146,12 +146,16 @@ export async function submitQuestion(formData: FormData) {
     }
 
     // Notify admins
-    await supabase.from('notifications').insert({
+    const { error: notificationError } = await supabase.from('notifications').insert({
         title: `New question on "${(questionData as any)?.product_name || 'a product'}"`,
         message: `From: ${(questionData as any)?.author_name || 'a user'}. Q: ${questionText}`,
         link: `/admin/questions`,
         type: 'new_question'
     });
+
+    if (notificationError) {
+        console.error("Failed to create admin notification for new question:", notificationError);
+    }
 
 
     revalidatePath('/admin/questions');
@@ -204,13 +208,17 @@ export async function answerQuestion(formData: FormData) {
         return { error: error.message };
     }
 
-    await supabase.from('notifications').insert({
+    const { error: notificationError } = await supabase.from('notifications').insert({
         user_id: questionData.user_id,
         title: 'Your question has been answered',
         message: 'A question you asked about a product has been answered by our team.',
         link: `/products/${questionData.product_id}`,
         type: 'question_answered'
     });
+
+    if (notificationError) {
+        return { error: `Question answered, but failed to send notification: ${notificationError.message}` };
+    }
 
     revalidatePath('/admin/questions');
     revalidatePath(`/products/${questionData.product_id}`);
@@ -393,11 +401,8 @@ export async function updateUserRole(formData: FormData) {
         return { error: 'Authentication required' };
     }
 
-    // This RPC call securely gets the calling user's role without causing recursion.
-    const { data: myRole, error: rpcError } = await supabase.rpc('get_my_role');
-    if (rpcError) {
-        return { error: `Could not verify permissions: ${rpcError.message}` };
-    }
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    const myRole = profile?.role;
 
     if (!myRole || !['admin', 'super-admin'].includes(myRole)) {
         return { error: 'You do not have permission to perform this action.' };
@@ -410,7 +415,6 @@ export async function updateUserRole(formData: FormData) {
         return { error: 'User ID and new role are required.' };
     }
     
-    // Prevent a super-admin from changing their own role
     if (userIdToUpdate === user.id) {
         return { error: 'Super-admins cannot change their own role.' };
     }
@@ -424,13 +428,17 @@ export async function updateUserRole(formData: FormData) {
         return { error: error.message };
     }
 
-    await supabase.from('notifications').insert({
+    const { error: notificationError } = await supabase.from('notifications').insert({
         user_id: userIdToUpdate,
         title: 'Your role has been updated',
         message: `Your account role has been changed to ${newRole}.`,
         link: '/profile',
         type: 'role_update'
     });
+    
+    if (notificationError) {
+        return { error: `Role updated, but failed to send notification: ${notificationError.message}` };
+    }
 
     revalidatePath('/admin/users');
     return { success: true };
@@ -602,13 +610,17 @@ export async function updateOrderStatus(orderId: number, status: string) {
 
     // Insert notification
     if (order) {
-        await supabase.from('notifications').insert({
+        const { error: notificationError } = await supabase.from('notifications').insert({
             user_id: order.user_id,
             title: 'Order Status Updated',
             message: `Your order #${order.order_number} is now ${status}.`,
             link: `/profile/my-orders/${order.order_number}`,
             type: 'order_update'
         });
+
+        if (notificationError) {
+            return { error: `Order updated, but notification failed: ${notificationError.message}` };
+        }
     }
     
     revalidatePath('/admin/orders');
