@@ -22,6 +22,8 @@ import { useToast } from '@/hooks/use-toast';
 import { submitReview, submitQuestion } from '@/app/actions';
 import { format } from 'date-fns';
 import WishlistButton from './wishlist-button';
+import parse from 'html-react-parser';
+
 
 interface ProductPageContentProps {
   product: Product & {
@@ -231,7 +233,7 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                         {product.originalPrice && <p className="text-lg line-through text-muted-foreground">${product.originalPrice.toFixed(2)}</p>}
                     </div>
 
-                    <p className="text-sm text-gray-600 mb-6">{product.shortDescription}</p>
+                    <p className="text-sm text-gray-600 mb-6">{parse(product.shortDescription)}</p>
 
                     <div className="flex items-center gap-4 mb-6">
                         {quantity === 0 ? (
@@ -274,7 +276,7 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                         <TabsTrigger value="questions">Questions ({product.questions.length})</TabsTrigger>
                     </TabsList>
                     <TabsContent value="description" className="py-6 text-sm text-gray-600 leading-relaxed">
-                        {product.description}
+                        {parse(product.description)}
                     </TabsContent>
                     <TabsContent value="reviews" className="py-6">
                         <div className="grid md:grid-cols-2 gap-8">

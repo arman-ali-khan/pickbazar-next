@@ -52,8 +52,8 @@ export default function PaymentPage() {
     const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
     const [paymentSettings, setPaymentSettings] = useState<any>(null);
     const [loadingSettings, setLoadingSettings] = useState(true);
+    const [shippingCost, setShippingCost] = useState(5.00);
 
-    const shippingCost = 5.00;
     const discountAmount = appliedDiscount?.discount || 0;
     const total = subtotal + shippingCost - discountAmount;
 
@@ -66,9 +66,14 @@ export default function PaymentPage() {
 
         const savedInfo = localStorage.getItem('shippingInfo');
         const savedDiscount = localStorage.getItem('appliedDiscount');
+        const savedShippingCost = localStorage.getItem('shippingCost');
 
         if (savedDiscount) {
             setAppliedDiscount(JSON.parse(savedDiscount));
+        }
+
+        if (savedShippingCost) {
+            setShippingCost(JSON.parse(savedShippingCost));
         }
 
         if (savedInfo) {
@@ -144,6 +149,7 @@ export default function PaymentPage() {
         dispatch(clearCart());
         localStorage.removeItem('shippingInfo');
         localStorage.removeItem('appliedDiscount');
+        localStorage.removeItem('shippingCost');
         
         router.push(`/checkout/success?order_number=${orderNumber}`);
     };

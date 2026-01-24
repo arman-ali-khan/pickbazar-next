@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { UploadCloud, Settings as SettingsIcon, Search, CreditCard, Wrench, Megaphone, X, Share2, Plus, Trash2 } from "lucide-react";
+import { UploadCloud, Settings as SettingsIcon, Search, CreditCard, Wrench, Megaphone, X, Share2, Plus, Trash2, Truck } from "lucide-react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense, useState, useEffect, useCallback, useTransition } from "react";
 import { useSupabase } from "@/lib/supabase/provider";
@@ -53,6 +53,7 @@ interface AllSettings {
     social_links: SocialLink[] | null;
     mobile_banking_number: string | null;
     mobile_banking_options: string[];
+    shipping_cost: number | null;
 }
 
 function SettingsContent() {
@@ -97,8 +98,12 @@ function SettingsContent() {
     }, [fetchSettings]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { id, value } = e.target;
-        setSettings(prev => ({...prev, [id]: value}));
+        const { id, value, type } = e.target as HTMLInputElement;
+        if (type === 'number') {
+             setSettings(prev => ({...prev, [id]: value === '' ? null : parseFloat(value)}));
+        } else {
+             setSettings(prev => ({...prev, [id]: value}));
+        }
     };
 
     const handleSwitchChange = (key: keyof AllSettings, checked: boolean) => {
@@ -234,9 +239,10 @@ function SettingsContent() {
 
     return (
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
-            <TabsList className="sm:grdi flex justify-between w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-6">
+            <TabsList className="sm:grdi flex justify-between w-full grid-cols-2 sm:grid-cols-3 md:grid-cols-7">
                 <TabsTrigger value="general" className="flex items-center gap-2"><SettingsIcon className="h-4 w-4" /><span className="hidden md:inline">General</span></TabsTrigger>
                 <TabsTrigger value="seo" className="flex items-center gap-2"><Search className="h-4 w-4" /><span className="hidden md:inline">SEO</span></TabsTrigger>
+                <TabsTrigger value="shipping" className="flex items-center gap-2"><Truck className="h-4 w-4" /><span className="hidden md:inline">Shipping</span></TabsTrigger>
                 <TabsTrigger value="payments" className="flex items-center gap-2"><CreditCard className="h-4 w-4" /><span className="hidden md:inline">Payments</span></TabsTrigger>
                 <TabsTrigger value="maintenance" className="flex items-center gap-2"><Wrench className="h-4 w-4" /><span className="hidden md:inline">Maintenance</span></TabsTrigger>
                 <TabsTrigger value="promo" className="flex items-center gap-2"><Megaphone className="h-4 w-4" /><span className="hidden md:inline">Promotions</span></TabsTrigger>
@@ -298,6 +304,29 @@ function SettingsContent() {
                 )}
             </TabsContent>
             
+            <TabsContent value="shipping">
+                {loading ? renderSkeleton() : (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Shipping Settings</CardTitle>
+                            <CardDescription>Manage shipping costs and options for your store.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                            <div className="space-y-2 max-w-sm">
+                                <Label htmlFor="shipping_cost">Standard Shipping Cost ($)</Label>
+                                <Input id="shipping_cost" type="number" value={settings.shipping_cost ?? ''} onChange={handleInputChange} step="0.01" placeholder="e.g., 5.00" />
+                                <p className="text-xs text-muted-foreground">This is the flat rate shipping cost applied to all orders.</p>
+                            </div>
+                        </CardContent>
+                        <CardFooter className="border-t pt-6">
+                            <Button onClick={handleSaveChanges} disabled={isSaving}>
+                                {isSaving ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                )}
+            </TabsContent>
+
             <TabsContent value="payments">
                 {loading ? renderSkeleton() : (
                     <Card>

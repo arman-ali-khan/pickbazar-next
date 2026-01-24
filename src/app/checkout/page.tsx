@@ -54,12 +54,24 @@ export default function CheckoutPage() {
     const [couponMessage, setCouponMessage] = useState<{ type: 'error' | 'success'; message: string } | null>(null);
     const [isApplyingCoupon, startCouponTransition] = useTransition();
     const [isProceeding, startProceedingTransition] = useTransition();
+    const [shippingCost, setShippingCost] = useState(5.00);
+    const [loadingSettings, setLoadingSettings] = useState(true);
 
-    const shippingCost = 5.00;
     const discountAmount = appliedDiscount?.discount || 0;
     const total = subtotal + shippingCost - discountAmount;
 
     useEffect(() => {
+        const fetchSettings = async () => {
+            setLoadingSettings(true);
+            const { data } = await supabase.rpc('get_all_settings');
+            if (data && data[0] && data[0].shipping_cost) {
+                setShippingCost(Number(data[0].shipping_cost));
+            } else {
+                setShippingCost(5.00); // Fallback
+            }
+            setLoadingSettings(false);
+        };
+
         if (user) {
             const fetchUserData = async () => {
                 const { data: profileData } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
@@ -75,6 +87,8 @@ export default function CheckoutPage() {
             fetchUserData();
             setShippingInfo(prev => ({ ...prev, email: user.email || '' }));
         }
+        
+        fetchSettings();
     }, [user, supabase]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,6 +116,7 @@ export default function CheckoutPage() {
     const handleProceedToPayment = () => {
         startProceedingTransition(() => {
             localStorage.setItem('shippingInfo', JSON.stringify(shippingInfo));
+            localStorage.setItem('shippingCost', JSON.stringify(shippingCost));
             if (appliedDiscount) {
                 localStorage.setItem('appliedDiscount', JSON.stringify(appliedDiscount));
             } else {
@@ -147,12 +162,12 @@ export default function CheckoutPage() {
                     )}
                     <div className="flex justify-between">
                         <p className="text-muted-foreground">Shipping</p>
-                        <p className="font-semibold">${shippingCost.toFixed(2)}</p>
+                        {loadingSettings ? <Skeleton className="h-5 w-12" /> : <p className="font-semibold">${shippingCost.toFixed(2)}</p>}
                     </div>
                     <Separator className="my-2" />
                     <div className="flex justify-between font-bold text-lg">
                         <p>Total</p>
-                        <p>${total.toFixed(2)}</p>
+                        {loadingSettings ? <Skeleton className="h-6 w-20" /> : <p>${total.toFixed(2)}</p>}
                     </div>
                 </div>
             </CardContent>
@@ -259,7 +274,7 @@ export default function CheckoutPage() {
                     <DialogTrigger asChild>
                       <Button className="w-full h-12">Login or Register</Button>
                     </DialogTrigger>
-                    <LoginDialog onLoginSuccess={() => router.refresh()} />
+                    <LoginDialog />
                   </Dialog>
                 </CardContent>
               </Card>
@@ -268,7 +283,7 @@ export default function CheckoutPage() {
           <div>
             {renderOrderSummary()}
             {user && (
-              <Button onClick={handleProceedToPayment} className="w-full mt-6 h-12" disabled={isProceeding}>
+              <Button onClick={handleProceedToPayment} className="w-full mt-6 h-12" disabled={isProceeding || loadingSettings}>
                   {isProceeding ? 'Processing...' : 'Proceed to Payment'}
               </Button>
             )}

@@ -98,14 +98,16 @@ export default function CartDrawer() {
           </div>
           
           <SheetFooter className="p-6 bg-white border-t mt-auto sm:flex-col sm:justify-center sm:space-x-0 sm:gap-2">
-              <Button disabled={cartItems.length === 0} className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 text-base font-semibold relative" asChild>
-                  <Link href="/checkout" className="flex items-center justify-center text-white">
-                      Checkout
-                      <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-primary rounded-full px-5 py-2.5 text-sm font-bold">
-                          ${isMounted ? subtotal.toFixed(2) : '0.00'}
-                      </span>
-                  </Link>
-              </Button>
+              <SheetClose asChild>
+                <Button disabled={cartItems.length === 0} className="w-full h-14 rounded-full bg-primary hover:bg-primary/90 text-base font-semibold relative" asChild>
+                    <Link href="/checkout" className="flex items-center justify-center text-white">
+                        Checkout
+                        <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-white text-primary rounded-full px-5 py-2.5 text-sm font-bold">
+                            ${isMounted ? subtotal.toFixed(2) : '0.00'}
+                        </span>
+                    </Link>
+                </Button>
+              </SheetClose>
               <SheetClose asChild>
                 <Button variant="ghost" className="w-full text-muted-foreground">
                     <X className="h-4 w-4 mr-2" /> Close

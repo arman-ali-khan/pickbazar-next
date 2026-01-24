@@ -16,6 +16,8 @@ import { addToCart, updateQuantity, selectItemQuantity, triggerFlyToCart } from 
 import { getQuickViewData } from '@/app/actions';
 import { Skeleton } from './ui/skeleton';
 import WishlistButton from './wishlist-button';
+import parse from 'html-react-parser';
+
 
 type QuickViewProduct = Product & {
     images: ImagePlaceholder[];
@@ -270,7 +272,7 @@ export default function ProductQuickView({ product, children }: { product: Produ
                             </div>
     
                             <p className="text-muted-foreground text-sm mb-4">{detailedProduct.weight}</p>
-                            <p className="text-sm text-gray-600 mb-2">{detailedProduct.shortDescription}</p>
+                            <span className="text-sm text-gray-600 mb-2">{parse(detailedProduct.shortDescription)}</span>
                             <Button variant="link" asChild className="p-0 h-auto text-primary self-start mb-4"><Link href={`/products/${detailedProduct.id}`}>Read more</Link></Button>
                             <div className="flex items-baseline gap-2 my-4">
                                 <p className="font-bold text-primary text-3xl">${detailedProduct.price.toFixed(2)}</p>
