@@ -165,11 +165,11 @@ function PagesDrawer() {
 }
 
 export default function BottomNavbar() {
+    const pathname = usePathname();
     const dispatch = useAppDispatch();
     const totalItems = useAppSelector(selectTotalItems);
     const { user } = useSupabase();
     const router = useRouter();
-    const pathname = usePathname();
     const isProfilePage = pathname.startsWith('/profile');
     
     const [notifications, setNotifications] = useState(initialNotifications);
@@ -185,6 +185,10 @@ export default function BottomNavbar() {
         }
     }
     
+    if (pathname.startsWith('/admin')) {
+        return null;
+    }
+
     const renderProfileButton = () => {
         if (user) {
             if (isProfilePage) {
