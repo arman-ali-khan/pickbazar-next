@@ -18,6 +18,7 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import type { OrderStatus } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Timeline, TimelineItem, TimelinePoint, TimelineTime, TimelineTitle } from '@/components/ui/timeline';
 
 interface OrderItem {
     id: number;
@@ -52,6 +53,11 @@ interface OrderDetails {
     }[];
 }
 
+interface OrderTimelineItem {
+    status: string;
+    created_at: string;
+}
+
 const getStatusVariant = (status: OrderStatus) => {
     switch (status) {
         case 'Delivered': return 'secondary';
@@ -66,6 +72,7 @@ export default function MyOrderDetailsPage() {
     const { supabase, user } = useSupabase();
     const { toast } = useToast();
     const [order, setOrder] = useState<OrderDetails | null>(null);
+    const [timeline, setTimeline] = useState<OrderTimelineItem[]>([]);
     const [loading, setLoading] = useState(true);
 
     const getOrder = useCallback(async () => {
@@ -87,6 +94,10 @@ export default function MyOrderDetailsPage() {
             notFound();
         } else {
             setOrder(data as OrderDetails);
+            const { data: timelineData } = await supabase.rpc('get_order_history', { p_order_id: data.id });
+            if (timelineData) {
+                setTimeline(timelineData);
+            }
         }
         setLoading(false);
     }, [user, supabase, toast, orderNumber]);
@@ -190,6 +201,19 @@ export default function MyOrderDetailsPage() {
                             <Badge variant={getStatusVariant(order.status)} className="text-sm">{order.status}</Badge>
                         </CardHeader>
                         <CardContent>
+                            <div className="mb-6">
+                                <h4 className="font-semibold mb-4">Order History</h4>
+                                <Timeline>
+                                    {timeline.map((item, index) => (
+                                        <TimelineItem key={index}>
+                                            <TimelinePoint />
+                                            <TimelineTitle>{item.status}</TimelineTitle>
+                                            <TimelineTime>{format(new Date(item.created_at), "PPp")}</TimelineTime>
+                                        </TimelineItem>
+                                    ))}
+                                </Timeline>
+                            </div>
+                            <Separator className="my-6" />
                             <div className="space-y-4">
                                 {order.order_items.map(item => (
                                     <div key={item.id} className="flex items-center gap-4">

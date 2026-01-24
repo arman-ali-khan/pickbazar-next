@@ -17,6 +17,9 @@ import { useSupabase } from '@/lib/supabase/provider';
 import type { OrderStatus } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { updateOrderStatus } from '@/app/actions';
+import { Timeline, TimelineItem, TimelinePoint, TimelineTime, TimelineTitle } from '@/components/ui/timeline';
+import { format } from 'date-fns';
+
 
 interface OrderItem {
     id: number;
@@ -54,6 +57,11 @@ interface OrderDetails {
     } | null;
 }
 
+interface OrderTimelineItem {
+    status: string;
+    created_at: string;
+}
+
 const getStatusVariant = (status: OrderStatus) => {
     switch (status) {
         case 'Delivered': return 'secondary';
@@ -72,6 +80,7 @@ export default function OrderDetailsPage() {
     const { toast } = useToast();
 
     const [order, setOrder] = useState<OrderDetails | null>(null);
+    const [timeline, setTimeline] = useState<OrderTimelineItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState<OrderStatus>('Pending');
     const [isUpdating, startUpdateTransition] = useTransition();
@@ -88,6 +97,11 @@ export default function OrderDetailsPage() {
             const orderData = data[0] as OrderDetails;
             setOrder(orderData);
             setStatus(orderData.status as OrderStatus);
+
+            const { data: timelineData } = await supabase.rpc('get_order_history', { p_order_id: orderData.id });
+            if (timelineData) {
+                setTimeline(timelineData);
+            }
         }
         setLoading(false);
     }, [orderNumber, supabase, toast]);
@@ -297,6 +311,22 @@ export default function OrderDetailsPage() {
                                     {order.shipping_details.city}, {order.shipping_details.state} {order.shipping_details.zip}
                                 </address>
                             </div>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Order History</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Timeline>
+                                {timeline.map((item, index) => (
+                                    <TimelineItem key={index}>
+                                        <TimelinePoint />
+                                        <TimelineTitle>{item.status}</TimelineTitle>
+                                        <TimelineTime>{format(new Date(item.created_at), "PPp")}</TimelineTime>
+                                    </TimelineItem>
+                                ))}
+                            </Timeline>
                         </CardContent>
                     </Card>
                     <Card>

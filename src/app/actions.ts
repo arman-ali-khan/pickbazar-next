@@ -629,38 +629,39 @@ export async function updateOrderStatus(orderId: number, status: string) {
 
     // Check if user is admin
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
-    if (!['admin', 'manager', 'super-admin'].includes(profile?.role || '')) {
+    if (!profile?.role || !['admin', 'manager', 'super-admin'].includes(profile.role)) {
         return { error: 'Permission denied.' };
     }
 
-    const { data: order, error: updateError } = await supabase
-        .from('orders')
-        .update({ status })
-        .eq('id', orderId)
-        .select()
-        .single();
+    const { data: order, error: updateError } = await supabase.rpc('update_order_status_and_log', {
+        p_order_id: orderId,
+        p_new_status: status
+    });
 
     if (updateError) {
-        return { error: updateError.message };
+        return { error: `Failed to update order: ${updateError.message}` };
     }
 
+    const updatedOrder = order?.[0];
+
     // Insert notification
-    if (order) {
+    if (updatedOrder) {
         const { error: notificationError } = await supabase.from('notifications').insert({
-            user_id: order.user_id,
+            user_id: updatedOrder.user_id,
             title: 'Order Status Updated',
-            message: `Your order #${order.order_number} is now ${status}.`,
-            link: `/profile/my-orders/${order.order_number}`,
+            message: `Your order #${updatedOrder.order_number} is now ${status}.`,
+            link: `/profile/my-orders/${updatedOrder.order_number}`,
             type: 'order_update'
         });
 
         if (notificationError) {
-            return { error: `Order updated, but notification failed: ${notificationError.message}` };
+            console.error('Failed to create notification:', notificationError);
+            // Non-critical error, so we don't return an error to the client for this.
         }
     }
     
     revalidatePath('/admin/orders');
-    revalidatePath(`/admin/orders/${order.order_number}`);
-    if (order) revalidatePath(`/profile/my-orders/${order.order_number}`);
-    return { success: true, orderNumber: order?.order_number };
+    revalidatePath(`/admin/orders/${updatedOrder?.order_number}`);
+    if (updatedOrder) revalidatePath(`/profile/my-orders/${updatedOrder.order_number}`);
+    return { success: true, orderNumber: updatedOrder?.order_number };
 }
