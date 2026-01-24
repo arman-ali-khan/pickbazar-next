@@ -461,7 +461,7 @@ export async function updateUserRole(formData: FormData) {
     });
     
     if (notificationError) {
-        return { error: `Role updated, but failed to send notification: ${notificationError.message}` };
+        console.error(`Role updated, but failed to send notification: ${notificationError.message}`);
     }
 
     revalidatePath('/admin/users');
@@ -655,8 +655,7 @@ export async function updateOrderStatus(orderId: number, status: string) {
         });
 
         if (notificationError) {
-            console.error('Failed to create notification:', notificationError);
-            // Non-critical error, so we don't return an error to the client for this.
+            console.error('Failed to create notification:', notificationError.message);
         }
     }
     
@@ -664,4 +663,45 @@ export async function updateOrderStatus(orderId: number, status: string) {
     revalidatePath(`/admin/orders/${updatedOrder?.order_number}`);
     if (updatedOrder) revalidatePath(`/profile/my-orders/${updatedOrder.order_number}`);
     return { success: true, orderNumber: updatedOrder?.order_number };
+}
+
+export async function sendCustomNotification(formData: FormData) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: 'Authentication required' };
+    }
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+    const myRole = profile?.role;
+
+    if (!myRole || !['admin', 'super-admin'].includes(myRole)) {
+        return { error: 'You do not have permission to perform this action.' };
+    }
+
+    const userIds = formData.getAll('userIds') as string[];
+    const title = formData.get('title') as string;
+    const message = formData.get('message') as string;
+    const link = formData.get('link') as string;
+
+    if (!userIds || userIds.length === 0 || !title) {
+        return { error: 'User selection and title are required.' };
+    }
+
+    const notificationsToInsert = userIds.map(userId => ({
+        user_id: userId,
+        title,
+        message: message || null,
+        link: link || null,
+        type: 'promotion'
+    }));
+
+    const { error } = await supabase.from('notifications').insert(notificationsToInsert);
+
+    if (error) {
+        return { error: `Failed to send notifications: ${error.message}` };
+    }
+
+    return { success: true, count: userIds.length };
 }

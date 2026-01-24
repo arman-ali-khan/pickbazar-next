@@ -7,6 +7,7 @@ import {
     CardTitle,
     CardContent,
     CardDescription,
+    CardFooter,
 } from "@/components/ui/card";
 import {
     Table,
@@ -23,7 +24,6 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSub,
     DropdownMenuSubTrigger,
-    DropdownMenuSubContent,
     DropdownMenuPortal,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
@@ -32,15 +32,18 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Trash2, Eye, Pencil, ListFilter } from "lucide-react";
+import { MoreHorizontal, Trash2, Eye, Pencil, ListFilter, Send } from "lucide-react";
 import { useState, useEffect, useCallback, useTransition, useMemo } from "react";
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from 'date-fns';
 import Link from 'next/link';
-import { updateUserRole } from "@/app/actions";
+import { updateUserRole, sendCustomNotification } from "@/app/actions";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 type UserRole = 'customer' | 'manager' | 'admin' | 'super-admin';
 interface User {
@@ -73,8 +76,14 @@ export default function AdminUsersPage() {
     const { toast } = useToast();
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
-    const [isPending, startTransition] = useTransition();
+    const [isRoleUpdating, startRoleUpdate] = useTransition();
+    const [isNotificationSending, startNotificationSend] = useTransition();
     const [roleFilter, setRoleFilter] = useState('all');
+    const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+
+    const [notificationTitle, setNotificationTitle] = useState('');
+    const [notificationMessage, setNotificationMessage] = useState('');
+    const [notificationLink, setNotificationLink] = useState('');
 
     const getUsers = useCallback(async () => {
         setLoading(true);
@@ -101,7 +110,7 @@ export default function AdminUsersPage() {
     }, [users, roleFilter]);
 
     const handleRoleChange = (userId: string, newRole: UserRole) => {
-        startTransition(async () => {
+        startRoleUpdate(async () => {
             const formData = new FormData();
             formData.append('userId', userId);
             formData.append('role', newRole);
@@ -120,6 +129,43 @@ export default function AdminUsersPage() {
             variant: "destructive",
             title: "Not Implemented",
             description: "User deletion must be handled with a secure server-side function.",
+        });
+    };
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedUserIds(filteredUsers.map(u => u.id));
+        } else {
+            setSelectedUserIds([]);
+        }
+    };
+
+    const handleSelectUser = (userId: string, checked: boolean) => {
+        setSelectedUserIds(prev =>
+            checked ? [...prev, userId] : prev.filter(id => id !== userId)
+        );
+    };
+
+    const handleSendNotification = (e: React.FormEvent) => {
+        e.preventDefault();
+        startNotificationSend(async () => {
+            const formData = new FormData();
+            selectedUserIds.forEach(id => formData.append('userIds', id));
+            formData.append('title', notificationTitle);
+            formData.append('message', notificationMessage);
+            formData.append('link', notificationLink);
+
+            const result = await sendCustomNotification(formData);
+
+            if (result?.error) {
+                toast({ variant: 'destructive', title: 'Error', description: result.error });
+            } else {
+                toast({ title: `Notifications Sent`, description: `Successfully sent notifications to ${result.count} users.` });
+                setNotificationTitle('');
+                setNotificationMessage('');
+                setNotificationLink('');
+                setSelectedUserIds([]);
+            }
         });
     };
 
@@ -161,6 +207,13 @@ export default function AdminUsersPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
+                                    <TableHead className="w-12">
+                                        <Checkbox
+                                            onCheckedChange={handleSelectAll}
+                                            checked={selectedUserIds.length > 0 && selectedUserIds.length === filteredUsers.length}
+                                            indeterminate={selectedUserIds.length > 0 && selectedUserIds.length < filteredUsers.length}
+                                         />
+                                    </TableHead>
                                     <TableHead>User</TableHead>
                                     <TableHead>Role</TableHead>
                                     <TableHead>Joined</TableHead>
@@ -170,6 +223,12 @@ export default function AdminUsersPage() {
                             <TableBody>
                                 {filteredUsers.map((user) => (
                                     <TableRow key={user.id}>
+                                        <TableCell>
+                                            <Checkbox
+                                                checked={selectedUserIds.includes(user.id)}
+                                                onCheckedChange={(checked) => handleSelectUser(user.id, !!checked)}
+                                            />
+                                        </TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-3">
                                                 <Avatar className="h-9 w-9">
@@ -189,7 +248,7 @@ export default function AdminUsersPage() {
                                         <TableCell className="text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" disabled={isPending}>
+                                                    <Button variant="ghost" size="icon" disabled={isRoleUpdating}>
                                                         <MoreHorizontal className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
@@ -227,6 +286,10 @@ export default function AdminUsersPage() {
                         {filteredUsers.map((user) => (
                              <Card key={user.id}>
                                 <CardHeader className="flex flex-row items-center gap-4 space-y-0 p-4">
+                                     <Checkbox
+                                        checked={selectedUserIds.includes(user.id)}
+                                        onCheckedChange={(checked) => handleSelectUser(user.id, !!checked)}
+                                    />
                                     <Avatar className="h-10 w-10">
                                         <AvatarImage src={user.avatar_url ?? undefined} alt={user.full_name ?? ''} />
                                         <AvatarFallback>{(user.full_name ?? user.email ?? 'U').charAt(0).toUpperCase()}</AvatarFallback>
@@ -254,6 +317,53 @@ export default function AdminUsersPage() {
                         ))}
                     </div>
                 </CardContent>
+            </Card>
+
+            <Card className="mt-8">
+                <form onSubmit={handleSendNotification}>
+                    <CardHeader>
+                        <CardTitle>Send Custom Notification</CardTitle>
+                        <CardDescription>
+                            Send a notification to the selected users. {selectedUserIds.length} user(s) selected.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid gap-2">
+                            <Label htmlFor="notification-title">Title</Label>
+                            <Input
+                                id="notification-title"
+                                placeholder="e.g. 🎉 Weekend Flash Sale!"
+                                value={notificationTitle}
+                                onChange={(e) => setNotificationTitle(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="grid gap-2">
+                            <Label htmlFor="notification-message">Message (Optional)</Label>
+                            <Textarea
+                                id="notification-message"
+                                placeholder="Get 20% off on all fresh vegetables."
+                                value={notificationMessage}
+                                onChange={(e) => setNotificationMessage(e.target.value)}
+                            />
+                        </div>
+                         <div className="grid gap-2">
+                            <Label htmlFor="notification-link">Link (Optional)</Label>
+                            <Input
+                                id="notification-link"
+                                placeholder="/offers"
+                                value={notificationLink}
+                                onChange={(e) => setNotificationLink(e.target.value)}
+                            />
+                        </div>
+                    </CardContent>
+                    <CardFooter className="border-t pt-6">
+                        <Button type="submit" disabled={selectedUserIds.length === 0 || !notificationTitle || isNotificationSending}>
+                            <Send className="mr-2 h-4 w-4" />
+                            {isNotificationSending ? 'Sending...' : `Send to ${selectedUserIds.length} users`}
+                        </Button>
+                    </CardFooter>
+                </form>
             </Card>
         </main>
     );
