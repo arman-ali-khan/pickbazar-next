@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { UploadCloud, Settings as SettingsIcon, Search, CreditCard, Wrench, Megaphone, X, Share2 } from "lucide-react";
+import { UploadCloud, Settings as SettingsIcon, Search, CreditCard, Wrench, Megaphone, X, Share2, Plus, Trash2 } from "lucide-react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense, useState, useEffect, useCallback, useTransition } from "react";
 import { useSupabase } from "@/lib/supabase/provider";
@@ -17,6 +17,14 @@ import Image from "next/image";
 import { updateSettings } from "@/app/actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { iconList } from "@/lib/icon-list";
+import LucideIcon from "@/components/lucide-icon";
+
+interface SocialLink {
+    url: string;
+    icon: string;
+}
 
 interface AllSettings {
     site_title: string;
@@ -40,9 +48,7 @@ interface AllSettings {
     maintenance_cover_image_url: string | null;
     maintenance_end_date: string | null;
     enable_promo_popup: boolean;
-    social_facebook_url: string | null;
-    social_twitter_url: string | null;
-    social_instagram_url: string | null;
+    social_links: SocialLink[] | null;
 }
 
 function SettingsContent() {
@@ -53,6 +59,7 @@ function SettingsContent() {
     const { toast } = useToast();
 
     const [settings, setSettings] = useState<Partial<AllSettings>>({});
+    const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [faviconFile, setFaviconFile] = useState<File | null>(null);
     const [previewFile, setPreviewFile] = useState<File | null>(null);
@@ -73,6 +80,9 @@ function SettingsContent() {
             toast({ variant: 'destructive', title: 'Error fetching settings', description: error.message });
         } else if (data) {
             setSettings(data);
+            if (data.social_links && Array.isArray(data.social_links)) {
+                setSocialLinks(data.social_links);
+            }
         }
         setLoading(false);
     }, [supabase, toast]);
@@ -122,7 +132,7 @@ function SettingsContent() {
     const handleSaveChanges = () => {
         startTransition(async () => {
             try {
-                const updatedSettings: Partial<AllSettings> = { ...settings };
+                let updatedSettings: Partial<AllSettings> = { ...settings };
 
                 if (logoFile) updatedSettings.logo_url = await uploadImage(logoFile);
                 if (faviconFile) updatedSettings.favicon_url = await uploadImage(faviconFile);
@@ -130,10 +140,16 @@ function SettingsContent() {
                 if (maintenanceCoverFile) updatedSettings.maintenance_cover_image_url = await uploadImage(maintenanceCoverFile);
                 
                 const settingsToUpdate = Object.entries(updatedSettings)
+                    .filter(([key]) => key !== 'social_links')
                     .map(([key, value]) => ({
                         key,
                         value: value === null || value === undefined ? null : String(value),
                     }));
+                
+                settingsToUpdate.push({
+                    key: 'social_links',
+                    value: JSON.stringify(socialLinks)
+                });
 
                 const result = await updateSettings(settingsToUpdate);
 
@@ -146,6 +162,20 @@ function SettingsContent() {
             }
         });
     };
+
+    const handleSocialLinkChange = (index: number, field: 'url' | 'icon', value: string) => {
+        const newLinks = [...socialLinks];
+        newLinks[index][field] = value;
+        setSocialLinks(newLinks);
+    }
+    
+    const addSocialLink = () => {
+        setSocialLinks([...socialLinks, { url: '', icon: 'Link' }]);
+    }
+
+    const removeSocialLink = (index: number) => {
+        setSocialLinks(socialLinks.filter((_, i) => i !== index));
+    }
     
     const renderImageUploader = (label: string, key: keyof AllSettings, fileSetter: React.Dispatch<React.SetStateAction<File | null>>) => (
         <div className="space-y-2">
@@ -315,24 +345,48 @@ function SettingsContent() {
                             <CardTitle>Social Media Links</CardTitle>
                             <CardDescription>Manage the social media links shown in your site's footer.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="social_facebook_url">Facebook URL</Label>
-                                <Input id="social_facebook_url" value={settings.social_facebook_url || ''} onChange={handleInputChange} placeholder="https://facebook.com/your-page" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="social_twitter_url">Twitter URL</Label>
-                                <Input id="social_twitter_url" value={settings.social_twitter_url || ''} onChange={handleInputChange} placeholder="https://twitter.com/your-handle" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="social_instagram_url">Instagram URL</Label>
-                                <Input id="social_instagram_url" value={settings.social_instagram_url || ''} onChange={handleInputChange} placeholder="https://instagram.com/your-profile" />
-                            </div>
+                        <CardContent className="space-y-4">
+                            {socialLinks.map((link, index) => (
+                                <div key={index} className="flex items-end gap-2 p-3 border rounded-lg">
+                                    <div className="grid gap-2 flex-1">
+                                        <Label htmlFor={`social-url-${index}`}>URL</Label>
+                                        <Input
+                                            id={`social-url-${index}`}
+                                            value={link.url}
+                                            onChange={(e) => handleSocialLinkChange(index, 'url', e.target.value)}
+                                            placeholder="https://example.com"
+                                        />
+                                    </div>
+                                    <div className="grid gap-2">
+                                        <Label>Icon</Label>
+                                        <Select value={link.icon} onValueChange={(value) => handleSocialLinkChange(index, 'icon', value)}>
+                                            <SelectTrigger className="w-40">
+                                                <SelectValue placeholder="Select icon" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {iconList.map(iconName => (
+                                                    <SelectItem key={iconName} value={iconName}>
+                                                        <div className="flex items-center gap-2">
+                                                            <LucideIcon name={iconName} className="h-4 w-4" />
+                                                            {iconName}
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <Button variant="ghost" size="icon" className="text-destructive" onClick={() => removeSocialLink(index)}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))}
+                            <Button variant="outline" onClick={addSocialLink}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Link
+                            </Button>
                         </CardContent>
                         <CardFooter className="border-t pt-6">
-                            <Button onClick={handleSaveChanges} disabled={isSaving}>
-                                {isSaving ? 'Saving...' : 'Save Changes'}
-                            </Button>
+                            <Button onClick={handleSaveChanges} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>
                         </CardFooter>
                     </Card>
                 )}

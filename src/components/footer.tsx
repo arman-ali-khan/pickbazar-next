@@ -1,12 +1,20 @@
 import Link from 'next/link';
-import { Leaf, Facebook, Twitter, Instagram } from 'lucide-react';
+import { Leaf } from 'lucide-react';
 import { Button } from './ui/button';
 import { createClient } from '@/lib/supabase/server';
 import Image from 'next/image';
+import LucideIcon from './lucide-icon';
+
+interface SocialLink {
+  url: string;
+  icon: string;
+}
 
 export default async function Footer() {
   const supabase = createClient();
   const { data: settings } = await supabase.rpc('get_all_settings');
+
+  const socialLinks: SocialLink[] = (settings?.social_links || []) as SocialLink[];
 
   return (
     <footer className="bg-muted/40">
@@ -50,9 +58,13 @@ export default async function Footer() {
              © {new Date().getFullYear()} {settings?.site_title || 'Pickbazar'}. All rights reserved.
           </p>
           <div className="flex space-x-2 order-1 md:order-2">
-              {settings?.social_facebook_url && <Button variant="ghost" size="icon" asChild><a href={settings.social_facebook_url} target="_blank" rel="noopener noreferrer"><Facebook className="h-5 w-5 text-muted-foreground" /></a></Button>}
-              {settings?.social_twitter_url && <Button variant="ghost" size="icon" asChild><a href={settings.social_twitter_url} target="_blank" rel="noopener noreferrer"><Twitter className="h-5 w-5 text-muted-foreground" /></a></Button>}
-              {settings?.social_instagram_url && <Button variant="ghost" size="icon" asChild><a href={settings.social_instagram_url} target="_blank" rel="noopener noreferrer"><Instagram className="h-5 w-5 text-muted-foreground" /></a></Button>}
+              {socialLinks.map((link, index) => (
+                <Button key={index} variant="ghost" size="icon" asChild>
+                  <a href={link.url} target="_blank" rel="noopener noreferrer" aria-label={link.icon}>
+                    <LucideIcon name={link.icon} className="h-5 w-5 text-muted-foreground" />
+                  </a>
+                </Button>
+              ))}
           </div>
         </div>
       </div>
