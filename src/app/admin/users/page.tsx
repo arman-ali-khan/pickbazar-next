@@ -24,6 +24,7 @@ import {
     DropdownMenuTrigger,
     DropdownMenuSub,
     DropdownMenuSubTrigger,
+    DropdownMenuSubContent,
     DropdownMenuPortal,
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
