@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -34,25 +35,23 @@ const faqs = [
 
 export default function FaqSection() {
   return (
-    <section className="py-12 px-4 md:px-8 bg-muted/20">
-      <div className="container mx-auto max-w-4xl">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-800">Frequently Asked Questions</h2>
-        </div>
-        <Accordion type="single" collapsible className="w-full space-y-4">
-          {faqs.map((faq, index) => (
-            <AccordionItem value={`item-${index}`} key={index} className="bg-white p-2 rounded-lg shadow-sm border-b-0">
-              <AccordionTrigger className="text-left px-4 font-semibold hover:no-underline text-lg">{faq.question}</AccordionTrigger>
-              <AccordionContent className="px-4 pt-2 text-muted-foreground text-base">{faq.answer}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-        <div className="text-center mt-12">
-            <Button asChild variant="outline">
-                <Link href="/faq">View All FAQs</Link>
-            </Button>
-        </div>
+    <div>
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-gray-800">Frequently Asked Questions</h2>
       </div>
-    </section>
+      <Accordion type="single" collapsible className="w-full space-y-4">
+        {faqs.map((faq, index) => (
+          <AccordionItem value={`item-${index}`} key={index} className="bg-background p-2 rounded-lg shadow-sm border-b-0">
+            <AccordionTrigger className="text-left px-4 font-semibold hover:no-underline text-base">{faq.question}</AccordionTrigger>
+            <AccordionContent className="px-4 pt-2 text-muted-foreground">{faq.answer}</AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+      <div className="mt-8">
+          <Button asChild variant="link" className="p-0 h-auto">
+              <Link href="/faq">View All FAQs</Link>
+          </Button>
+      </div>
+    </div>
   );
 }

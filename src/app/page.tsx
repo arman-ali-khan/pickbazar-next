@@ -68,8 +68,12 @@ export default async function Home() {
         <RecentlyAddedProducts />
         <HomePageCategorySections sections={homeSections} />
         <CustomerReviews />
-        <FaqSection />
-        <ContactSection />
+        <section className="container py-16 bg-muted/20">
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 items-start">
+              <FaqSection />
+              <ContactSection />
+          </div>
+        </section>
       </main>
       <Footer />
       <CartDrawer />
