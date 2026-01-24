@@ -135,15 +135,24 @@ export async function submitQuestion(formData: FormData) {
         return { error: 'Product and question text are required.' };
     }
 
-    const { error } = await supabase.from('questions').insert({
+    const { data: questionData, error } = await supabase.from('questions').insert({
         user_id: user.id,
         product_id: Number(productId),
         question_text: String(questionText),
-    });
+    }).select().single();
 
     if (error) {
         return { error: error.message };
     }
+
+    // Notify admins
+    await supabase.from('notifications').insert({
+        title: `New question on "${(questionData as any)?.product_name || 'a product'}"`,
+        message: `From: ${(questionData as any)?.author_name || 'a user'}. Q: ${questionText}`,
+        link: `/admin/questions`,
+        type: 'new_question'
+    });
+
 
     revalidatePath('/admin/questions');
     revalidatePath(`/products/${productId}`);
@@ -316,8 +325,8 @@ export async function requestRefund(formData: FormData) {
     return { error: `Refund request failed: ${error.message}` };
   }
   
-  revalidatePath('/profile/my-orders');
   revalidatePath('/profile/my-refunds');
+  revalidatePath('/admin/refunds');
   return { success: true };
 }
 
@@ -385,11 +394,10 @@ export async function updateUserRole(formData: FormData) {
     }
 
     // This RPC call securely gets the calling user's role without causing recursion.
-    const { data: roleData, error: rpcError } = await supabase.rpc('get_my_role');
+    const { data: myRole, error: rpcError } = await supabase.rpc('get_my_role');
     if (rpcError) {
         return { error: `Could not verify permissions: ${rpcError.message}` };
     }
-    const myRole = roleData?.[0]?.role;
 
     if (!myRole || !['admin', 'super-admin'].includes(myRole)) {
         return { error: 'You do not have permission to perform this action.' };
