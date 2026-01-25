@@ -17,7 +17,8 @@ import { applyCoupon } from '@/app/actions';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { cn } from '@/lib/utils';
 
 interface ShippingInfo {
   firstName: string;
@@ -306,23 +307,48 @@ export default function CheckoutPage() {
                     </div>
                      {savedAddresses.length > 0 ? (
                         <div className="space-y-4 pt-2">
-                            <div className="space-y-2">
-                                <Label>Shipping Address</Label>
-                                <Select onValueChange={handleAddressSelect} value={selectedAddressId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select a shipping address" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {savedAddresses.map((addr) => (
-                                        <SelectItem key={addr.id} value={String(addr.id)}>
-                                            {addr.title}: {addr.street_address}, {addr.city}
-                                        </SelectItem>
-                                        ))}
-                                        <SelectItem value="new">-- Add a new address --</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            {selectedAddressId === 'new' && <AddressFormFields />}
+                            <Label>Shipping Address</Label>
+                            <RadioGroup onValueChange={handleAddressSelect} value={selectedAddressId} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {savedAddresses.map((addr) => (
+                                    <Label
+                                        key={addr.id}
+                                        htmlFor={`addr-${addr.id}`}
+                                        className={cn(
+                                            "flex flex-col justify-between p-4 border rounded-lg cursor-pointer transition-all",
+                                            selectedAddressId === String(addr.id)
+                                                ? "border-primary ring-2 ring-primary"
+                                                : "border-border hover:border-gray-400"
+                                        )}
+                                    >
+                                        <div className="flex justify-between items-start w-full">
+                                            <div className="space-y-1">
+                                                <p className="font-semibold">{addr.title}</p>
+                                                <address className="not-italic text-muted-foreground text-sm">
+                                                    {addr.street_address}, {addr.city}, {addr.state} {addr.zip}
+                                                </address>
+                                            </div>
+                                            <RadioGroupItem value={String(addr.id)} id={`addr-${addr.id}`} />
+                                        </div>
+                                    </Label>
+                                ))}
+                                <Label
+                                    htmlFor="addr-new"
+                                    className={cn(
+                                        "flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-all min-h-[110px]",
+                                        selectedAddressId === 'new'
+                                            ? "border-primary ring-2 ring-primary bg-primary/5"
+                                            : "border-border hover:border-primary/50"
+                                    )}
+                                >
+                                    <p className="font-semibold mt-2">+ Add New Address</p>
+                                    <RadioGroupItem value="new" id="addr-new" className="hidden" />
+                                </Label>
+                            </RadioGroup>
+                            {selectedAddressId === 'new' && (
+                                <div className="pt-4">
+                                    <AddressFormFields />
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <AddressFormFields />
