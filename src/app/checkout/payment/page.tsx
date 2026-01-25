@@ -28,6 +28,7 @@ interface ShippingInfo {
   state: string;
   zip: string;
   email: string;
+  phone: string;
 }
 
 interface AppliedDiscount {
@@ -173,6 +174,7 @@ export default function PaymentPage() {
                             <p>{shippingInfo.address}</p>
                             <p>{shippingInfo.city}, {shippingInfo.state} {shippingInfo.zip}</p>
                             <p>{shippingInfo.email}</p>
+                            <p>{shippingInfo.phone}</p>
                          </div>
                     ) : (
                         <p className="text-sm text-muted-foreground">Loading shipping details...</p>

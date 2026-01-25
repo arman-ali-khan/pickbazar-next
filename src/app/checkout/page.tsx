@@ -27,6 +27,7 @@ interface ShippingInfo {
   state: string;
   zip: string;
   email: string;
+  phone: string;
 }
 
 interface AppliedDiscount {
@@ -57,6 +58,7 @@ export default function CheckoutPage() {
       state: '',
       zip: '',
       email: '',
+      phone: '',
     });
 
     const [couponCode, setCouponCode] = useState('');
@@ -87,10 +89,10 @@ export default function CheckoutPage() {
 
         if (user) {
             const fetchUserData = async () => {
-                const { data: profileData } = await supabase.from('profiles').select('full_name').eq('id', user.id).single();
+                const { data: profileData } = await supabase.from('profiles').select('full_name, contact_number').eq('id', user.id).single();
                 if (profileData) {
                     const [firstName, ...lastNameParts] = (profileData.full_name || '').split(' ');
-                    setShippingInfo(prev => ({ ...prev, firstName: firstName || '', lastName: lastNameParts.join(' ') || '' }));
+                    setShippingInfo(prev => ({ ...prev, firstName: firstName || '', lastName: lastNameParts.join(' ') || '', phone: profileData.contact_number || '' }));
                 }
                 const { data: addressesData } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
 
@@ -292,9 +294,15 @@ export default function CheckoutPage() {
                             <Input id="lastName" placeholder="Doe" value={shippingInfo.lastName} onChange={handleInputChange} required />
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input id="email" type="email" placeholder="you@example.com" value={shippingInfo.email} onChange={handleInputChange} required readOnly={!!user} />
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                          <Label htmlFor="email">Email</Label>
+                          <Input id="email" type="email" placeholder="you@example.com" value={shippingInfo.email} onChange={handleInputChange} required readOnly={!!user} />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="phone">Phone</Label>
+                          <Input id="phone" type="tel" placeholder="Your phone number" value={shippingInfo.phone} onChange={handleInputChange} required />
+                      </div>
                     </div>
                      {savedAddresses.length > 0 ? (
                         <div className="space-y-4 pt-2">
