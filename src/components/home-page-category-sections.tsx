@@ -1,46 +1,20 @@
-import { createClient } from '@/lib/supabase/server';
+'use client';
 import ProductCard from '@/components/product-details';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { Product } from '@/lib/data';
 import LucideIcon from './lucide-icon';
 
-async function getProductsForCategory(categoryId: number) {
-    const supabase = createClient();
-    const { data, error } = await supabase
-        .from('products')
-        .select('*, product_categories!inner(category_id)')
-        .eq('product_categories.category_id', categoryId)
-        .limit(6);
-    
-    if (error) {
-        console.error("Error fetching products for category:", error);
-        return [];
-    }
-
-    return data.map(p => ({
-      id: p.id,
-      name: p.name,
-      price: p.price,
-      originalPrice: p.original_price,
-      image: { id: `prod-${p.id}`, imageUrl: p.featured_image_url || 'https://picsum.photos/seed/placeholder/200', imageHint: 'product', description: p.name },
-      weight: p.unit || '',
-      category: '', // This data is not available directly on the product row
-      rating: 0, // This data is not available directly on the product row
-    }));
-}
-
-export default async function HomePageCategorySections({ sections }: { sections: any[] | null }) {
+export default function HomePageCategorySections({ sections }: { sections: any[] | null }) {
     if (!sections || sections.length === 0) {
         return null;
     }
 
-    const categorySections = await Promise.all(
-        sections.map(async (section) => {
-            if (!section.categories) return null;
-
-            const products = await getProductsForCategory(section.categories.id);
-            if (products.length === 0) return null;
+    return <>
+        {sections.map((section) => {
+            if (!section.categories || !section.products || section.products.length === 0) {
+                return null;
+            }
 
             return (
                 <section key={section.categories.id} className="py-8 px-4 md:px-8">
@@ -54,14 +28,12 @@ export default async function HomePageCategorySections({ sections }: { sections:
                         </Button>
                     </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1">
-                      {products.map((product) => (
-                        <ProductCard key={product.id} product={product as Product} />
+                      {section.products.map((product: Product) => (
+                        <ProductCard key={product.id} product={product} />
                       ))}
                     </div>
                 </section>
             );
-        })
-    );
-
-    return <>{categorySections}</>;
+        })}
+    </>;
 }

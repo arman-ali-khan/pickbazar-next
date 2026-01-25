@@ -12,10 +12,15 @@ import FaqSection from "@/components/faq-section";
 import { createClient } from '@/lib/supabase/server';
 import PromoDialog from "@/components/promo-dialog";
 import HomePageCategorySections from "@/components/home-page-category-sections";
+import { Product } from "@/lib/data";
 
 export default async function Home() {
   const supabase = createClient();
-  const { data: homeSections } = await supabase
+  
+  const { data: settingsData } = await supabase.rpc('get_all_settings');
+  const settings = settingsData?.[0];
+
+  const { data: homeSectionsData } = await supabase
     .from('home_page_sections')
     .select(`
       display_order,
@@ -27,6 +32,31 @@ export default async function Home() {
     `)
     .order('display_order');
 
+  const sectionsWithProducts = homeSectionsData ? await Promise.all(homeSectionsData.map(async (section) => {
+    if (!section.categories) {
+        return { ...section, products: [] };
+    }
+    const { data: productsData } = await supabase
+        .from('products')
+        .select('*, product_categories!inner(category_id)')
+        .eq('product_categories.category_id', section.categories.id)
+        .limit(6);
+    
+    const products = (productsData || []).map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        originalPrice: p.original_price,
+        image: { id: `prod-${p.id}`, imageUrl: p.featured_image_url || 'https://picsum.photos/seed/placeholder/200', imageHint: 'product', description: p.name },
+        weight: p.unit || '',
+        category: '', 
+        rating: 0, 
+    }));
+
+    return { ...section, products };
+  })) : [];
+
+
   const { data: offersData, error: offersError } = await supabase
     .from('offers')
     .select('id, title, subtitle, image_url, category_ids, product_ids')
@@ -37,9 +67,6 @@ export default async function Home() {
 
   const { data: categoriesData, error: categoriesError } = await supabase.from('categories').select('id, name');
   
-  const { data } = await supabase.rpc('get_all_settings');
-  const settings = data?.[0];
-
   let offers: OfferForCarousel[] = [];
   if (offersData && categoriesData) {
     offers = offersData.map(offer => {
@@ -67,7 +94,7 @@ export default async function Home() {
         <OfferCarousel offers={offers} />
         <RecommendedProducts />
         <RecentlyAddedProducts />
-        <HomePageCategorySections sections={homeSections} />
+        <HomePageCategorySections sections={sectionsWithProducts} />
         <CustomerReviews />
         <section className="py-16 bg-muted/20">
           <div className="container mx-auto grid md:grid-cols-2 gap-8 lg:gap-12 items-start">

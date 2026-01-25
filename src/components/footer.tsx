@@ -1,3 +1,4 @@
+'use client';
 import Link from 'next/link';
 import { Leaf } from 'lucide-react';
 import { Button } from './ui/button';

@@ -1,9 +1,12 @@
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { createClient } from '@/lib/supabase/server';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import LucideIcon from './lucide-icon';
+import { useSupabase } from '@/lib/supabase/provider';
+import { useState, useEffect } from 'react';
 
 interface DbCategory {
     id: number;
@@ -17,27 +20,35 @@ interface HierarchicalCategory extends DbCategory {
 }
 
 
-export default async function HeroBanners() {
-  const supabase = createClient();
-  const { data: categoriesData } = await supabase
-    .from('categories')
-    .select('id, name, parent_id, icon')
-    .order('name');
+export default function HeroBanners() {
+  const { supabase } = useSupabase();
+  const [categoryTree, setCategoryTree] = useState<HierarchicalCategory[]>([]);
   
-  let categoryTree: HierarchicalCategory[] = [];
-  if (categoriesData) {
-      const topLevel: HierarchicalCategory[] = categoriesData
-          .filter(c => c.parent_id === null)
-          .map(c => ({...c, sub: []}));
-      
-      const children: DbCategory[] = categoriesData.filter(c => c.parent_id !== null);
+  useEffect(() => {
+    const fetchCategories = async () => {
+        const { data: categoriesData } = await supabase
+            .from('categories')
+            .select('id, name, parent_id, icon')
+            .order('name');
+        
+        let tree: HierarchicalCategory[] = [];
+        if (categoriesData) {
+            const topLevel: HierarchicalCategory[] = categoriesData
+                .filter(c => c.parent_id === null)
+                .map(c => ({...c, sub: []}));
+            
+            const children: DbCategory[] = categoriesData.filter(c => c.parent_id !== null);
 
-      topLevel.forEach(parent => {
-          parent.sub = children
-              .filter(child => child.parent_id === parent.id);
-      });
-      categoryTree = topLevel;
-  }
+            topLevel.forEach(parent => {
+                parent.sub = children
+                    .filter(child => child.parent_id === parent.id);
+            });
+            tree = topLevel;
+        }
+        setCategoryTree(tree);
+    };
+    fetchCategories();
+  }, [supabase]);
     
   return (
     <section className="relative w-full h-[550px]">
@@ -58,7 +69,7 @@ export default async function HeroBanners() {
                     <h2 className="text-lg text-white font-semibold p-4 border-b">Categories</h2>
                     <div className="flex-1 overflow-y-auto p-2">
                         {categoryTree.length > 0 && 
-                            <Accordion type="single" collapsible defaultValue={categoryTree[0].name} className="w-full">
+                            <Accordion type="single" collapsible defaultValue={categoryTree[0]?.name} className="w-full">
                                 {categoryTree.map((category) => (
                                     <AccordionItem value={category.name} key={category.id} className="border-b-0">
                                         <AccordionTrigger className="p-3 text-sm font-medium text-white hover:text-primary hover:no-underline rounded-md hover:bg-gray-100">
