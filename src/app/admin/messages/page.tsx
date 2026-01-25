@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
@@ -8,6 +7,7 @@ import {
     CardTitle,
     CardContent,
     CardDescription,
+    CardFooter,
 } from "@/components/ui/card";
 import {
     Table,
@@ -49,12 +49,15 @@ const getStatusVariant = (status: Message['status']) => {
     return status === 'read' ? 'secondary' : 'default';
 };
 
+const MESSAGES_PER_PAGE = 10;
+
 export default function AdminMessagesPage() {
     const { supabase } = useSupabase();
     const { toast } = useToast();
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
     const [isPending, startTransition] = useTransition();
+    const [currentPage, setCurrentPage] = useState(1);
 
     const fetchMessages = useCallback(async () => {
         setLoading(true);
@@ -96,6 +99,43 @@ export default function AdminMessagesPage() {
             }
         });
     }
+
+    const totalPages = Math.ceil(messages.length / MESSAGES_PER_PAGE);
+    const paginatedMessages = messages.slice(
+        (currentPage - 1) * MESSAGES_PER_PAGE,
+        currentPage * MESSAGES_PER_PAGE
+    );
+    
+    const renderPagination = () => {
+        if (totalPages <= 1) return null;
+        return (
+            <CardFooter>
+                <div className="flex items-center justify-between w-full">
+                    <div className="text-xs text-muted-foreground">
+                        Showing <strong>{Math.min((currentPage - 1) * MESSAGES_PER_PAGE + 1, messages.length)}</strong> to <strong>{Math.min(currentPage * MESSAGES_PER_PAGE, messages.length)}</strong> of <strong>{messages.length}</strong> messages
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage >= totalPages}
+                        >
+                            Next
+                        </Button>
+                    </div>
+                </div>
+            </CardFooter>
+        );
+    };
 
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
@@ -154,7 +194,7 @@ export default function AdminMessagesPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {messages.map((message) => (
+                                {paginatedMessages.map((message) => (
                                     <TableRow key={message.id} className={cn(message.status === 'unread' && 'bg-muted/50')}>
                                         <TableCell>
                                             <div className="flex items-center gap-3">
@@ -205,7 +245,7 @@ export default function AdminMessagesPage() {
 
                     {/* Mobile View */}
                     <div className="grid grid-cols-1 gap-4 md:hidden">
-                        {messages.map((message) => (
+                        {paginatedMessages.map((message) => (
                             <Card key={message.id} className={cn(message.status === 'unread' && 'border-primary')}>
                                 <CardHeader className="flex flex-row items-start gap-4 space-y-0 p-4">
                                     <Avatar className="h-10 w-10">
@@ -252,6 +292,7 @@ export default function AdminMessagesPage() {
                     </>
                     )}
                 </CardContent>
+                {renderPagination()}
             </Card>
         </main>
     );
