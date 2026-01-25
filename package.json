@@ -44,6 +44,7 @@
     "@tiptap/pm": "^2.5.7",
     "@tiptap/react": "^2.5.7",
     "@tiptap/starter-kit": "^2.5.7",
+    "bd-geodata": "^1.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^3.6.0",
