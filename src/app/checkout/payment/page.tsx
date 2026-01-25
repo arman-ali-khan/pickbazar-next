@@ -127,7 +127,6 @@ export default function PaymentPage() {
         const transactionDetails = selectedMethod === 'mobile-banking' ? { trxId, mobileLast4 } : null;
 
         const { data: orderNumber, error } = await supabase.rpc('create_order', {
-            p_user_id: user.id,
             p_total_amount: total,
             p_shipping_details: shippingInfo,
             p_items: orderItems,
