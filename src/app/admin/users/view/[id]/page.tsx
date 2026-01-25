@@ -104,7 +104,7 @@ export default function ViewUserPage() {
             supabase.rpc('get_all_users'),
             supabase.from('addresses').select('*').eq('user_id', userId),
             supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
-            supabase.rpc('get_admin_user_wishlist', { p_user_id: userId })
+            supabase.from('wishlist').select('products(id, name, featured_image_url)').eq('user_id', userId)
         ]);
 
         const { data: allUsers, error: userError } = allUsersRes;
@@ -130,7 +130,8 @@ export default function ViewUserPage() {
 
         const { data: wishlistData } = wishlistRes;
         if (wishlistData) {
-            setWishlist(wishlistData);
+            const formattedWishlist = wishlistData.map((item: any) => item.products).filter(p => p !== null);
+            setWishlist(formattedWishlist as WishlistItem[]);
         }
         
         setLoading(false);
