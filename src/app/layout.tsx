@@ -1,3 +1,4 @@
+
 import type { Metadata } from 'next';
 import { Toaster } from "@/components/ui/toaster";
 import './globals.css';
@@ -44,7 +45,10 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: siteTitle,
       description: siteSubtitle,
+      url: settings?.canonical_url || undefined,
+      siteName: siteTitle,
       images: linkPreviewImageUrl ? [{ url: linkPreviewImageUrl }] : [],
+      type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
