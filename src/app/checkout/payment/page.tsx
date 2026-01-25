@@ -19,6 +19,7 @@ import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
+import { placeNewOrder } from '@/app/actions';
 
 interface ShippingInfo {
   firstName: string;
@@ -130,36 +131,25 @@ export default function PaymentPage() {
         
         const transactionDetails = selectedMethod === 'mobile-banking' ? { trxId, mobileLast4 } : null;
 
-        const { data: orderNumber, error } = await supabase.rpc('create_order', {
-            p_total_amount: total,
-            p_shipping_details: shippingInfo,
-            p_items: orderItems,
-            p_payment_method: selectedMethod,
-            p_transaction_details: transactionDetails,
-            p_coupon_code: appliedDiscount?.code || null,
-            p_discount_amount: discountAmount,
-        });
+        const { orderNumber, error } = await placeNewOrder(
+            orderItems,
+            total,
+            shippingInfo,
+            selectedMethod,
+            transactionDetails,
+            appliedDiscount?.code || null,
+            discountAmount
+        );
+
 
         if (error) {
             toast({
                 variant: 'destructive',
                 title: 'Order Failed',
-                description: error.message,
+                description: error,
             });
             setIsProcessing(false);
             return;
-        }
-
-        if (orderNumber) {
-            const { error: notificationError } = await supabase.from('notifications').insert({
-                title: `New order #${orderNumber} placed`,
-                message: `From: ${shippingInfo.firstName} ${shippingInfo.lastName}. Total: $${total.toFixed(2)}.`,
-                link: `/admin/orders/${orderNumber}`,
-                type: 'new_order'
-            });
-            if (notificationError) {
-                console.error('Failed to create admin notification for new order:', notificationError);
-            }
         }
 
         dispatch(clearCart());

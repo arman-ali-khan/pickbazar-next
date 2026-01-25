@@ -705,3 +705,48 @@ export async function sendCustomNotification(formData: FormData) {
 
     return { success: true, count: userIds.length };
 }
+
+export async function placeNewOrder(
+    cartItems: { product_id: number; quantity: number; price: number; }[],
+    totalAmount: number,
+    shippingInfo: any,
+    paymentMethod: string,
+    transactionDetails: any | null,
+    couponCode: string | null,
+    discountAmount: number
+) {
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { orderNumber: null, error: 'You must be logged in to place an order.' };
+    }
+    
+    const { data: orderNumber, error: rpcError } = await supabase.rpc('create_order', {
+        p_total_amount: totalAmount,
+        p_shipping_details: shippingInfo,
+        p_items: cartItems,
+        p_payment_method: paymentMethod,
+        p_transaction_details: transactionDetails,
+        p_coupon_code: couponCode,
+        p_discount_amount: discountAmount,
+    });
+
+    if (rpcError) {
+        return { orderNumber: null, error: rpcError.message };
+    }
+    
+    if (orderNumber) {
+        const { error: notificationError } = await supabase.from('notifications').insert({
+            title: `New order #${orderNumber} placed`,
+            message: `From: ${shippingInfo.firstName} ${shippingInfo.lastName}. Total: $${totalAmount.toFixed(2)}.`,
+            link: `/admin/orders/${orderNumber}`,
+            type: 'new_order'
+        });
+        if (notificationError) {
+            console.error('Failed to create admin notification for new order:', notificationError);
+        }
+    }
+
+    return { orderNumber, error: null };
+}
