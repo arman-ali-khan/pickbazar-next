@@ -181,7 +181,7 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ logoUrl, siteTitle }: AdminSidebarProps) {
   const { state } = useSidebar();
-  const { supabase } = useSupabase();
+  const { supabase, user } = useSupabase();
   const [counts, setCounts] = useState({
       notifications: 0,
       products: 0,
@@ -191,6 +191,19 @@ export default function AdminSidebar({ logoUrl, siteTitle }: AdminSidebarProps) 
       questions: 0,
       messages: 0,
   });
+  const [profile, setProfile] = useState<{ full_name: string | null, avatar_url: string | null } | null>(null);
+
+  useEffect(() => {
+    if (user) {
+        const fetchProfile = async () => {
+            const { data } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single();
+            if (data) {
+                setProfile(data);
+            }
+        };
+        fetchProfile();
+    }
+}, [user, supabase]);
 
   useEffect(() => {
       const fetchCounts = async () => {
@@ -236,6 +249,10 @@ export default function AdminSidebar({ logoUrl, siteTitle }: AdminSidebarProps) 
       };
   }, [supabase]);
   
+  const userName = profile?.full_name || user?.user_metadata?.full_name || 'Admin Name';
+  const userEmail = user?.email || 'admin@pickbazar.com';
+  const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url;
+
   return (
     <Sidebar collapsible="icon" className="border-r bg-card hidden md:flex">
        <SidebarHeader className={cn("flex items-center justify-between  p-4", state === 'expanded' ? 'flex-row-reverse' : '')}>
@@ -281,12 +298,12 @@ export default function AdminSidebar({ logoUrl, siteTitle }: AdminSidebarProps) 
       <SidebarFooter className="p-4 border-t">
         <div className={cn("flex items-center gap-3 transition-all duration-300", state === 'collapsed' ? 'justify-center' : '')}>
              <Avatar className="h-9 w-9">
-                <AvatarImage src="https://picsum.photos/seed/admin/40" alt="Admin" data-ai-hint="person face" />
-                <AvatarFallback>A</AvatarFallback>
+                <AvatarImage src={userAvatar || "https://picsum.photos/seed/admin/40"} alt={userName} data-ai-hint="person face" />
+                <AvatarFallback>{userName?.[0].toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className={cn("overflow-hidden transition-all duration-300", state === 'expanded' ? 'w-auto' : 'w-0')}>
-                <p className="font-semibold text-sm">Admin Name</p>
-                <p className="text-xs text-muted-foreground">admin@pickbazar.com</p>
+                <p className="font-semibold text-sm">{userName}</p>
+                <p className="text-xs text-muted-foreground">{userEmail}</p>
             </div>
              <Button variant="ghost" size="icon" className={cn("transition-all duration-300", state === 'expanded' ? 'ml-auto' : '')}>
                 <LogOut className="h-5 w-5" />

@@ -29,9 +29,22 @@ interface Notification {
 
 export default function AdminHeader() {
     const { toggleSidebar } = useSidebar();
-    const { supabase } = useSupabase();
+    const { supabase, user } = useSupabase();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [profile, setProfile] = useState<{ full_name: string | null, avatar_url: string | null } | null>(null);
+
+    useEffect(() => {
+        if (user) {
+            const fetchProfile = async () => {
+                const { data } = await supabase.from('profiles').select('full_name, avatar_url').eq('id', user.id).single();
+                if (data) {
+                    setProfile(data);
+                }
+            };
+            fetchProfile();
+        }
+    }, [user, supabase]);
 
     useEffect(() => {
         const fetchNotifications = async () => {
@@ -60,6 +73,10 @@ export default function AdminHeader() {
         };
 
     }, [supabase]);
+
+    const userName = profile?.full_name || user?.user_metadata?.full_name || 'Admin';
+    const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url;
+
 
     return (
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
@@ -130,14 +147,14 @@ export default function AdminHeader() {
               <DropdownMenuTrigger asChild>
                 <Button variant="secondary" size="icon" className="rounded-full">
                     <Avatar className="h-8 w-8">
-                        <AvatarImage src="https://picsum.photos/seed/admin/40" alt="Admin" data-ai-hint="person face" />
-                        <AvatarFallback>A</AvatarFallback>
+                        <AvatarImage src={userAvatar || "https://picsum.photos/seed/admin/40"} alt={userName} data-ai-hint="person face" />
+                        <AvatarFallback>{userName?.[0].toUpperCase()}</AvatarFallback>
                     </Avatar>
                   <span className="sr-only">Toggle user menu</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>{userName}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild><Link href="/admin/settings">Settings</Link></DropdownMenuItem>
                 <DropdownMenuItem>Support</DropdownMenuItem>

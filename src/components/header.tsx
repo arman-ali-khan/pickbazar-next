@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -160,6 +159,7 @@ interface HeaderProps {
 
 export default function Header({ logoUrl, siteTitle }: HeaderProps) {
   const [isMounted, setIsMounted] = useState(false);
+  const [profile, setProfile] = useState<{ avatar_url: string | null } | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -176,6 +176,37 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
 
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      const fetchProfile = async () => {
+        const { data } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .single();
+        if (data) {
+          setProfile(data);
+        }
+      };
+      fetchProfile();
+
+      const profileChannel = supabase
+        .channel(`profile-changes-for-${user.id}`)
+        .on(
+          'postgres_changes',
+          { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` },
+          (payload) => {
+            setProfile(payload.new as any);
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(profileChannel);
+      };
+    }
+  }, [user, supabase]);
 
   const getNotifications = useCallback(async () => {
       if (!user) return;
@@ -264,7 +295,7 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
   };
 
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name;
-  const userAvatar = user?.user_metadata?.avatar_url;
+  const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url;
 
   if (!isMounted) {
     return (
