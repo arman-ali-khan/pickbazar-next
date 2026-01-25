@@ -1,4 +1,3 @@
-
 'use client';
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -48,7 +47,11 @@ export default function AdminHeader() {
 
     useEffect(() => {
         const fetchNotifications = async () => {
-            const { data, error } = await supabase.rpc('get_admin_notifications');
+            const { data, error } = await supabase
+                .from('notifications')
+                .select('*')
+                .is('user_id', null)
+                .order('created_at', { ascending: false });
 
             if (error) {
                 console.error("Error fetching notifications for header:", error);
@@ -62,7 +65,7 @@ export default function AdminHeader() {
         fetchNotifications();
         
         const channel = supabase.channel('realtime-notifications')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' },
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: 'user_id=is.null' },
             (payload) => {
                 fetchNotifications();
             })
