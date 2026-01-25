@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -40,16 +39,17 @@ export default function EditUserPage() {
             return;
         }
         setLoading(true);
-        const { data: userArray, error } = await supabase.rpc('get_user_details', { p_user_id: userId });
+        const { data: allUsers, error } = await supabase.rpc('get_all_users');
+        const userArray = allUsers ? (allUsers as UserProfile[]).filter(u => u.id === userId) : [];
 
-        if (error || !userArray || userArray.length === 0) {
+        if (error || userArray.length === 0) {
             toast({ variant: 'destructive', title: 'Error', description: 'User not found.' });
             notFound();
             return;
         }
         
         const userData = userArray[0];
-        setUser(userData as UserProfile);
+        setUser(userData);
         setFullName(userData.full_name || '');
         setAvatarUrl(userData.avatar_url || null);
         setLoading(false);

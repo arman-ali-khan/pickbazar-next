@@ -100,22 +100,23 @@ export default function ViewUserPage() {
         }
         setLoading(true);
 
-        const [userRes, addressesRes, ordersRes, wishlistRes] = await Promise.all([
-            supabase.rpc('get_user_details', { p_user_id: userId }),
+        const [allUsersRes, addressesRes, ordersRes, wishlistRes] = await Promise.all([
+            supabase.rpc('get_all_users'),
             supabase.from('addresses').select('*').eq('user_id', userId),
             supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
             supabase.rpc('get_admin_user_wishlist', { p_user_id: userId })
         ]);
 
-        const { data: userArray, error: userError } = userRes;
+        const { data: allUsers, error: userError } = allUsersRes;
+        const userArray = allUsers ? (allUsers as UserProfile[]).filter(u => u.id === userId) : [];
 
-        if (userError || !userArray || userArray.length === 0) {
+        if (userError || userArray.length === 0) {
             toast({ variant: "destructive", title: "Error", description: `User not found. ${userError?.message || ''}`.trim() });
             notFound();
             return;
         }
         const userData = userArray[0];
-        setUser(userData as UserProfile);
+        setUser(userData);
 
         const { data: addressesData } = addressesRes;
         if (addressesData) {
