@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
@@ -33,6 +33,8 @@ const getNotificationIcon = (type: string | null) => {
     }
 };
 
+const NOTIFICATIONS_PER_PAGE = 10;
+
 export default function AdminNotificationsPage() {
     const { supabase } = useSupabase();
     const { toast } = useToast();
@@ -40,6 +42,7 @@ export default function AdminNotificationsPage() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
     const [isUpdating, startTransition] = useTransition();
+    const [currentPage, setCurrentPage] = useState(1);
 
     const getNotifications = useCallback(async () => {
         setLoading(true);
@@ -92,6 +95,12 @@ export default function AdminNotificationsPage() {
     
     const unreadCount = notifications.filter(n => !n.is_read).length;
 
+    const totalPages = Math.ceil(notifications.length / NOTIFICATIONS_PER_PAGE);
+    const paginatedNotifications = notifications.slice(
+        (currentPage - 1) * NOTIFICATIONS_PER_PAGE,
+        currentPage * NOTIFICATIONS_PER_PAGE
+    );
+
     return (
         <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
             <Card>
@@ -130,7 +139,7 @@ export default function AdminNotificationsPage() {
                         </div>
                      ) : (
                         <div className="space-y-4">
-                            {notifications.map((notification) => (
+                            {paginatedNotifications.map((notification) => (
                                 <div
                                     key={notification.id}
                                     className={cn(
@@ -160,6 +169,33 @@ export default function AdminNotificationsPage() {
                         </div>
                      )}
                 </CardContent>
+                {totalPages > 1 && (
+                     <CardFooter>
+                        <div className="flex items-center justify-between w-full">
+                            <div className="text-xs text-muted-foreground">
+                                Showing <strong>{Math.min((currentPage - 1) * NOTIFICATIONS_PER_PAGE + 1, notifications.length)}</strong> to <strong>{Math.min(currentPage * NOTIFICATIONS_PER_PAGE, notifications.length)}</strong> of <strong>{notifications.length}</strong> notifications
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                >
+                                    Previous
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage >= totalPages}
+                                >
+                                    Next
+                                </Button>
+                            </div>
+                        </div>
+                    </CardFooter>
+                )}
             </Card>
         </main>
     );
