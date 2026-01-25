@@ -1,4 +1,3 @@
-
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,6 +6,14 @@ import Link from "next/link";
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from "../ui/badge";
 import { OrderStatus } from "@/lib/data";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 
 type OrderWithCustomer = {
     id: number;
@@ -19,17 +26,6 @@ type OrderWithCustomer = {
     customer_avatar_url: string | null;
 }
 
-const getStatusVariant = (status: OrderStatus) => {
-    switch (status) {
-        case 'Delivered': return 'secondary';
-        case 'Cancelled': return 'destructive';
-        case 'Pending': return 'default';
-        case 'Processing': return 'outline';
-        case 'Shipped': return 'default';
-        default: return 'default';
-    }
-};
-
 export default function PendingOrders({ orders }: { orders: OrderWithCustomer[] }) {
   return (
     <Card>
@@ -41,40 +37,42 @@ export default function PendingOrders({ orders }: { orders: OrderWithCustomer[] 
       </CardHeader>
       <CardContent>
         {orders.length > 0 ? (
-          <div className="space-y-6">
-            {orders.map((order) => (
-              <div key={order.id} className="flex items-start gap-4">
-                <Avatar className="h-10 w-10 border">
-                  <AvatarImage src={order.customer_avatar_url ?? undefined} alt={order.customer_name ?? ''} />
-                  <AvatarFallback>{(order.customer_name ?? 'G').charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="grid gap-1 flex-1">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-medium leading-none">
-                        {order.customer_name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Order <Link href={`/admin/orders/${order.order_number}`} className="hover:underline font-medium text-foreground">{order.order_number}</Link>
-                      </p>
-                    </div>
-                     <div className="flex flex-col items-end gap-1">
-                        <div className="text-sm font-bold">
-                            ${order.total_amount.toFixed(2)}
-                        </div>
-                         <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
-                    </div>
-                  </div>
-                   <p className="text-xs text-muted-foreground" suppressHydrationWarning>
-                    {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
-                  </p>
-                </div>
-              </div>
-            ))}
-             <Button asChild className="w-full mt-6">
+          <>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Customer</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead className="text-right">Date</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {orders.map((order) => (
+                        <TableRow key={order.id}>
+                            <TableCell>
+                                <div className="flex items-center gap-2">
+                                    <Avatar className="h-8 w-8 border">
+                                      <AvatarImage src={order.customer_avatar_url ?? undefined} alt={order.customer_name ?? ''} />
+                                      <AvatarFallback>{(order.customer_name ?? 'G').charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <Link href={`/admin/orders/${order.order_number}`} className="font-medium text-sm hover:underline">{order.order_number}</Link>
+                                        <p className="text-xs text-muted-foreground">{order.customer_name}</p>
+                                    </div>
+                                </div>
+                            </TableCell>
+                            <TableCell className="font-semibold">${order.total_amount.toFixed(2)}</TableCell>
+                             <TableCell className="text-right text-xs text-muted-foreground" suppressHydrationWarning>
+                                {formatDistanceToNow(new Date(order.created_at), { addSuffix: true })}
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            <Button asChild className="w-full mt-4">
               <Link href="/admin/orders">Manage All Orders</Link>
             </Button>
-          </div>
+          </>
         ) : (
           <div className="text-center py-8 text-muted-foreground">
             <p>No pending orders right now.</p>
