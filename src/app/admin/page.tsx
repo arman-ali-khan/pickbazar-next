@@ -1,11 +1,26 @@
 import type { Metadata } from 'next';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { DollarSign, ShoppingCart, Users, Box } from "lucide-react";
+import { DollarSign, RefreshCw, Star, HelpCircle } from "lucide-react";
 import { createClient } from '@/lib/supabase/server';
-import LowStockProducts from '@/components/admin/low-stock-products';
-import PendingOrders from '@/components/admin/pending-orders';
-import RecentMessages from '@/components/admin/recent-messages';
 import RevenueChart from '@/components/admin/revenue-chart';
+import PendingReviews from '@/components/admin/pending-reviews';
+import PendingQuestions from '@/components/admin/pending-questions';
+import PendingRefunds from '@/components/admin/pending-refunds';
+import type { AdminReview, AdminQuestion } from '@/lib/data';
+
+interface AdminRefund {
+    id: number;
+    order_id: number;
+    order_number: string;
+    amount: number;
+    status: 'Pending' | 'Approved' | 'Rejected';
+    reason: string;
+    created_at: string;
+    user_id: string;
+    customer_name: string;
+    customer_avatar_url: string;
+}
+
 
 export const metadata: Metadata = {
   title: 'Dashboard',
@@ -13,36 +28,33 @@ export const metadata: Metadata = {
 
 export default async function AdminDashboardPage() {
     const supabase = createClient();
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
     
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
     const [
         revenueData,
-        ordersData,
-        newCustomersData,
-        stockData,
-        lowStockData,
-        pendingOrdersData,
-        recentMessagesData,
+        reviewsData,
+        questionsData,
+        refundsData,
         revenueChartData
     ] = await Promise.all([
         supabase.from('orders').select('total_amount').eq('status', 'Delivered'),
-        supabase.from('orders').select('id', { count: 'exact' }),
-        supabase.from('profiles').select('id', { count: 'exact' }).gte('created_at', oneMonthAgo.toISOString()),
-        supabase.from('products').select('stock').eq('status', 'active'),
-        supabase.from('products').select('id, name, stock, featured_image_url').eq('status', 'active').lt('stock', 10).order('stock', { ascending: true }).limit(5),
-        supabase.rpc('get_admin_order_list').filter('status', 'in', '("Pending","Processing")').limit(5).order('created_at', { ascending: false }),
-        supabase.rpc('get_contact_messages').eq('status', 'unread').limit(5),
+        supabase.rpc('get_admin_reviews'),
+        supabase.rpc('get_admin_questions'),
+        supabase.rpc('get_admin_refunds'),
         supabase.from('orders').select('created_at, total_amount').eq('status', 'Delivered').gte('created_at', ninetyDaysAgo.toISOString())
     ]);
 
     const totalRevenue = revenueData.data?.reduce((acc, order) => acc + order.total_amount, 0) || 0;
-    const totalOrders = ordersData.count || 0;
-    const newCustomers = newCustomersData.count || 0;
-    const productsInStock = stockData.data?.reduce((acc, p) => acc + (p.stock || 0), 0) || 0;
+    
+    const pendingReviews = (reviewsData.data as AdminReview[] || []).filter((r) => r.status === 'Pending');
+    const pendingQuestions = (questionsData.data as AdminQuestion[] || []).filter((q) => q.status === 'Pending');
+    const pendingRefunds = (refundsData.data as AdminRefund[] || []).filter((r) => r.status === 'Pending');
+    
+    const pendingReviewsCount = pendingReviews.length;
+    const pendingQuestionsCount = pendingQuestions.length;
+    const pendingRefundsCount = pendingRefunds.length;
 
     return (
         <div>
@@ -59,31 +71,29 @@ export default async function AdminDashboardPage() {
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-                        <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Pending Reviews</CardTitle>
+                        <Star className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">{totalOrders}</p>
+                        <p className="text-2xl font-bold">{pendingReviewsCount}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">New Customers</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Pending Questions</CardTitle>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">+{newCustomers}</p>
-                        <p className="text-xs text-muted-foreground">in the last month</p>
+                        <p className="text-2xl font-bold">{pendingQuestionsCount}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Products in Stock</CardTitle>
-                        <Box className="h-4 w-4 text-muted-foreground" />
+                        <CardTitle className="text-sm font-medium">Pending Refunds</CardTitle>
+                        <RefreshCw className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <p className="text-2xl font-bold">{productsInStock}</p>
-                        <p className="text-xs text-muted-foreground">across all active products</p>
+                        <p className="text-2xl font-bold">{pendingRefundsCount}</p>
                     </CardContent>
                 </Card>
             </div>
@@ -91,13 +101,9 @@ export default async function AdminDashboardPage() {
                 <RevenueChart data={revenueChartData.data || []} />
             </div>
             <div className="grid gap-6 mt-6 lg:grid-cols-3">
-                 <div className="lg:col-span-2">
-                    <PendingOrders orders={pendingOrdersData.data || []} />
-                </div>
-                <div className="lg:col-span-1 grid auto-rows-max gap-6">
-                    <LowStockProducts products={lowStockData.data || []} />
-                    <RecentMessages messages={recentMessagesData.data || []} />
-                </div>
+                <PendingReviews reviews={pendingReviews} />
+                <PendingQuestions questions={pendingQuestions} />
+                <PendingRefunds refunds={pendingRefunds} />
             </div>
         </div>
     );
