@@ -13,6 +13,7 @@ import { SetupSupabase } from '@/components/setup-supabase';
 import { Suspense } from 'react';
 import ProgressBar from '@/components/progress-bar';
 import Footer from '@/components/footer';
+import AppLoader from '@/components/app-loader';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -84,15 +85,16 @@ export default async function RootLayout({
       <body className="font-body antialiased pb-16 md:pb-0">
         <SupabaseProvider>
           <ReduxProvider>
-            {/* The ProgressBar needs to be wrapped in Suspense to use navigation hooks */}
-            <Suspense fallback={null}>
-              <ProgressBar />
-            </Suspense>
-            {children}
-            <Footer settings={settings} />
-            <Toaster />
-            <FlyToCartAnimation />
-            <BottomNavbar />
+            <AppLoader logoUrl={settings?.logo_url} siteTitle={settings?.site_title}>
+              <Suspense fallback={null}>
+                <ProgressBar />
+              </Suspense>
+              {children}
+              <Footer settings={settings} />
+              <Toaster />
+              <FlyToCartAnimation />
+              <BottomNavbar />
+            </AppLoader>
           </ReduxProvider>
         </SupabaseProvider>
       </body>
