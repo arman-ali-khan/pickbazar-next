@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -152,9 +153,6 @@ function PagesDrawer() {
                               <LoginDialog />
                           </Dialog>
                         )}
-                        <Button asChild>
-                            <Link href="/invest">Become an Investor</Link>
-                        </Button>
                     </div>
                   </div>
                 </div>

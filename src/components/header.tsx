@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -511,17 +512,11 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
                       <LoginDialog />
                     </Dialog>
                 )}
-                  <Button asChild>
-                    <Link href="/invest">Become an Investor</Link>
-                  </Button>
               </div>
               <div className="md:hidden flex items-center gap-2">
                 <Button variant="ghost" size="icon" onClick={() => dispatch(setSearchOpen(true))}>
                     <Search className="h-5 w-5" />
                 </Button>
-                 <Button asChild>
-                    <Link href="/invest">Invest</Link>
-                  </Button>
               </div>
             </div>
           </>
