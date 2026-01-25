@@ -17,6 +17,7 @@ import { applyCoupon } from '@/app/actions';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ShippingInfo {
   firstName: string;
@@ -31,6 +32,15 @@ interface ShippingInfo {
 interface AppliedDiscount {
   code: string;
   discount: number;
+}
+
+interface Address {
+    id: number;
+    title: string;
+    street_address: string;
+    city: string;
+    state: string;
+    zip: string;
 }
 
 export default function CheckoutPage() {
@@ -57,6 +67,9 @@ export default function CheckoutPage() {
     const [shippingCost, setShippingCost] = useState(5.00);
     const [loadingSettings, setLoadingSettings] = useState(true);
 
+    const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
+    const [selectedAddressId, setSelectedAddressId] = useState<string>('new');
+
     const discountAmount = appliedDiscount?.discount || 0;
     const total = subtotal + shippingCost - discountAmount;
 
@@ -79,9 +92,21 @@ export default function CheckoutPage() {
                     const [firstName, ...lastNameParts] = (profileData.full_name || '').split(' ');
                     setShippingInfo(prev => ({ ...prev, firstName: firstName || '', lastName: lastNameParts.join(' ') || '' }));
                 }
-                const { data: addressData } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).single();
-                if (addressData) {
-                    setShippingInfo(prev => ({ ...prev, address: addressData.street_address || '', city: addressData.city || '', state: addressData.state || '', zip: addressData.zip || '' }));
+                const { data: addressesData } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+
+                if (addressesData && addressesData.length > 0) {
+                    setSavedAddresses(addressesData as Address[]);
+                    const firstAddress = addressesData[0];
+                    setSelectedAddressId(String(firstAddress.id));
+                    setShippingInfo(prev => ({
+                        ...prev,
+                        address: firstAddress.street_address || '',
+                        city: firstAddress.city || '',
+                        state: firstAddress.state || '',
+                        zip: firstAddress.zip || '',
+                    }));
+                } else {
+                    setSelectedAddressId('new');
                 }
             };
             fetchUserData();
@@ -94,6 +119,30 @@ export default function CheckoutPage() {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value } = e.target;
         setShippingInfo(prev => ({ ...prev, [id]: value }));
+    };
+
+    const handleAddressSelect = (addressId: string) => {
+        setSelectedAddressId(addressId);
+        if (addressId === 'new') {
+            setShippingInfo(prev => ({
+                ...prev,
+                address: '',
+                city: '',
+                state: '',
+                zip: '',
+            }));
+        } else {
+            const selected = savedAddresses.find(addr => addr.id === parseInt(addressId));
+            if (selected) {
+                setShippingInfo(prev => ({
+                    ...prev,
+                    address: selected.street_address || '',
+                    city: selected.city || '',
+                    state: selected.state || '',
+                    zip: selected.zip || '',
+                }));
+            }
+        }
     };
 
     const handleApplyCoupon = () => {
@@ -174,6 +223,29 @@ export default function CheckoutPage() {
         </Card>
     );
 
+    const AddressFormFields = () => (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="address">Address</Label>
+            <Input id="address" placeholder="123 Market St" value={shippingInfo.address} onChange={handleInputChange} required />
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Input id="city" placeholder="San Francisco" value={shippingInfo.city} onChange={handleInputChange} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="state">State</Label>
+              <Input id="state" placeholder="CA" value={shippingInfo.state} onChange={handleInputChange} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="zip">ZIP Code</Label>
+              <Input id="zip" placeholder="94103" value={shippingInfo.zip} onChange={handleInputChange} required />
+            </div>
+          </div>
+        </>
+    );
+
     if (authLoading) {
       return (
           <div className="bg-muted/20 min-h-screen">
@@ -224,24 +296,29 @@ export default function CheckoutPage() {
                         <Label htmlFor="email">Email</Label>
                         <Input id="email" type="email" placeholder="you@example.com" value={shippingInfo.email} onChange={handleInputChange} required readOnly={!!user} />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="address">Address</Label>
-                        <Input id="address" placeholder="123 Market St" value={shippingInfo.address} onChange={handleInputChange} required />
-                    </div>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="city">City</Label>
-                            <Input id="city" placeholder="San Francisco" value={shippingInfo.city} onChange={handleInputChange} required />
+                     {savedAddresses.length > 0 ? (
+                        <div className="space-y-4 pt-2">
+                            <div className="space-y-2">
+                                <Label>Shipping Address</Label>
+                                <Select onValueChange={handleAddressSelect} value={selectedAddressId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select a shipping address" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {savedAddresses.map((addr) => (
+                                        <SelectItem key={addr.id} value={String(addr.id)}>
+                                            {addr.title}: {addr.street_address}, {addr.city}
+                                        </SelectItem>
+                                        ))}
+                                        <SelectItem value="new">-- Add a new address --</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {selectedAddressId === 'new' && <AddressFormFields />}
                         </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="state">State</Label>
-                            <Input id="state" placeholder="CA" value={shippingInfo.state} onChange={handleInputChange} required />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="zip">ZIP Code</Label>
-                            <Input id="zip" placeholder="94103" value={shippingInfo.zip} onChange={handleInputChange} required />
-                        </div>
-                    </div>
+                    ) : (
+                        <AddressFormFields />
+                    )}
                   </CardContent>
                 </Card>
                 <Card>
