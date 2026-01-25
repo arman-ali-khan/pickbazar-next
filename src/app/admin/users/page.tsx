@@ -297,7 +297,11 @@ export default function AdminUsersPage() {
                                         <AvatarFallback>{(user.full_name ?? user.email ?? 'U').charAt(0).toUpperCase()}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1">
-                                        <CardTitle className="text-base">{user.full_name ?? 'No Name'}</CardTitle>
+                                        <CardTitle className="text-base">
+                                            <Link href={`/admin/users/view/${user.id}`} className="hover:underline">
+                                                {user.full_name ?? 'No Name'}
+                                            </Link>
+                                        </CardTitle>
                                         <CardDescription>{user.email}</CardDescription>
                                     </div>
                                     <DropdownMenu>
@@ -307,7 +311,26 @@ export default function AdminUsersPage() {
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            {/* Actions for mobile view */}
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/admin/users/view/${user.id}`}><Eye className="mr-2 h-4 w-4" /> View</Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/admin/users/edit/${user.id}`}><Pencil className="mr-2 h-4 w-4" /> Edit Profile</Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger disabled={user.id === currentUser?.id || user.role === 'super-admin'}>Change Role</DropdownMenuSubTrigger>
+                                                <DropdownMenuPortal>
+                                                    <DropdownMenuSubContent>
+                                                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'admin')}>Make Admin</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'manager')}>Make Manager</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'customer')}>Make Customer (Demote)</DropdownMenuItem>
+                                                    </DropdownMenuSubContent>
+                                                </DropdownMenuPortal>
+                                            </DropdownMenuSub>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user.id)} disabled={user.role === 'super-admin'}>
+                                                <Trash2 className="mr-2 h-4 w-4" /> Delete User
+                                            </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </CardHeader>

@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useTransition } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from 'next/link';
-import { ChevronLeft, Edit, Heart } from 'lucide-react';
+import { ChevronLeft, Edit, Heart, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { useRouter, notFound, useParams } from 'next/navigation';
 import { useSupabase } from '@/lib/supabase/provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,6 +14,19 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { updateUserRole } from '@/app/actions';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuPortal,
+    DropdownMenuSeparator,
+    DropdownMenuSubContent,
+} from "@/components/ui/dropdown-menu";
 
 type UserRole = 'customer' | 'manager' | 'admin' | 'super-admin';
 interface UserProfile {
@@ -69,7 +82,7 @@ const getRoleVariant = (role: UserRole) => {
 export default function ViewUserPage() {
     const router = useRouter();
     const params = useParams<{ id: string }>();
-    const { supabase } = useSupabase();
+    const { supabase, user: currentUser } = useSupabase();
     const userId = params.id;
 
     const [user, setUser] = useState<UserProfile | null>(null);
@@ -77,6 +90,8 @@ export default function ViewUserPage() {
     const [recentOrders, setRecentOrders] = useState<Order[]>([]);
     const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [isRoleUpdating, startRoleUpdate] = useTransition();
+    const { toast } = useToast();
 
     const fetchData = useCallback(async () => {
         if (!userId) {
@@ -120,6 +135,30 @@ export default function ViewUserPage() {
     useEffect(() => {
         fetchData();
     }, [fetchData]);
+
+    const handleRoleChange = (newRole: UserRole) => {
+        if (!user) return;
+        startRoleUpdate(async () => {
+            const formData = new FormData();
+            formData.append('userId', user.id);
+            formData.append('role', newRole);
+            const result = await updateUserRole(formData);
+            if (result?.error) {
+                toast({ variant: 'destructive', title: 'Error Updating Role', description: result.error });
+            } else {
+                toast({ title: 'Role Updated', description: "The user's role has been successfully updated." });
+                fetchData();
+            }
+        });
+    };
+
+    const handleDelete = () => {
+        toast({
+            variant: "destructive",
+            title: "Not Implemented",
+            description: "User deletion must be handled with a secure server-side function.",
+        });
+    };
 
     if (loading) {
         return (
@@ -197,12 +236,37 @@ export default function ViewUserPage() {
                 <h1 className="flex-1 shrink-0 whitespace-nowrap text-xl font-semibold tracking-tight sm:grow-0">
                     User Profile
                 </h1>
-                <Button size="sm" asChild>
-                    <Link href={`/admin/users/edit/${user.id}`}>
-                        <Edit className="h-3.5 w-3.5 mr-2" />
-                        Edit User
-                    </Link>
-                </Button>
+                <div className="ml-auto flex items-center gap-2">
+                    <Button size="sm" asChild>
+                        <Link href={`/admin/users/edit/${user.id}`}>
+                            <Edit className="h-3.5 w-3.5 mr-2" />
+                            Edit User
+                        </Link>
+                    </Button>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" disabled={isRoleUpdating}>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuSub>
+                                <DropdownMenuSubTrigger disabled={user.id === currentUser?.id || user.role === 'super-admin'}>Change Role</DropdownMenuSubTrigger>
+                                <DropdownMenuPortal>
+                                    <DropdownMenuSubContent>
+                                        <DropdownMenuItem onClick={() => handleRoleChange('admin')}>Make Admin</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleRoleChange('manager')}>Make Manager</DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleRoleChange('customer')}>Make Customer (Demote)</DropdownMenuItem>
+                                    </DropdownMenuSubContent>
+                                </DropdownMenuPortal>
+                            </DropdownMenuSub>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive" onClick={handleDelete} disabled={user.role === 'super-admin'}>
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete User
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div className="grid auto-rows-max gap-4 lg:col-span-1">
