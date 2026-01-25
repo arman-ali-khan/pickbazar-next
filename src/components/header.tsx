@@ -173,7 +173,7 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const { user, supabase } = useSupabase();
   const { toast } = useToast();
-  const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }, { name: 'Contact', href: '/contact' }];
+  const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }];
 
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
