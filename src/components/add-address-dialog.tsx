@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useMemo, useState } from 'react';
-import { divisions, districts, upazilas } from 'bd-geodata';
+import * as bdGeodata from 'bd-geodata';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 
 export type AddressFormValues = {
@@ -66,19 +66,19 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
 
   const filteredDistricts = useMemo(() => {
     if (!selectedDivisionId) return [];
-    return districts.filter(d => d.division_id === selectedDivisionId);
+    return bdGeodata.districts.filter(d => d.division_id === selectedDivisionId);
   }, [selectedDivisionId]);
 
   const filteredUpazilas = useMemo(() => {
     if (!selectedDistrictId) return [];
-    return upazilas.filter(u => u.district_id === selectedDistrictId);
+    return bdGeodata.upazilas.filter(u => u.district_id === selectedDistrictId);
   }, [selectedDistrictId]);
 
 
   function onSubmit(values: z.infer<typeof addressSchema>) {
-    const divisionName = divisions.find(d => d.id === values.division)?.name || '';
-    const districtName = districts.find(d => d.id === values.district)?.name || '';
-    const upazilaName = upazilas.find(u => u.id === values.upazila)?.name || '';
+    const divisionName = bdGeodata.divisions.find(d => d.id === values.division)?.name || '';
+    const districtName = bdGeodata.districts.find(d => d.id === values.district)?.name || '';
+    const upazilaName = bdGeodata.upazilas.find(u => u.id === values.upazila)?.name || '';
 
     onAddAddress({
       type: values.type,
@@ -165,7 +165,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {divisions.map((division) => (
+                      {bdGeodata.divisions.map((division) => (
                         <SelectItem key={division.id} value={division.id}>
                           {division.name}
                         </SelectItem>
