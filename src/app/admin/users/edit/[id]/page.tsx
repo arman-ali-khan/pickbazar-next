@@ -40,14 +40,15 @@ export default function EditUserPage() {
             return;
         }
         setLoading(true);
-        const { data: userData, error } = await supabase.rpc('get_user_details', { p_user_id: userId }).single();
+        const { data: userArray, error } = await supabase.rpc('get_user_details', { p_user_id: userId });
 
-        if (error || !userData) {
+        if (error || !userArray || userArray.length === 0) {
             toast({ variant: 'destructive', title: 'Error', description: 'User not found.' });
             notFound();
             return;
         }
-
+        
+        const userData = userArray[0];
         setUser(userData as UserProfile);
         setFullName(userData.full_name || '');
         setAvatarUrl(userData.avatar_url || null);
