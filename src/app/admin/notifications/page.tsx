@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
@@ -46,7 +45,11 @@ export default function AdminNotificationsPage() {
 
     const getNotifications = useCallback(async () => {
         setLoading(true);
-        const { data, error } = await supabase.rpc('get_admin_notifications');
+        const { data, error } = await supabase
+            .from('notifications')
+            .is('user_id', null)
+            .order('created_at', { ascending: false });
+
         if (error) {
             toast({ variant: 'destructive', title: 'Error fetching notifications', description: error.message });
         } else {

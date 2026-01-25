@@ -24,6 +24,7 @@ interface Notification {
     message: string | null;
     link: string | null;
     created_at: string;
+    is_read: boolean;
 }
 
 export default function AdminHeader() {
@@ -56,8 +57,8 @@ export default function AdminHeader() {
             if (error) {
                 console.error("Error fetching notifications for header:", error);
             } else if (data) {
+                setNotifications(data.slice(0, 5));
                 const unreadNotifications = data.filter((n: any) => !n.is_read);
-                setNotifications(unreadNotifications.slice(0, 5));
                 setUnreadCount(unreadNotifications.length);
             }
         };
@@ -111,7 +112,7 @@ export default function AdminHeader() {
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
                         <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
-                            {unreadCount}
+                            {unreadCount > 9 ? '9+' : unreadCount}
                         </span>
                     )}
                     <span className="sr-only">Toggle notifications</span>
