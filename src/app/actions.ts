@@ -722,7 +722,7 @@ export async function placeNewOrder(
         return { orderNumber: null, error: 'You must be logged in to place an order.' };
     }
     
-    const { data: orderNumber, error: rpcError } = await supabase.rpc('create_order', {
+    const { data, error: rpcError } = await supabase.rpc('create_order', {
         p_total_amount: totalAmount,
         p_shipping_details: shippingInfo,
         p_items: cartItems,
@@ -735,6 +735,9 @@ export async function placeNewOrder(
     if (rpcError) {
         return { orderNumber: null, error: rpcError.message };
     }
+    
+    // The RPC might return a scalar (the order number string) or an array with an object containing the order number.
+    const orderNumber = (Array.isArray(data) && data.length > 0 && data[0].order_number) ? data[0].order_number : data;
     
     if (orderNumber) {
         const { error: notificationError } = await supabase.from('notifications').insert({
