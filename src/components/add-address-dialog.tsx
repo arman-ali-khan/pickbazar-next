@@ -64,21 +64,25 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
     },
   });
 
+  const allDivisions = (bdGeodata as any).divisions || (bdGeodata as any).default?.divisions || [];
+  const allDistricts = (bdGeodata as any).districts || (bdGeodata as any).default?.districts || [];
+  const allUpazilas = (bdGeodata as any).upazilas || (bdGeodata as any).default?.upazilas || [];
+
   const filteredDistricts = useMemo(() => {
-    if (!selectedDivisionId) return [];
-    return bdGeodata.districts.filter(d => d.division_id === selectedDivisionId);
-  }, [selectedDivisionId]);
+    if (!selectedDivisionId || !allDistricts.length) return [];
+    return allDistricts.filter((d: any) => d.division_id === selectedDivisionId);
+  }, [selectedDivisionId, allDistricts]);
 
   const filteredUpazilas = useMemo(() => {
-    if (!selectedDistrictId) return [];
-    return bdGeodata.upazilas.filter(u => u.district_id === selectedDistrictId);
-  }, [selectedDistrictId]);
+    if (!selectedDistrictId || !allUpazilas.length) return [];
+    return allUpazilas.filter((u: any) => u.district_id === selectedDistrictId);
+  }, [selectedDistrictId, allUpazilas]);
 
 
   function onSubmit(values: z.infer<typeof addressSchema>) {
-    const divisionName = bdGeodata.divisions.find(d => d.id === values.division)?.name || '';
-    const districtName = bdGeodata.districts.find(d => d.id === values.district)?.name || '';
-    const upazilaName = bdGeodata.upazilas.find(u => u.id === values.upazila)?.name || '';
+    const divisionName = allDivisions.find((d: any) => d.id === values.division)?.name || '';
+    const districtName = allDistricts.find((d: any) => d.id === values.district)?.name || '';
+    const upazilaName = allUpazilas.find((u: any) => u.id === values.upazila)?.name || '';
 
     onAddAddress({
       type: values.type,
@@ -165,7 +169,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {bdGeodata.divisions.map((division) => (
+                      {allDivisions.map((division: any) => (
                         <SelectItem key={division.id} value={division.id}>
                           {division.name}
                         </SelectItem>
@@ -197,7 +201,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {filteredDistricts.map((district) => (
+                      {filteredDistricts.map((district: any) => (
                         <SelectItem key={district.id} value={district.id}>
                           {district.name}
                         </SelectItem>
@@ -223,7 +227,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {filteredUpazilas.map((upazila) => (
+                      {filteredUpazilas.map((upazila: any) => (
                         <SelectItem key={upazila.id} value={upazila.id}>
                           {upazila.name}
                         </SelectItem>
