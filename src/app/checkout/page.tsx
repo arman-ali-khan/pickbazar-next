@@ -276,130 +276,134 @@ export default function CheckoutPage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Checkout</h1>
         </div>
-        <div className="grid lg:grid-cols-2 gap-12 items-start">
-          <div className="space-y-8">
-            {user ? (
-               <>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Shipping Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={(e) => { e.preventDefault(); handleProceedToPayment(); }}>
+            <div className="grid lg:grid-cols-2 gap-12 items-start">
+            <div className="space-y-8">
+                {user ? (
+                <>
+                    <Card>
+                    <CardHeader>
+                        <CardTitle>Shipping Information</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="firstName">First Name</Label>
+                                <Input id="firstName" placeholder="John" value={shippingInfo.firstName} onChange={handleInputChange} required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="lastName">Last Name</Label>
+                                <Input id="lastName" placeholder="Doe" value={shippingInfo.lastName} onChange={handleInputChange} required />
+                            </div>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="firstName">First Name</Label>
-                            <Input id="firstName" placeholder="John" value={shippingInfo.firstName} onChange={handleInputChange} required />
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" type="email" placeholder="you@example.com" value={shippingInfo.email} onChange={handleInputChange} required readOnly={!!user} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="lastName">Last Name</Label>
-                            <Input id="lastName" placeholder="Doe" value={shippingInfo.lastName} onChange={handleInputChange} required />
+                            <Label htmlFor="phone">Phone</Label>
+                            <Input id="phone" type="tel" placeholder="Your phone number" value={shippingInfo.phone} onChange={handleInputChange} required />
                         </div>
-                    </div>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                          <Label htmlFor="email">Email</Label>
-                          <Input id="email" type="email" placeholder="you@example.com" value={shippingInfo.email} onChange={handleInputChange} required readOnly={!!user} />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="phone">Phone</Label>
-                          <Input id="phone" type="tel" placeholder="Your phone number" value={shippingInfo.phone} onChange={handleInputChange} required />
-                      </div>
-                    </div>
-                     {savedAddresses.length > 0 ? (
-                        <div className="space-y-4 pt-2">
-                            <Label>Shipping Address</Label>
-                            <RadioGroup onValueChange={handleAddressSelect} value={selectedAddressId} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                {savedAddresses.map((addr) => (
+                        </div>
+                        {savedAddresses.length > 0 ? (
+                            <div className="space-y-4 pt-2">
+                                <Label>Shipping Address</Label>
+                                <RadioGroup onValueChange={handleAddressSelect} value={selectedAddressId} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    {savedAddresses.map((addr) => (
+                                        <Label
+                                            key={addr.id}
+                                            htmlFor={`addr-${addr.id}`}
+                                            className={cn(
+                                                "flex flex-col justify-between p-4 border rounded-lg cursor-pointer transition-all",
+                                                selectedAddressId === String(addr.id)
+                                                    ? "border-primary ring-2 ring-primary"
+                                                    : "border-border hover:border-gray-400"
+                                            )}
+                                        >
+                                            <div className="flex justify-between items-start w-full">
+                                                <div className="space-y-1">
+                                                    <p className="font-semibold">{addr.title}</p>
+                                                    <address className="not-italic text-muted-foreground text-sm">
+                                                        {addr.street_address}, {addr.city}, {addr.state} {addr.zip}
+                                                    </address>
+                                                </div>
+                                                <RadioGroupItem value={String(addr.id)} id={`addr-${addr.id}`} />
+                                            </div>
+                                        </Label>
+                                    ))}
                                     <Label
-                                        key={addr.id}
-                                        htmlFor={`addr-${addr.id}`}
+                                        htmlFor="addr-new"
                                         className={cn(
-                                            "flex flex-col justify-between p-4 border rounded-lg cursor-pointer transition-all",
-                                            selectedAddressId === String(addr.id)
-                                                ? "border-primary ring-2 ring-primary"
-                                                : "border-border hover:border-gray-400"
+                                            "flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-all min-h-[110px]",
+                                            selectedAddressId === 'new'
+                                                ? "border-primary ring-2 ring-primary bg-primary/5"
+                                                : "border-border hover:border-primary/50"
                                         )}
                                     >
-                                        <div className="flex justify-between items-start w-full">
-                                            <div className="space-y-1">
-                                                <p className="font-semibold">{addr.title}</p>
-                                                <address className="not-italic text-muted-foreground text-sm">
-                                                    {addr.street_address}, {addr.city}, {addr.state} {addr.zip}
-                                                </address>
-                                            </div>
-                                            <RadioGroupItem value={String(addr.id)} id={`addr-${addr.id}`} />
-                                        </div>
+                                        <p className="font-semibold mt-2">+ Add New Address</p>
+                                        <RadioGroupItem value="new" id="addr-new" className="hidden" />
                                     </Label>
-                                ))}
-                                <Label
-                                    htmlFor="addr-new"
-                                    className={cn(
-                                        "flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg cursor-pointer transition-all min-h-[110px]",
-                                        selectedAddressId === 'new'
-                                            ? "border-primary ring-2 ring-primary bg-primary/5"
-                                            : "border-border hover:border-primary/50"
-                                    )}
-                                >
-                                    <p className="font-semibold mt-2">+ Add New Address</p>
-                                    <RadioGroupItem value="new" id="addr-new" className="hidden" />
-                                </Label>
-                            </RadioGroup>
-                            {selectedAddressId === 'new' && (
-                                <div className="pt-4">
-                                    <AddressFormFields />
-                                </div>
-                            )}
+                                </RadioGroup>
+                                {selectedAddressId === 'new' && (
+                                    <div className="pt-4 space-y-4">
+                                        <AddressFormFields />
+                                    </div>
+                                )}
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                <AddressFormFields />
+                            </div>
+                        )}
+                    </CardContent>
+                    </Card>
+                    <Card>
+                    <CardHeader>
+                        <CardTitle>Coupon Code</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex gap-2">
+                            <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter coupon code" />
+                            <Button type="button" onClick={handleApplyCoupon} disabled={isApplyingCoupon}>
+                                {isApplyingCoupon ? 'Applying...' : 'Apply'}
+                            </Button>
                         </div>
-                    ) : (
-                        <AddressFormFields />
-                    )}
-                  </CardContent>
-                </Card>
+                        {couponMessage && (
+                            <p className={`text-sm mt-2 ${couponMessage.type === 'error' ? 'text-destructive' : 'text-green-600'}`}>
+                                {couponMessage.message}
+                            </p>
+                        )}
+                    </CardContent>
+                    </Card>
+                </>
+                ) : (
                 <Card>
-                  <CardHeader>
-                      <CardTitle>Coupon Code</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                      <div className="flex gap-2">
-                          <Input value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Enter coupon code" />
-                          <Button onClick={handleApplyCoupon} disabled={isApplyingCoupon}>
-                              {isApplyingCoupon ? 'Applying...' : 'Apply'}
-                          </Button>
-                      </div>
-                      {couponMessage && (
-                          <p className={`text-sm mt-2 ${couponMessage.type === 'error' ? 'text-destructive' : 'text-green-600'}`}>
-                              {couponMessage.message}
-                          </p>
-                      )}
-                  </CardContent>
+                    <CardHeader>
+                    <CardTitle>Please Login to Continue</CardTitle>
+                    <CardDescription>You need to be logged in to proceed with checkout.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                    <Dialog>
+                        <DialogTrigger asChild>
+                        <Button className="w-full h-12">Login or Register</Button>
+                        </DialogTrigger>
+                        <LoginDialog />
+                    </Dialog>
+                    </CardContent>
                 </Card>
-               </>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Please Login to Continue</CardTitle>
-                  <CardDescription>You need to be logged in to proceed with checkout.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button className="w-full h-12">Login or Register</Button>
-                    </DialogTrigger>
-                    <LoginDialog />
-                  </Dialog>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-          <div>
-            {renderOrderSummary()}
-            {user && (
-              <Button onClick={handleProceedToPayment} className="w-full mt-6 h-12" disabled={isProceeding || loadingSettings}>
-                  {isProceeding ? 'Processing...' : 'Proceed to Payment'}
-              </Button>
-            )}
-          </div>
-        </div>
+                )}
+            </div>
+            <div>
+                {renderOrderSummary()}
+                {user && (
+                <Button type="submit" className="w-full mt-6 h-12" disabled={isProceeding || loadingSettings}>
+                    {isProceeding ? 'Processing...' : 'Proceed to Payment'}
+                </Button>
+                )}
+            </div>
+            </div>
+        </form>
       </main>
       <CartDrawer />
     </div>

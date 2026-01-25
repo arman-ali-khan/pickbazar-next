@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { Leaf } from 'lucide-react';
 import { Button } from './ui/button';
-import { createClient } from '@/lib/supabase/server';
 import Image from 'next/image';
 import LucideIcon from './lucide-icon';
 
@@ -10,11 +9,16 @@ interface SocialLink {
   icon: string;
 }
 
-export default async function Footer() {
-  const supabase = createClient();
-  const { data } = await supabase.rpc('get_all_settings');
-  const settings = data?.[0];
+interface FooterProps {
+  settings?: {
+    site_title?: string | null;
+    site_subtitle?: string | null;
+    logo_url?: string | null;
+    social_links?: SocialLink[] | null;
+  } | null;
+}
 
+export default function Footer({ settings }: FooterProps) {
   const socialLinks: SocialLink[] = (settings?.social_links || []) as SocialLink[];
 
   return (

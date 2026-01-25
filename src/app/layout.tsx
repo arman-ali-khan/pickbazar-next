@@ -56,7 +56,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -71,6 +71,10 @@ export default function RootLayout({
     );
   }
 
+  const supabase = createClient();
+  const { data } = await supabase.rpc('get_all_settings');
+  const settings = data?.[0];
+
   return (
     <html lang="en" className={`${inter.variable} light`}>
       <body className="font-body antialiased pb-16 md:pb-0">
@@ -81,7 +85,7 @@ export default function RootLayout({
               <ProgressBar />
             </Suspense>
             {children}
-            <Footer />
+            <Footer settings={settings} />
             <Toaster />
             <FlyToCartAnimation />
             <BottomNavbar />
