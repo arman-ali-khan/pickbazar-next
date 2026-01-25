@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
@@ -101,18 +100,18 @@ export default function ViewUserPage() {
         setLoading(true);
 
         const [userRes, addressesRes, ordersRes, wishlistRes] = await Promise.all([
-            supabase.rpc('get_user_details', { p_user_id: userId }),
+            supabase.rpc('get_user_details', { p_user_id: userId }).single(),
             supabase.from('addresses').select('*').eq('user_id', userId),
             supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
             supabase.rpc('get_admin_user_wishlist', { p_user_id: userId })
         ]);
 
         const { data: userData, error: userError } = userRes;
-        if (userError || !userData || userData.length === 0) {
+        if (userError || !userData) {
             notFound();
             return;
         }
-        setUser(userData[0] as UserProfile);
+        setUser(userData as UserProfile);
 
         const { data: addressesData } = addressesRes;
         if (addressesData) {

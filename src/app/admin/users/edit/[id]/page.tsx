@@ -39,16 +39,16 @@ export default function EditUserPage() {
             return;
         }
         setLoading(true);
-        const { data, error } = await supabase.rpc('get_user_details', { p_user_id: userId });
+        const { data, error } = await supabase.rpc('get_user_details', { p_user_id: userId }).single();
 
-        if (error || !data || data.length === 0) {
+        if (error || !data) {
             toast({ variant: 'destructive', title: 'Error', description: 'User not found.' });
             notFound();
             return;
         }
 
-        const userData = data[0];
-        setUser(userData);
+        const userData = data;
+        setUser(userData as UserProfile);
         setFullName(userData.full_name || '');
         setAvatarUrl(userData.avatar_url || null);
         setLoading(false);

@@ -237,7 +237,7 @@ export default function AdminUsersPage() {
                                                     <AvatarImage src={user.avatar_url ?? undefined} alt={user.full_name ?? ''} />
                                                     <AvatarFallback>{(user.full_name || user.email || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                                                 </Avatar>
-                                                <div>
+                                                <div className="">
                                                     <p className="font-medium">{user.full_name ?? 'No Name'}</p>
                                                     <p className="text-xs text-muted-foreground">{user.email}</p>
                                                 </div>
@@ -296,13 +296,13 @@ export default function AdminUsersPage() {
                                         <AvatarImage src={user.avatar_url ?? undefined} alt={user.full_name ?? ''} />
                                         <AvatarFallback>{(user.full_name ?? user.email ?? 'U').charAt(0).toUpperCase()}</AvatarFallback>
                                     </Avatar>
-                                    <div className="flex-1">
+                                    <div className="flex-1 truncate">
                                         <CardTitle className="text-base">
                                             <Link href={`/admin/users/view/${user.id}`} className="hover:underline">
                                                 {user.full_name ?? 'No Name'}
                                             </Link>
                                         </CardTitle>
-                                        <CardDescription>{user.email}</CardDescription>
+                                        <CardDescription className="truncate">{user.email}</CardDescription>
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
