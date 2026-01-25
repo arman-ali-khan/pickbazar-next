@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronDown, Menu, Search, Leaf, X, User, Bell, ShoppingBag, Heart } from 'lucide-react';
+import { ChevronDown, Menu, Search, Leaf, X, User, Bell, ShoppingBag, Heart, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -159,7 +159,7 @@ interface HeaderProps {
 
 export default function Header({ logoUrl, siteTitle }: HeaderProps) {
   const [isMounted, setIsMounted] = useState(false);
-  const [profile, setProfile] = useState<{ avatar_url: string | null } | null>(null);
+  const [profile, setProfile] = useState<{ avatar_url: string | null; role: string | null; } | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -182,7 +182,7 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
       const fetchProfile = async () => {
         const { data } = await supabase
           .from('profiles')
-          .select('avatar_url')
+          .select('avatar_url, role')
           .eq('id', user.id)
           .single();
         if (data) {
@@ -296,6 +296,8 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
 
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name;
   const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url;
+  const allowedAdminRoles = ['admin', 'manager', 'super-admin'];
+  const isAdmin = profile?.role && allowedAdminRoles.includes(profile.role);
 
   if (!isMounted) {
     return (
@@ -487,12 +489,14 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
                           {unreadCount > 0 && <span className="ml-auto h-2 w-2 rounded-full bg-red-500" />}
                         </Link>
                       </DropdownMenuItem>
-                       <DropdownMenuItem asChild>
-                        <Link href="/admin">
-                          <Bell className="mr-2 h-4 w-4" />
-                          <span>Admin Dahsboard</span>
-                        </Link>
-                      </DropdownMenuItem>
+                       {isAdmin && (
+                         <DropdownMenuItem asChild>
+                            <Link href="/admin">
+                              <LayoutDashboard className="mr-2 h-4 w-4" />
+                              <span>Admin Dashboard</span>
+                            </Link>
+                          </DropdownMenuItem>
+                       )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={handleLogout}>
                         Logout
