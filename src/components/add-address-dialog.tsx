@@ -22,39 +22,94 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useState, useEffect } from 'react';
+import { getDivisions, getDistricts, getUpazilas } from '@bangladeshi/bangladesh-address';
 
+// This is the type expected by the parent component.
+export type AddressFormValues = {
+    type: 'billing' | 'shipping';
+    title: string;
+    country: string;
+    city: string;
+    state: string;
+    zip: string;
+    streetAddress: string;
+}
+
+// Internal form schema using BD address fields
 const addressSchema = z.object({
   type: z.enum(['billing', 'shipping']),
   title: z.string().min(1, 'Title is required.'),
-  country: z.string().min(1, 'Country is required.'),
-  city: z.string().min(1, 'City is required.'),
-  state: z.string().min(1, 'State is required.'),
+  division: z.string().min(1, 'Division is required.'),
+  district: z.string().min(1, 'District is required.'),
+  upazila: z.string().min(1, 'Upazila is required.'),
   zip: z.string().min(1, 'ZIP code is required.'),
   streetAddress: z.string().min(1, 'Street address is required.'),
 });
-
-export type AddressFormValues = z.infer<typeof addressSchema>;
 
 interface AddAddressDialogProps {
   onAddAddress: (data: AddressFormValues) => void;
 }
 
 export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
-  const form = useForm<AddressFormValues>({
+  const [divisions, setDivisions] = useState<string[]>([]);
+  const [districts, setDistricts] = useState<string[]>([]);
+  const [upazilas, setUpazilas] = useState<string[]>([]);
+  
+  const form = useForm<z.infer<typeof addressSchema>>({
     resolver: zodResolver(addressSchema),
     defaultValues: {
       type: 'shipping',
       title: '',
-      country: '',
-      city: '',
-      state: '',
+      division: '',
+      district: '',
+      upazila: '',
       zip: '',
       streetAddress: '',
     },
   });
 
-  function onSubmit(values: AddressFormValues) {
-    onAddAddress(values);
+  const selectedDivision = form.watch('division');
+  const selectedDistrict = form.watch('district');
+
+  useEffect(() => {
+    setDivisions(getDivisions());
+  }, []);
+
+  useEffect(() => {
+    if (selectedDivision) {
+      setDistricts(getDistricts(selectedDivision));
+      form.setValue('district', '');
+      form.setValue('upazila', '');
+    } else {
+      setDistricts([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDivision, form]);
+
+  useEffect(() => {
+    if (selectedDistrict) {
+      setUpazilas(getUpazilas(selectedDistrict));
+      form.setValue('upazila', '');
+    } else {
+      setUpazilas([]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDistrict, form]);
+
+  // Transform internal form data to match the expected parent type
+  function onSubmit(values: z.infer<typeof addressSchema>) {
+    const dataToSubmit: AddressFormValues = {
+        type: values.type,
+        title: values.title,
+        country: 'Bangladesh',
+        state: values.division,
+        city: values.district,
+        zip: values.zip,
+        streetAddress: `${values.streetAddress}, ${values.upazila}`,
+    };
+    onAddAddress(dataToSubmit);
     form.reset();
   }
 
@@ -108,44 +163,66 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
               </FormItem>
             )}
           />
+
           <div className="grid grid-cols-2 gap-4">
-            <FormField
+             <FormField
               control={form.control}
-              name="country"
+              name="division"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Country</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="USA" />
-                  </FormControl>
+                  <FormLabel>Division</FormLabel>
+                   <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Division" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {divisions.map((div) => <SelectItem key={div} value={div}>{div}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <FormField
               control={form.control}
-              name="city"
+              name="district"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>City</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="New York" />
-                  </FormControl>
+                  <FormLabel>District</FormLabel>
+                   <Select onValueChange={field.onChange} value={field.value} disabled={!selectedDivision}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select District" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {districts.map((dis) => <SelectItem key={dis} value={dis}>{dis}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <FormField
+             <FormField
               control={form.control}
-              name="state"
+              name="upazila"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>State</FormLabel>
-                  <FormControl>
-                    <Input {...field} placeholder="NY" />
-                  </FormControl>
+                  <FormLabel>Upazila / Thana</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedDistrict}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Upazila" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {upazilas.map((upa) => <SelectItem key={upa} value={upa}>{upa}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -157,7 +234,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
                 <FormItem>
                   <FormLabel>ZIP</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="10001" />
+                    <Input {...field} placeholder="e.g. 1216" />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -171,7 +248,7 @@ export function AddAddressDialog({ onAddAddress }: AddAddressDialogProps) {
               <FormItem>
                 <FormLabel>Street Address</FormLabel>
                 <FormControl>
-                  <Textarea {...field} placeholder="123 Main St" />
+                  <Textarea {...field} placeholder="e.g. House no, Road no" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
