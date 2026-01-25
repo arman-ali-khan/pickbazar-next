@@ -48,6 +48,7 @@ export default function AdminNotificationsPage() {
         setLoading(true);
         const { data, error } = await supabase
             .from('notifications')
+            .select('*')
             .filter('user_id', 'is', null)
             .order('created_at', { ascending: false });
 
