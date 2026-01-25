@@ -1,3 +1,4 @@
+
 'use client';
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -48,10 +49,10 @@ export default function AdminHeader() {
 
     useEffect(() => {
         const fetchNotifications = async () => {
-            const { data, error } = await supabase
+            const { data, error, count } = await supabase
                 .from('notifications')
-                .select('*')
-                .is('user_id', null)
+                .select('*', { count: 'exact' })
+                .filter('user_id', 'is', null)
                 .order('created_at', { ascending: false });
 
             if (error) {

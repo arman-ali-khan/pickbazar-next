@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
@@ -47,7 +48,7 @@ export default function AdminNotificationsPage() {
         setLoading(true);
         const { data, error } = await supabase
             .from('notifications')
-            .is('user_id', null)
+            .filter('user_id', 'is', null)
             .order('created_at', { ascending: false });
 
         if (error) {
