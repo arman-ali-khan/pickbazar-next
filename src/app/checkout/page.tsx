@@ -77,6 +77,10 @@ export default function CheckoutPage() {
     const total = subtotal + shippingCost - discountAmount;
 
     useEffect(() => {
+      document.title = 'Checkout | Pickbazar';
+    }, []);
+
+    useEffect(() => {
         const fetchSettings = async () => {
             setLoadingSettings(true);
             const { data } = await supabase.rpc('get_all_settings');

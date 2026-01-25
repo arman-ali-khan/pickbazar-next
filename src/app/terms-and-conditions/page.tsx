@@ -1,9 +1,21 @@
 
+import type { Metadata } from 'next';
 import Header from '@/components/header';
 import CartDrawer from '@/components/cart-drawer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const supabase = createClient();
+  const { data } = await supabase.from('pages').select('title').eq('slug', 'terms-and-conditions').single();
+
+  const pageTitle = data?.title || 'Terms and Conditions';
+
+  return {
+    title: pageTitle,
+  };
+}
 
 export default async function TermsAndConditionsPage() {
   const supabase = createClient();

@@ -41,6 +41,10 @@ export default function ProfilePage() {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [uploading, setUploading] = useState(false);
 
+  useEffect(() => {
+    document.title = 'My Profile | Pickbazar';
+  }, []);
+
   const getAddresses = useCallback(async () => {
     if (!user) return;
     try {

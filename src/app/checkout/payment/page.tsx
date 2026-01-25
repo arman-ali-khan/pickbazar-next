@@ -59,6 +59,10 @@ export default function PaymentPage() {
     const total = subtotal + shippingCost - discountAmount;
 
     useEffect(() => {
+        document.title = 'Payment | Pickbazar';
+    }, []);
+
+    useEffect(() => {
         if (!authLoading && !user) {
             toast({ variant: 'destructive', title: 'Authentication Required', description: 'Please login to continue.' });
             router.push('/checkout');

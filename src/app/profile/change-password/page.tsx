@@ -22,6 +22,10 @@ export default function ChangePasswordPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
+        document.title = 'Change Password | Pickbazar';
+    }, []);
+
+    useEffect(() => {
         if (!authLoading && !user) {
             router.push('/');
         }

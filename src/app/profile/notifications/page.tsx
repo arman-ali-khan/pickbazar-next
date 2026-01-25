@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -41,6 +40,10 @@ export default function NotificationsPage() {
     const { toast } = useToast();
     const [notifications, setNotifications] = useState<UserNotification[]>([]);
     const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        document.title = 'Notifications | Pickbazar';
+    }, []);
 
     const getNotifications = useCallback(async () => {
         if (!user) {

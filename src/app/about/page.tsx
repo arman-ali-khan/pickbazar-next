@@ -1,4 +1,5 @@
 
+import type { Metadata } from 'next';
 import Header from '@/components/header';
 import CartDrawer from '@/components/cart-drawer';
 import Image from 'next/image';
@@ -8,6 +9,10 @@ import { Linkedin, Twitter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
+
+export const metadata: Metadata = {
+  title: 'About Us',
+};
 
 interface TeamMember {
   name: string;

@@ -38,6 +38,14 @@ function SearchContent() {
   const [visibleCount, setVisibleCount] = useState(PRODUCTS_PER_PAGE);
   const [sortOrder, setSortOrder] = useState<SortOrder>('default');
 
+  useEffect(() => {
+    if (query) {
+      document.title = `Search for "${query}" | Pickbazar`;
+    } else {
+      document.title = 'Search | Pickbazar';
+    }
+  }, [query]);
+
   const fetchAndProcessData = useCallback(async () => {
     if (!query) {
       setAllSearchedProducts([]);

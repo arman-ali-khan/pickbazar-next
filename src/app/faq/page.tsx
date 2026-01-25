@@ -1,4 +1,5 @@
 
+import type { Metadata } from 'next';
 import Header from '@/components/header';
 import CartDrawer from '@/components/cart-drawer';
 import {
@@ -9,6 +10,10 @@ import {
 } from '@/components/ui/accordion';
 import { createClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
+
+export const metadata: Metadata = {
+  title: 'Frequently Asked Questions',
+};
 
 interface FaqItem {
   question: string;

@@ -35,6 +35,10 @@ function SuccessContent() {
     const [loading, setLoading] = useState(true);
     const { supabase } = useSupabase();
 
+    useEffect(() => {
+        document.title = 'Order Successful | Pickbazar';
+    }, []);
+
     const getOrderDetails = useCallback(async () => {
         if (!orderNumber) {
             setLoading(false);

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -42,6 +41,10 @@ export default function ContactPage() {
   const { supabase } = useSupabase();
   const [contactInfo, setContactInfo] = useState<ContactInfo | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  useEffect(() => {
+    document.title = 'Contact Us | Pickbazar';
+  }, []);
 
   useEffect(() => {
     const fetchContactInfo = async () => {

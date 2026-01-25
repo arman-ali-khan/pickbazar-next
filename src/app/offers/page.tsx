@@ -1,10 +1,15 @@
 
+import type { Metadata } from 'next';
 import Header from '@/components/header';
 import CartDrawer from '@/components/cart-drawer';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { createClient } from '@/lib/supabase/server';
+
+export const metadata: Metadata = {
+  title: 'Offers',
+};
 
 interface Offer {
   id: number;

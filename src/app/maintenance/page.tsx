@@ -1,6 +1,20 @@
+
 import { createClient } from '@/lib/supabase/server';
 import MaintenanceContent from '@/components/maintenance-content';
 import Image from 'next/image';
+import type { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+    const supabase = createClient();
+    const { data } = await supabase.rpc('get_all_settings');
+    const settings = data?.[0];
+
+    const maintenanceTitle = settings?.maintenance_title || 'Under Maintenance';
+
+    return {
+        title: maintenanceTitle
+    };
+}
 
 export default async function MaintenancePage() {
     const supabase = createClient();

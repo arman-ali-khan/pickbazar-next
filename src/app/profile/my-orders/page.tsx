@@ -31,6 +31,10 @@ export default function MyOrdersPage() {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
 
+    useEffect(() => {
+        document.title = 'My Orders | Pickbazar';
+    }, []);
+
     const getOrders = useCallback(async () => {
         if (!user) return;
         setLoading(true);

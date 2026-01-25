@@ -1,8 +1,13 @@
 
+import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
 import Header from '@/components/header';
 import CartDrawer from '@/components/cart-drawer';
 import ShopPageClient from '@/components/shop-page-client';
+
+export const metadata: Metadata = {
+    title: 'Shop',
+};
 
 export default async function ShopPage() {
     const supabase = createClient();

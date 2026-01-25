@@ -1,10 +1,15 @@
 
+import type { Metadata } from 'next';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { DollarSign, ShoppingCart, Users, Box } from "lucide-react";
 import { createClient } from '@/lib/supabase/server';
 import RecentReviews from '@/components/admin/recent-reviews';
 import type { AdminReview } from "@/lib/data";
-import RecentRefundRequests from "@/components/admin/recent-refund-requests";
+import RecentRefundRequests from '@/components/admin/recent-refund-requests';
+
+export const metadata: Metadata = {
+  title: 'Dashboard',
+};
 
 export default async function AdminDashboardPage() {
     const supabase = createClient();

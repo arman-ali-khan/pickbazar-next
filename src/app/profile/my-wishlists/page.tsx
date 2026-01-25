@@ -16,6 +16,10 @@ export default function MyWishlistPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        document.title = 'My Wishlist | Pickbazar';
+    }, []);
+
+    useEffect(() => {
         const fetchWishlist = async () => {
             if (!user) return;
             setLoading(true);
