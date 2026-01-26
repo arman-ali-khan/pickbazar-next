@@ -85,19 +85,28 @@ export default function ViewUserPage() {
         }
         setLoading(true);
 
-        const [userRes, addressesRes, ordersRes, wishlistRes] = await Promise.all([
-            supabase.rpc('get_user_details', { p_user_id: userId }),
+        const [allUsersRes, addressesRes, ordersRes, wishlistRes] = await Promise.all([
+            supabase.rpc('get_all_users'),
             supabase.from('addresses').select('*').eq('user_id', userId),
             supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
             supabase.rpc('get_admin_user_wishlist', { p_user_id: userId })
         ]);
 
-        const { data: userData, error: userError } = userRes;
-        if (userError || !userData || userData.length === 0) {
+        const { data: allUsersData, error: userError } = allUsersRes;
+        
+        if (userError || !allUsersData) {
             notFound();
             return;
         }
-        setUser(userData[0] as UserProfile);
+
+        const userData = (allUsersData as any[]).find(u => u.id === userId);
+
+        if (!userData) {
+            notFound();
+            return;
+        }
+        
+        setUser(userData as UserProfile);
 
         const { data: addressesData } = addressesRes;
         if (addressesData) {

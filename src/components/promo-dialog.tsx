@@ -38,8 +38,9 @@ export default function PromoDialog() {
     const shouldShow = !localStorage.getItem(LOCAL_STORAGE_KEY);
 
     const fetchPromo = async () => {
-      const { data: settingsData } = await supabase.rpc('get_all_settings');
-      const promoEnabled = settingsData?.enable_promo_popup;
+      const { data: settingsDataArr } = await supabase.rpc('get_all_settings');
+      const settings = settingsDataArr?.[0];
+      const promoEnabled = settings?.enable_promo_popup;
 
       if (shouldShow && promoEnabled) {
         const { data, error } = await supabase
