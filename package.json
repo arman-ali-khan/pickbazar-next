@@ -9,8 +9,12 @@
     "build": "NODE_ENV=production next build",
     "start": "next start",
     "lint": "next lint",
+<<<<<<< HEAD
     "typecheck": "tsc --noEmit",
     "test": "jest"
+=======
+    "typecheck": "tsc --noEmit"
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
   },
   "dependencies": {
     "@genkit-ai/google-genai": "^1.20.0",
@@ -68,16 +72,21 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "@testing-library/jest-dom": "^6.4.8",
     "@testing-library/react": "^16.0.0",
     "@tailwindcss/typography": "^0.5.13",
     "@types/jest": "^29.5.12",
+=======
+    "@tailwindcss/typography": "^0.5.13",
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
     "@types/node": "^20",
     "@types/nprogress": "^0.2.3",
     "@types/react": "^19.2.1",
     "@types/react-dom": "^19.2.1",
     "@types/recharts": "^1.8.29",
     "genkit-cli": "^1.20.0",
+<<<<<<< HEAD
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^29.7.0",
     "postcss": "^8",
@@ -86,3 +95,10 @@
     "typescript": "^5"
   }
 }
+=======
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  }
+}
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b

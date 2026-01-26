@@ -46,12 +46,16 @@ export default function AdminNotificationsPage() {
 
     const getNotifications = useCallback(async () => {
         setLoading(true);
+<<<<<<< HEAD
         const { data, error } = await supabase
             .from('notifications')
             .select('*')
             .filter('user_id', 'is', null)
             .order('created_at', { ascending: false });
 
+=======
+        const { data, error } = await supabase.rpc('get_admin_notifications');
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         if (error) {
             toast({ variant: 'destructive', title: 'Error fetching notifications', description: error.message });
         } else {

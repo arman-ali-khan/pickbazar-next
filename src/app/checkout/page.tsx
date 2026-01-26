@@ -13,7 +13,11 @@ import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useRouter } from 'next/navigation';
+<<<<<<< HEAD
 import { applyCoupon } from '@/app/actions';
+=======
+import { applyCoupon } from '@/app/actions/order';
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -257,7 +261,11 @@ export default function CheckoutPage() {
       return (
           <div className="bg-muted/20 min-h-screen">
             <Header />
+<<<<<<< HEAD
             <main className="container py-12">
+=======
+            <main className="container mx-auto py-12">
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
               <div className="text-center mb-12">
                 <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Checkout</h1>
               </div>
@@ -276,7 +284,11 @@ export default function CheckoutPage() {
   return (
     <div className="bg-muted/20 min-h-screen">
       <Header />
+<<<<<<< HEAD
       <main className="container py-12">
+=======
+      <main className="container mx-auto py-12">
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Checkout</h1>
         </div>

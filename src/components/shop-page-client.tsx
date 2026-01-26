@@ -30,6 +30,7 @@ function ShopContent() {
   const { supabase } = useSupabase();
 
   const categoriesQuery = searchParams.get('categories');
+<<<<<<< HEAD
   const categoryQuery = searchParams.get('category');
   const offerProductsQuery = searchParams.get('offer_products');
 
@@ -43,6 +44,11 @@ function ShopContent() {
     return [];
   }, [categoriesQuery, categoryQuery]);
   
+=======
+  const offerProductsQuery = searchParams.get('offer_products');
+
+  const initialCategories = useMemo(() => (categoriesQuery ? categoriesQuery.split(',') : []), [categoriesQuery]);
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
   const initialProductIds = useMemo(() => (offerProductsQuery ? offerProductsQuery.split(',').map(Number) : []), [offerProductsQuery]);
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -278,9 +284,15 @@ function ShopContent() {
 
               {currentProducts.length > 0 ? (
                 viewMode === 'grid' ? (
+<<<<<<< HEAD
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 2xl:grid-cols-5 gap-2">
                       {currentProducts.map((product, index) => (
                           <ProductCard key={product.id} product={product} priority={index < 5} />
+=======
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-2">
+                      {currentProducts.map(product => (
+                          <ProductCard key={product.id} product={product} />
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                       ))}
                   </div>
                 ) : (

@@ -33,7 +33,11 @@ export default async function FaqPage() {
   return (
     <div className="bg-muted/20 min-h-screen">
       <Header />
+<<<<<<< HEAD
       <main className="container py-12">
+=======
+      <main className="container mx-auto py-12">
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         <div className="max-w-3xl mx-auto">
           <div className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Frequently Asked Questions</h1>

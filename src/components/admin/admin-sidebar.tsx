@@ -1,4 +1,8 @@
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 'use client';
 
 import {
@@ -215,7 +219,11 @@ export default function AdminSidebar({ logoUrl, siteTitle }: AdminSidebarProps) 
               questionsRes,
               messagesRes,
           ] = await Promise.all([
+<<<<<<< HEAD
               supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('is_read', false).filter('user_id', 'is', null),
+=======
+              supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('is_read', false).is('user_id', null),
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
               supabase.from('products').select('id', { count: 'exact', head: true }).lt('stock', 10),
               supabase.from('orders').select('id', { count: 'exact', head: true }).eq('status', 'Pending'),
               supabase.from('refunds').select('id', { count: 'exact', head: true }).eq('status', 'Pending'),

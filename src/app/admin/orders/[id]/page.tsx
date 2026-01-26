@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 
+=======
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 'use client';
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
@@ -16,7 +19,11 @@ import { Badge } from '@/components/ui/badge';
 import { useSupabase } from '@/lib/supabase/provider';
 import type { OrderStatus } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
+<<<<<<< HEAD
 import { updateOrderStatus } from '@/app/actions';
+=======
+import { updateOrderStatus } from '@/app/actions/order';
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import { Timeline, TimelineItem, TimelinePoint, TimelineTime, TimelineTitle } from '@/components/ui/timeline';
 import { format } from 'date-fns';
 
@@ -38,6 +45,10 @@ interface OrderDetails {
         firstName: string;
         lastName: string;
         email: string;
+<<<<<<< HEAD
+=======
+        phone: string;
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         address: string;
         city: string;
         state: string;
@@ -301,6 +312,10 @@ export default function OrderDetailsPage() {
                                 <div>
                                     <p className="font-semibold">{order.shipping_details.firstName} {order.shipping_details.lastName}</p>
                                     <p className="text-sm text-muted-foreground">{order.shipping_details.email}</p>
+<<<<<<< HEAD
+=======
+                                    <p className="text-sm text-muted-foreground">{order.shipping_details.phone}</p>
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                                 </div>
                             </div>
                             <Separator />

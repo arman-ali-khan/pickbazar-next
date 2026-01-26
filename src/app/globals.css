@@ -104,3 +104,19 @@
   opacity: 1;
   transform: rotate(3deg) translate(0px, -4px);
 }
+<<<<<<< HEAD
+=======
+
+
+.language-text {
+  display: flex;
+  overflow: auto;
+  width: 300px;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease; /* Smooth animation */
+  max-width: 300px;
+  font-family: 'Arial', sans-serif;
+}
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b

@@ -26,6 +26,7 @@ export async function middleware(request: NextRequest) {
           return request.cookies.get(name)?.value
         },
         set(name: string, value: string, options: CookieOptions) {
+<<<<<<< HEAD
           request.cookies.set({
             name,
             value,
@@ -58,6 +59,14 @@ export async function middleware(request: NextRequest) {
             value: '',
             ...options,
           })
+=======
+          request.cookies.set({ name, value, ...options })
+          response.cookies.set({ name, value, ...options })
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({ name, value: '', ...options })
+          response.cookies.set({ name, value: '', ...options })
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         },
       },
     }

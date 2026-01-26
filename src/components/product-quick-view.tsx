@@ -13,7 +13,11 @@ import { cn } from '@/lib/utils';
 import ImageMagnify from './image-magnify';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { addToCart, updateQuantity, selectItemQuantity, triggerFlyToCart } from '@/lib/redux/slices/cartSlice';
+<<<<<<< HEAD
 import { getQuickViewData } from '@/app/actions';
+=======
+import { getQuickViewData } from '@/app/actions/product';
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import { Skeleton } from './ui/skeleton';
 import WishlistButton from './wishlist-button';
 import parse from 'html-react-parser';

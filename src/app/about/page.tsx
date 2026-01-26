@@ -70,7 +70,11 @@ export default async function AboutPage() {
   return (
     <div className="bg-muted/20 min-h-screen">
       <Header />
+<<<<<<< HEAD
       <main className="container py-12">
+=======
+      <main className="container mx-auto py-12">
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         <section className="text-center mb-16">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800">{pageContent.title}</h1>
           <p className="text-muted-foreground mt-4 text-lg max-w-3xl mx-auto">

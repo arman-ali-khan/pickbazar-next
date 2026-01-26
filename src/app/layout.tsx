@@ -20,7 +20,11 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 export async function generateMetadata(): Promise<Metadata> {
   if (!isSupabaseConfigured) {
     return {
+<<<<<<< HEAD
       title: 'Kumorgonj Bazar',
+=======
+      title: 'Pickbazar',
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
       description: 'An e-commerce storefront for fresh products.',
     };
   }
@@ -29,6 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { data } = await supabase.rpc('get_all_settings');
   const settings = data?.[0];
 
+<<<<<<< HEAD
   const siteTitle = settings?.site_title || 'Kumorgonj Bazar';
   const siteSubtitle = settings?.site_subtitle || 'An e-commerce storefront for fresh products.';
   const faviconUrl = settings?.favicon_url;
@@ -37,6 +42,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase: canonicalUrl ? new URL(canonicalUrl) : null,
+=======
+  const siteTitle = settings?.site_title || 'Pickbazar';
+  const siteSubtitle = settings?.site_subtitle || 'An e-commerce storefront for fresh products.';
+  const faviconUrl = settings?.favicon_url;
+  const linkPreviewImageUrl = settings?.link_preview_image_url;
+
+  return {
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
     title: {
       default: siteTitle,
       template: `%s | ${siteTitle}`,
@@ -48,7 +61,11 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: siteTitle,
       description: siteSubtitle,
+<<<<<<< HEAD
       url: canonicalUrl || undefined,
+=======
+      url: settings?.canonical_url || undefined,
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
       siteName: siteTitle,
       images: linkPreviewImageUrl ? [{ url: linkPreviewImageUrl }] : [],
       type: 'website',

@@ -16,7 +16,11 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { useSupabase } from '@/lib/supabase/provider';
+<<<<<<< HEAD
 import { answerQuestion } from '@/app/actions';
+=======
+import { answerQuestion } from '@/app/actions/product';
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 
 
 export default function AnswerQuestionPage() {

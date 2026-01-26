@@ -39,16 +39,27 @@ export default function EditUserPage() {
             return;
         }
         setLoading(true);
+<<<<<<< HEAD
         const { data: allUsers, error } = await supabase.rpc('get_all_users');
         const userArray = allUsers ? (allUsers as UserProfile[]).filter(u => u.id === userId) : [];
 
         if (error || userArray.length === 0) {
+=======
+        const { data, error } = await supabase.rpc('get_user_details', { p_user_id: userId });
+
+        if (error || !data || data.length === 0) {
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
             toast({ variant: 'destructive', title: 'Error', description: 'User not found.' });
             notFound();
             return;
         }
+<<<<<<< HEAD
         
         const userData = userArray[0];
+=======
+
+        const userData = data[0];
+>>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         setUser(userData);
         setFullName(userData.full_name || '');
         setAvatarUrl(userData.avatar_url || null);
