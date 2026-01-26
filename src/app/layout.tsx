@@ -33,7 +33,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteSubtitle = settings?.site_subtitle || 'An e-commerce storefront for fresh products.';
   const faviconUrl = settings?.favicon_url;
   const linkPreviewImageUrl = settings?.link_preview_image_url;
-
+  
   return {
     title: {
       default: siteTitle,

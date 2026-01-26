@@ -22,6 +22,12 @@ interface UserProfile {
     avatar_url: string | null;
     created_at: string;
     role: UserRole;
+    contact_number:string;
+}
+interface AllUserProfile {
+    id: string;
+    contact_number:string | null;
+    bio: string | null;
 }
 
 interface Address {
@@ -72,6 +78,9 @@ export default function ViewUserPage() {
     const userId = params.id;
 
     const [user, setUser] = useState<UserProfile | null>(null);
+
+    const [allUer, setAllUser] = useState<AllUserProfile | null>(null);
+
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [recentOrders, setRecentOrders] = useState<Order[]>([]);
     const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -84,15 +93,25 @@ export default function ViewUserPage() {
         }
         setLoading(true);
 
-        const [allUsersRes, addressesRes, ordersRes, wishlistRes] = await Promise.all([
+        const [allUsersRes, addressesRes, getUsers, ordersRes, wishlistRes] = await Promise.all([
             supabase.rpc('get_all_users'),
             supabase.from('addresses').select('*').eq('user_id', userId),
+            supabase.from('profiles').select('*').eq('id', userId),
             supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
             supabase.from('wishlist').select('products(id, name, featured_image_url)').eq('user_id', userId)
         ]);
 
         const { data: allUsersData, error: userError } = allUsersRes;
         
+        if (getUsers.error) {
+            console.error("Error fetching user:", getUsers.error);
+            notFound();
+            return;
+        }
+        const usersData = (getUsers.data as any[]).find(u => u.id === userId);
+        setAllUser(usersData as AllUserProfile);
+        console.log(usersData,'usersData')
+
         if (userError || !allUsersData) {
             notFound();
             return;
@@ -104,7 +123,6 @@ export default function ViewUserPage() {
             notFound();
             return;
         }
-        
         setUser(userData as UserProfile);
 
         const { data: addressesData } = addressesRes;
@@ -237,9 +255,17 @@ export default function ViewUserPage() {
                                     <span className="text-muted-foreground">Joined</span>
                                     <span suppressHydrationWarning>{format(new Date(user.created_at), 'PP')}</span>
                                 </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">User Bio</span>
+                                    <span>{allUer.bio}</span>
+                                </div>
                                  <div className="flex justify-between items-center">
                                     <span className="text-muted-foreground">Role</span>
                                     <Badge variant={getRoleVariant(user.role)}>{roleDisplayMap[user.role]}</Badge>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">User Phone</span>
+                                    <span>{allUer.contact_number}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Total Orders</span>
