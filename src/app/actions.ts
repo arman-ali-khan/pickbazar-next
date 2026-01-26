@@ -375,23 +375,61 @@ export async function updateRefundStatus(formData: FormData) {
   }
 
   const refundId = formData.get('refundId');
-  const newStatus = formData.get('status');
+  const newStatus = formData.get('status') as string;
 
   if (!refundId || !newStatus) {
     return { error: 'Refund ID and new status are required.' };
   }
 
+  // Fetch refund to get user_id and order_id
+  const { data: refundData, error: refundError } = await supabase
+    .from('refunds')
+    .select('user_id, order_id')
+    .eq('id', Number(refundId))
+    .single();
+
+  if (refundError || !refundData) {
+      return { error: 'Refund not found.' };
+  }
+
+  const { data: orderData, error: orderError } = await supabase
+    .from('orders')
+    .select('order_number')
+    .eq('id', refundData.order_id)
+    .single();
+
+  if (orderError || !orderData) {
+      return { error: 'Associated order not found.' };
+  }
+  const orderNumber = orderData.order_number;
+
+  // Update the status
   const { error } = await supabase
     .from('refunds')
-    .update({ status: String(newStatus) })
+    .update({ status: newStatus })
     .eq('id', Number(refundId));
   
   if (error) {
     return { error: error.message };
   }
 
+  // Create notification for the user
+  const { error: notificationError } = await supabase.from('notifications').insert({
+    user_id: refundData.user_id,
+    title: `Your refund request has been ${newStatus.toLowerCase()}`,
+    message: `Your refund request for order #${orderNumber} was ${newStatus.toLowerCase()}.`,
+    link: `/profile/my-refunds`,
+    type: 'refund_update'
+  });
+
+  if (notificationError) {
+    console.error("Failed to create user notification for refund update:", notificationError);
+    // Don't block the response for this, just log it.
+  }
+
   revalidatePath('/admin/refunds');
   revalidatePath('/admin');
+  revalidatePath('/profile/my-refunds');
   return { success: true };
 }
 
