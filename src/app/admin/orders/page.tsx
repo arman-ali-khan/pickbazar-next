@@ -26,12 +26,16 @@ import {
     DropdownMenuRadioGroup,
     DropdownMenuRadioItem,
     DropdownMenuSeparator,
+    DropdownMenuSub,
+    DropdownMenuSubTrigger,
+    DropdownMenuPortal,
+    DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Search, MoreHorizontal, File, ListFilter, Trash2, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useTransition } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from "date-fns";
@@ -39,6 +43,7 @@ import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import type { OrderStatus } from '@/lib/data';
 import { Skeleton } from "@/components/ui/skeleton";
+import { updateOrderStatus } from "@/app/actions";
 
 type OrderWithCustomer = {
     id: number;
@@ -62,7 +67,29 @@ const getStatusVariant = (status: OrderStatus) => {
     }
 };
 
-const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
+const OrderList = ({ orders, onStatusUpdate }: { orders: OrderWithCustomer[], onStatusUpdate: () => void }) => {
+    const [isUpdating, startTransition] = useTransition();
+    const { toast } = useToast();
+
+    const handleStatusChange = (orderId: number, newStatus: OrderStatus) => {
+        startTransition(async () => {
+            const result = await updateOrderStatus(orderId, newStatus);
+            if (result.error) {
+                toast({
+                    variant: 'destructive',
+                    title: 'Error updating status',
+                    description: result.error,
+                });
+            } else {
+                toast({
+                    title: 'Status Updated',
+                    description: `Order #${result.orderNumber} status updated to ${newStatus}.`,
+                });
+                onStatusUpdate();
+            }
+        });
+    };
+
     if (orders.length === 0) {
         return (
             <div className="text-center py-20">
@@ -103,6 +130,21 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                                             <div className="flex items-center w-full"><Eye className="mr-2 h-4 w-4" /><span>View Details</span></div>
                                         </Link>
                                     </DropdownMenuItem>
+                                    <DropdownMenuSub>
+                                        <DropdownMenuSubTrigger disabled={isUpdating}>Change Status</DropdownMenuSubTrigger>
+                                        <DropdownMenuPortal>
+                                            <DropdownMenuSubContent>
+                                                <DropdownMenuRadioGroup value={order.status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus as OrderStatus)}>
+                                                    <DropdownMenuRadioItem value="Pending">Pending</DropdownMenuRadioItem>
+                                                    <DropdownMenuRadioItem value="Processing">Processing</DropdownMenuRadioItem>
+                                                    <DropdownMenuRadioItem value="Shipped">Shipped</DropdownMenuRadioItem>
+                                                    <DropdownMenuRadioItem value="Delivered">Delivered</DropdownMenuRadioItem>
+                                                    <DropdownMenuRadioItem value="Cancelled">Cancelled</DropdownMenuRadioItem>
+                                                </DropdownMenuRadioGroup>
+                                            </DropdownMenuSubContent>
+                                        </DropdownMenuPortal>
+                                    </DropdownMenuSub>
+                                    <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Delete</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
@@ -171,9 +213,28 @@ const OrderList = ({ orders }: { orders: OrderWithCustomer[] }) => {
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
                                             <DropdownMenuItem asChild>
-                                                <Link href={`/admin/orders/${order.order_number}`}>View Details</Link>
+                                                <Link href={`/admin/orders/${order.order_number}`} className="flex items-center">
+                                                    <Eye className="mr-2 h-4 w-4" />View Details
+                                                </Link>
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger disabled={isUpdating}>Change Status</DropdownMenuSubTrigger>
+                                                <DropdownMenuPortal>
+                                                    <DropdownMenuSubContent>
+                                                        <DropdownMenuRadioGroup value={order.status} onValueChange={(newStatus) => handleStatusChange(order.id, newStatus as OrderStatus)}>
+                                                            <DropdownMenuRadioItem value="Pending">Pending</DropdownMenuRadioItem>
+                                                            <DropdownMenuRadioItem value="Processing">Processing</DropdownMenuRadioItem>
+                                                            <DropdownMenuRadioItem value="Shipped">Shipped</DropdownMenuRadioItem>
+                                                            <DropdownMenuRadioItem value="Delivered">Delivered</DropdownMenuRadioItem>
+                                                            <DropdownMenuRadioItem value="Cancelled">Cancelled</DropdownMenuRadioItem>
+                                                        </DropdownMenuRadioGroup>
+                                                    </DropdownMenuSubContent>
+                                                </DropdownMenuPortal>
+                                            </DropdownMenuSub>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem className="text-destructive">
+                                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                            </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </TableCell>
@@ -358,7 +419,7 @@ export default function AdminOrdersPage() {
                                     </Table>
                             </div>
                         </>
-                    ) : <OrderList orders={paginatedOrders} />}
+                    ) : <OrderList orders={paginatedOrders} onStatusUpdate={fetchOrders} />}
                 </CardContent>
                 <CardFooter>
                     <div className="flex items-center justify-between w-full">
@@ -389,6 +450,8 @@ export default function AdminOrdersPage() {
         </main>
     );
 }
+
+    
 
     
 
