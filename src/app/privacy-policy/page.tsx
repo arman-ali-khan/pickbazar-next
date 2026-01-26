@@ -30,7 +30,7 @@ export default async function PrivacyPolicyPage() {
   return (
     <div className="bg-muted/20 min-h-screen">
       <Header />
-      <main className="container py-12">
+      <main className="container mx-auto py-12">
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardHeader>

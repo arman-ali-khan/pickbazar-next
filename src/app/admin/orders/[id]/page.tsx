@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
@@ -16,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { useSupabase } from '@/lib/supabase/provider';
 import type { OrderStatus } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
-import { updateOrderStatus } from '@/app/actions';
+import { updateOrderStatus } from '@/app/actions/order';
 import { Timeline, TimelineItem, TimelinePoint, TimelineTime, TimelineTitle } from '@/components/ui/timeline';
 import { format } from 'date-fns';
 
@@ -38,6 +37,7 @@ interface OrderDetails {
         firstName: string;
         lastName: string;
         email: string;
+        phone: string;
         address: string;
         city: string;
         state: string;
@@ -301,6 +301,7 @@ export default function OrderDetailsPage() {
                                 <div>
                                     <p className="font-semibold">{order.shipping_details.firstName} {order.shipping_details.lastName}</p>
                                     <p className="text-sm text-muted-foreground">{order.shipping_details.email}</p>
+                                    <p className="text-sm text-muted-foreground">{order.shipping_details.phone}</p>
                                 </div>
                             </div>
                             <Separator />

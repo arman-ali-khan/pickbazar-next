@@ -1,4 +1,3 @@
-
 'use client';
 import Image from 'next/image';
 import { useState, useRef, useTransition } from 'react';
@@ -19,7 +18,7 @@ import { Dialog, DialogTrigger } from './ui/dialog';
 import { LoginDialog } from './login-dialog';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { submitReview, submitQuestion } from '@/app/actions';
+import { submitReview, submitQuestion } from '@/app/actions/product';
 import { format } from 'date-fns';
 import WishlistButton from './wishlist-button';
 import parse from 'html-react-parser';
@@ -233,7 +232,7 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                         {product.originalPrice && <p className="text-lg line-through text-muted-foreground">${product.originalPrice.toFixed(2)}</p>}
                     </div>
 
-                    <p className="text-sm text-gray-600 mb-6">{parse(product.shortDescription)}</p>
+                    <div className="text-sm text-gray-600 mb-6">{parse(product.shortDescription)}</div>
 
                     <div className="flex items-center gap-4 mb-6">
                         {quantity === 0 ? (

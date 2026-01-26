@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { cancelRefund } from '@/app/actions';
+import { cancelRefund, requestRefund } from '@/app/actions/order';
 
 interface Refund {
     id: number;

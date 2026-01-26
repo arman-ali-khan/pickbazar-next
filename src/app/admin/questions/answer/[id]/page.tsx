@@ -16,7 +16,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { useSupabase } from '@/lib/supabase/provider';
-import { answerQuestion } from '@/app/actions';
+import { answerQuestion } from '@/app/actions/product';
 
 
 export default function AnswerQuestionPage() {

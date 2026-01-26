@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import type { RelatedProduct, ProductReview, Question } from '@/lib/data';
 import type { Metadata } from 'next';
+import { submitReview, submitQuestion } from '@/app/actions/product';
 
 type Props = {
   params: { id: string };
@@ -161,7 +162,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
   return (
     <div className="bg-background min-h-screen">
       <Header />
-      <main className="container px-2 sm:px-4 py-8">
+      <main className="container px-2 mx-auto sm:px-4 py-8">
         <ProductPageContent product={productToShow} relatedProducts={relatedProducts} />
       </main>
       <CartDrawer />

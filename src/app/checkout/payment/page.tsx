@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,6 +20,7 @@ import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
+import { createOrderNotification } from '@/app/actions/order';
 
 interface ShippingInfo {
   firstName: string;
@@ -150,6 +152,9 @@ export default function PaymentPage() {
             return;
         }
 
+        // Notify Admins
+        await createOrderNotification(orderNumber, total);
+
         dispatch(clearCart());
         localStorage.removeItem('shippingInfo');
         localStorage.removeItem('appliedDiscount');
@@ -161,7 +166,7 @@ export default function PaymentPage() {
   return (
     <div className="bg-muted/20 min-h-screen">
       <Header />
-      <main className="container py-12">
+      <main className="container mx-auto py-12">
         <div className="max-w-2xl mx-auto space-y-8">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">

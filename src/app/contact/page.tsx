@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { useEffect, useState, useTransition } from 'react';
 import { useSupabase } from '@/lib/supabase/provider';
-import { submitContactMessage } from '@/app/actions';
+import { submitContactMessage } from '@/app/actions/contact';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),
@@ -95,7 +95,7 @@ export default function ContactPage() {
   return (
     <div className="bg-muted/20 min-h-screen">
       <Header />
-      <main className="container py-12">
+      <main className="container mx-auto py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Get In Touch</h1>
           <p className="text-muted-foreground mt-4 text-lg">We'd love to hear from you. Here's how you can reach us.</p>

@@ -158,7 +158,7 @@ interface HeaderProps {
   siteTitle?: string | null;
 }
 
-export default function Header({ logoUrl, siteTitle }: HeaderProps) {
+export default function Header({ logoUrl: propLogoUrl, siteTitle: propSiteTitle }: HeaderProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [profile, setProfile] = useState<{ avatar_url: string | null; role: string | null; } | null>(null);
 
@@ -174,6 +174,36 @@ export default function Header({ logoUrl, siteTitle }: HeaderProps) {
   const { user, supabase } = useSupabase();
   const { toast } = useToast();
   const navItems = [{ name: 'Shop', href: '/shop' }, { name: 'Offers', href: '/offers' }];
+
+  const [logoUrl, setLogoUrl] = useState(propLogoUrl);
+  const [siteTitle, setSiteTitle] = useState(propSiteTitle);
+
+    useEffect(() => {
+        setLogoUrl(propLogoUrl);
+    }, [propLogoUrl]);
+
+    useEffect(() => {
+        setSiteTitle(propSiteTitle);
+    }, [propSiteTitle]);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase.rpc('get_all_settings');
+      if (data?.[0]) {
+        if (propLogoUrl === undefined) {
+          setLogoUrl(data[0].logo_url);
+        }
+        if (propSiteTitle === undefined) {
+          setSiteTitle(data[0].site_title);
+        }
+      }
+    };
+
+    if (propLogoUrl === undefined || propSiteTitle === undefined) {
+      fetchSettings();
+    }
+  }, [propLogoUrl, propSiteTitle, supabase]);
+
 
   const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);

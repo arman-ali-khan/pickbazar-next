@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -36,6 +35,7 @@ interface OrderDetails {
     shipping_details: {
         firstName: string;
         lastName: string;
+        phone: string;
         address: string;
         city: string;
         state: string;
@@ -261,7 +261,8 @@ export default function MyOrderDetailsPage() {
                                 <address className="not-italic text-muted-foreground text-sm">
                                     {order.shipping_details.firstName} {order.shipping_details.lastName}<br />
                                     {order.shipping_details.address}<br />
-                                    {order.shipping_details.city}, {order.shipping_details.state} {order.shipping_details.zip}
+                                    {order.shipping_details.city}, {order.shipping_details.state} {order.shipping_details.zip}<br />
+                                    {order.shipping_details.phone}
                                 </address>
                             </div>
                              <Separator className="my-4" />
