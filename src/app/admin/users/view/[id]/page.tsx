@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -89,7 +88,7 @@ export default function ViewUserPage() {
             supabase.rpc('get_all_users'),
             supabase.from('addresses').select('*').eq('user_id', userId),
             supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
-            supabase.rpc('get_admin_user_wishlist', { p_user_id: userId })
+            supabase.from('wishlist').select('products(id, name, featured_image_url)').eq('user_id', userId)
         ]);
 
         const { data: allUsersData, error: userError } = allUsersRes;
@@ -118,9 +117,13 @@ export default function ViewUserPage() {
             setRecentOrders(ordersData as Order[]);
         }
 
-        const { data: wishlistData } = wishlistRes;
-        if (wishlistData) {
-            setWishlist(wishlistData);
+        const { data: wishlistData, error: wishlistError } = wishlistRes;
+        if (wishlistError) {
+            console.error("Error fetching wishlist for admin view:", wishlistError);
+            setWishlist([]);
+        } else if (wishlistData) {
+            const items = wishlistData.map((item: any) => item.products).filter(Boolean);
+            setWishlist(items as WishlistItem[]);
         }
         
         setLoading(false);
