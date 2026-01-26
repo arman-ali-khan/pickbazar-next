@@ -42,11 +42,7 @@ export default async function OffersPage() {
   return (
     <div className="bg-background min-h-screen">
       <Header />
-<<<<<<< HEAD
-      <main className="container py-12">
-=======
       <main className="container mx-auto py-12">
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Our Special Offers</h1>
           <p className="text-muted-foreground mt-4 text-lg">Take advantage of our latest deals and promotions.</p>

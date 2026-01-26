@@ -1,53 +1,3 @@
-
-<<<<<<< HEAD
-import { createClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
-import ViewUserPageClient, { type UserProfile, type Address, type Order, type WishlistItem } from '@/components/admin/view-user-page-client';
-
-export const dynamic = 'force-dynamic';
-
-export default async function ViewUserPage({ params }: { params: { id: string } }) {
-    const supabase = createClient();
-    const userId = params.id;
-
-    if (!userId) {
-        notFound();
-    }
-
-    const { data: { user: adminUser } } = await supabase.auth.getUser();
-    if (!adminUser) {
-        // This case should be covered by the admin layout, but it's good practice.
-        notFound();
-    }
-
-    const [allUsersRes, addressesRes, ordersRes, wishlistRes] = await Promise.all([
-        supabase.rpc('get_all_users'),
-        supabase.from('addresses').select('*').eq('user_id', userId),
-        supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
-        supabase.from('wishlist').select('products!inner(id, name, featured_image_url)').eq('user_id', userId)
-    ]);
-    
-    const { data: allUsers, error: userError } = allUsersRes;
-    const userArray = allUsers ? (allUsers as UserProfile[]).filter(u => u.id === userId) : [];
-
-    if (userError || userArray.length === 0) {
-        notFound();
-    }
-    const user = userArray[0];
-    
-    const addresses = (addressesRes.data || []) as Address[];
-    const recentOrders = (ordersRes.data || []) as Order[];
-    const wishlistItems = (wishlistRes.data || []).map((item: any) => item.products).filter(p => p !== null) as WishlistItem[];
-
-    return (
-        <ViewUserPageClient
-            user={user}
-            addresses={addresses}
-            recentOrders={recentOrders}
-            wishlist={wishlistItems}
-        />
-    )
-=======
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -72,6 +22,12 @@ interface UserProfile {
     avatar_url: string | null;
     created_at: string;
     role: UserRole;
+    contact_number:string;
+}
+interface AllUserProfile {
+    id: string;
+    contact_number:string | null;
+    bio: string | null;
 }
 
 interface Address {
@@ -122,6 +78,9 @@ export default function ViewUserPage() {
     const userId = params.id;
 
     const [user, setUser] = useState<UserProfile | null>(null);
+
+    const [allUer, setAllUser] = useState<AllUserProfile | null>(null);
+
     const [addresses, setAddresses] = useState<Address[]>([]);
     const [recentOrders, setRecentOrders] = useState<Order[]>([]);
     const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -134,19 +93,37 @@ export default function ViewUserPage() {
         }
         setLoading(true);
 
-        const [userRes, addressesRes, ordersRes, wishlistRes] = await Promise.all([
-            supabase.rpc('get_user_details', { p_user_id: userId }),
+        const [allUsersRes, addressesRes, getUsers, ordersRes, wishlistRes] = await Promise.all([
+            supabase.rpc('get_all_users'),
             supabase.from('addresses').select('*').eq('user_id', userId),
+            supabase.from('profiles').select('*').eq('id', userId),
             supabase.from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(5),
-            supabase.rpc('get_admin_user_wishlist', { p_user_id: userId })
+            supabase.from('wishlist').select('products(id, name, featured_image_url)').eq('user_id', userId)
         ]);
 
-        const { data: userData, error: userError } = userRes;
-        if (userError || !userData || userData.length === 0) {
+        const { data: allUsersData, error: userError } = allUsersRes;
+        
+        if (getUsers.error) {
+            console.error("Error fetching user:", getUsers.error);
             notFound();
             return;
         }
-        setUser(userData[0] as UserProfile);
+        const usersData = (getUsers.data as any[]).find(u => u.id === userId);
+        setAllUser(usersData as AllUserProfile);
+        console.log(usersData,'usersData')
+
+        if (userError || !allUsersData) {
+            notFound();
+            return;
+        }
+
+        const userData = (allUsersData as any[]).find(u => u.id === userId);
+
+        if (!userData) {
+            notFound();
+            return;
+        }
+        setUser(userData as UserProfile);
 
         const { data: addressesData } = addressesRes;
         if (addressesData) {
@@ -158,9 +135,13 @@ export default function ViewUserPage() {
             setRecentOrders(ordersData as Order[]);
         }
 
-        const { data: wishlistData } = wishlistRes;
-        if (wishlistData) {
-            setWishlist(wishlistData);
+        const { data: wishlistData, error: wishlistError } = wishlistRes;
+        if (wishlistError) {
+            console.error("Error fetching wishlist for admin view:", wishlistError);
+            setWishlist([]);
+        } else if (wishlistData) {
+            const items = wishlistData.map((item: any) => item.products).filter(Boolean);
+            setWishlist(items as WishlistItem[]);
         }
         
         setLoading(false);
@@ -274,9 +255,17 @@ export default function ViewUserPage() {
                                     <span className="text-muted-foreground">Joined</span>
                                     <span suppressHydrationWarning>{format(new Date(user.created_at), 'PP')}</span>
                                 </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">User Bio</span>
+                                    <span>{allUer.bio}</span>
+                                </div>
                                  <div className="flex justify-between items-center">
                                     <span className="text-muted-foreground">Role</span>
                                     <Badge variant={getRoleVariant(user.role)}>{roleDisplayMap[user.role]}</Badge>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">User Phone</span>
+                                    <span>{allUer.contact_number}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Total Orders</span>
@@ -377,5 +366,4 @@ export default function ViewUserPage() {
             </div>
         </main>
     );
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 }

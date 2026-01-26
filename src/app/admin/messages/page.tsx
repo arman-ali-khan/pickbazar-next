@@ -32,11 +32,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
-<<<<<<< HEAD
-import { updateMessageStatus, deleteContactMessage } from '@/app/actions';
-=======
 import { updateMessageStatus, deleteContactMessage } from '@/app/actions/contact';
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Message {

@@ -15,11 +15,7 @@ import { Suspense, useState, useEffect, useCallback, useTransition } from "react
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-<<<<<<< HEAD
-import { updateSettings } from "@/app/actions";
-=======
 import { updateSettings } from "@/app/actions/settings";
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -323,13 +319,7 @@ function SettingsContent() {
                             </div>
                         </CardContent>
                         <CardFooter className="border-t pt-6">
-<<<<<<< HEAD
-                            <Button onClick={handleSaveChanges} disabled={isSaving}>
-                                {isSaving ? 'Saving...' : 'Save Changes'}
-                            </Button>
-=======
                             <Button onClick={handleSaveChanges} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                         </CardFooter>
                     </Card>
                 )}

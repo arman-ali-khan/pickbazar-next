@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -39,10 +35,7 @@ interface OrderDetails {
     shipping_details: {
         firstName: string;
         lastName: string;
-<<<<<<< HEAD
-=======
         phone: string;
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         address: string;
         city: string;
         state: string;
@@ -268,12 +261,8 @@ export default function MyOrderDetailsPage() {
                                 <address className="not-italic text-muted-foreground text-sm">
                                     {order.shipping_details.firstName} {order.shipping_details.lastName}<br />
                                     {order.shipping_details.address}<br />
-<<<<<<< HEAD
-                                    {order.shipping_details.city}, {order.shipping_details.state} {order.shipping_details.zip}
-=======
                                     {order.shipping_details.city}, {order.shipping_details.state} {order.shipping_details.zip}<br />
                                     {order.shipping_details.phone}
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                                 </address>
                             </div>
                              <Separator className="my-4" />

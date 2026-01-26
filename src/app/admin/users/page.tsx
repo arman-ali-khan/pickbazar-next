@@ -39,11 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from 'date-fns';
 import Link from 'next/link';
-<<<<<<< HEAD
-import { updateUserRole, sendCustomNotification } from "@/app/actions";
-=======
 import { updateUserRole, sendCustomNotification } from "@/app/actions/user";
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -241,11 +237,7 @@ export default function AdminUsersPage() {
                                                     <AvatarImage src={user.avatar_url ?? undefined} alt={user.full_name ?? ''} />
                                                     <AvatarFallback>{(user.full_name || user.email || 'U').charAt(0).toUpperCase()}</AvatarFallback>
                                                 </Avatar>
-<<<<<<< HEAD
-                                                <div className="">
-=======
                                                 <div>
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                                                     <p className="font-medium">{user.full_name ?? 'No Name'}</p>
                                                     <p className="text-xs text-muted-foreground">{user.email}</p>
                                                 </div>
@@ -304,19 +296,6 @@ export default function AdminUsersPage() {
                                         <AvatarImage src={user.avatar_url ?? undefined} alt={user.full_name ?? ''} />
                                         <AvatarFallback>{(user.full_name ?? user.email ?? 'U').charAt(0).toUpperCase()}</AvatarFallback>
                                     </Avatar>
-<<<<<<< HEAD
-                                    <div className="flex-1 truncate">
-                                        <CardTitle className="text-base">
-                                            <Link href={`/admin/users/view/${user.id}`} className="hover:underline">
-                                                {user.full_name ?? 'No Name'}
-                                            </Link>
-                                        </CardTitle>
-                                        <CardDescription className="truncate">{user.email}</CardDescription>
-                                    </div>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon">
-=======
                                     <div className="flex-1">
                                         <CardTitle className="text-base">{user.full_name ?? 'No Name'}</CardTitle>
                                         <CardDescription>{user.email}</CardDescription>
@@ -324,7 +303,6 @@ export default function AdminUsersPage() {
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
                                             <Button variant="ghost" size="icon" disabled={isRoleUpdating}>
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                                                 <MoreHorizontal className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>

@@ -14,11 +14,7 @@ import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-<<<<<<< HEAD
-import { cancelRefund } from '@/app/actions';
-=======
 import { cancelRefund, requestRefund } from '@/app/actions/order';
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 
 interface Refund {
     id: number;

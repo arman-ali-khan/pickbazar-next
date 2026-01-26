@@ -14,10 +14,6 @@ interface ImageMagnifyProps {
   zoomImageSrc?: string;
   className?: string;
   imageClassName?: string;
-<<<<<<< HEAD
-  priority?: boolean;
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 }
 
 const ImageMagnify: React.FC<ImageMagnifyProps> = ({
@@ -27,10 +23,6 @@ const ImageMagnify: React.FC<ImageMagnifyProps> = ({
   zoomImageSrc,
   className,
   imageClassName,
-<<<<<<< HEAD
-  priority = false,
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 }) => {
   const [showZoom, setShowZoom] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -52,10 +44,6 @@ const ImageMagnify: React.FC<ImageMagnifyProps> = ({
       data-ai-hint={imageHint}
       fill
       className={cn('object-contain', imageClassName)}
-<<<<<<< HEAD
-      priority={priority}
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
     />
   );
 
@@ -103,10 +91,7 @@ const ImageMagnify: React.FC<ImageMagnifyProps> = ({
         style={{
           backgroundImage: `url(${finalZoomSrc})`,
           backgroundPosition: `${position.x}% ${position.y}%`,
-<<<<<<< HEAD
-=======
           backgroundRepeat: 'no-repeat',
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
           backgroundSize: '250%',
         }}
       />

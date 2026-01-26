@@ -14,11 +14,7 @@ import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import TiptapEditor from '@/components/tiptap-editor';
 import { useSupabase } from '@/lib/supabase/provider';
-<<<<<<< HEAD
-import { updateMessageStatus } from '@/app/actions';
-=======
 import { updateMessageStatus } from '@/app/actions/contact';
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Message {

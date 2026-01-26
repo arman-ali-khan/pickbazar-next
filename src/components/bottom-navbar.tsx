@@ -6,10 +6,7 @@ import { Home, Menu, User, ShoppingCart, ChevronDown, Settings, Leaf, Bell } fro
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
-<<<<<<< HEAD
-=======
 import { LoginDialog } from '@/components/login-dialog';
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,12 +25,6 @@ import { useState, useEffect, useCallback } from 'react';
 import LucideIcon from './lucide-icon';
 import type { UserNotification } from '@/lib/data';
 import { formatDistanceToNow } from 'date-fns';
-<<<<<<< HEAD
-import dynamic from 'next/dynamic';
-
-const LoginDialog = dynamic(() => import('@/components/login-dialog').then(mod => mod.LoginDialog));
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
     <Link

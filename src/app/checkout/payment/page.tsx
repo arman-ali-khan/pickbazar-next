@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-=======
 
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -23,11 +20,7 @@ import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
-<<<<<<< HEAD
-import { placeNewOrder } from '@/app/actions';
-=======
 import { createOrderNotification } from '@/app/actions/order';
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 
 interface ShippingInfo {
   firstName: string;
@@ -139,18 +132,6 @@ export default function PaymentPage() {
         
         const transactionDetails = selectedMethod === 'mobile-banking' ? { trxId, mobileLast4 } : null;
 
-<<<<<<< HEAD
-        const { orderNumber, error } = await placeNewOrder(
-            orderItems,
-            total,
-            shippingInfo,
-            selectedMethod,
-            transactionDetails,
-            appliedDiscount?.code || null,
-            discountAmount
-        );
-
-=======
         const { data: orderNumber, error } = await supabase.rpc('create_order', {
             p_total_amount: total,
             p_shipping_details: shippingInfo,
@@ -160,28 +141,20 @@ export default function PaymentPage() {
             p_coupon_code: appliedDiscount?.code || null,
             p_discount_amount: discountAmount,
         });
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 
         if (error) {
             toast({
                 variant: 'destructive',
                 title: 'Order Failed',
-<<<<<<< HEAD
-                description: error,
-=======
                 description: error.message,
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
             });
             setIsProcessing(false);
             return;
         }
 
-<<<<<<< HEAD
-=======
         // Notify Admins
         await createOrderNotification(orderNumber, total);
 
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         dispatch(clearCart());
         localStorage.removeItem('shippingInfo');
         localStorage.removeItem('appliedDiscount');
@@ -193,11 +166,7 @@ export default function PaymentPage() {
   return (
     <div className="bg-muted/20 min-h-screen">
       <Header />
-<<<<<<< HEAD
-      <main className="container py-12">
-=======
       <main className="container mx-auto py-12">
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         <div className="max-w-2xl mx-auto space-y-8">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">

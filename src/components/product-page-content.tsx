@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 'use client';
 import Image from 'next/image';
 import { useState, useRef, useTransition } from 'react';
@@ -22,11 +18,7 @@ import { Dialog, DialogTrigger } from './ui/dialog';
 import { LoginDialog } from './login-dialog';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-<<<<<<< HEAD
-import { submitReview, submitQuestion } from '@/app/actions';
-=======
 import { submitReview, submitQuestion } from '@/app/actions/product';
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import { format } from 'date-fns';
 import WishlistButton from './wishlist-button';
 import parse from 'html-react-parser';
@@ -208,10 +200,6 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                             alt={product.name}
                             imageHint={mainImage.imageHint}
                             imageClassName="p-8"
-<<<<<<< HEAD
-                            priority
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                         />
                     </div>
                     <div className="grid grid-cols-5 gap-2">
@@ -244,11 +232,7 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                         {product.originalPrice && <p className="text-lg line-through text-muted-foreground">${product.originalPrice.toFixed(2)}</p>}
                     </div>
 
-<<<<<<< HEAD
-                    <p className="text-sm text-gray-600 mb-6">{parse(product.shortDescription)}</p>
-=======
                     <div className="text-sm text-gray-600 mb-6">{parse(product.shortDescription)}</div>
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 
                     <div className="flex items-center gap-4 mb-6">
                         {quantity === 0 ? (

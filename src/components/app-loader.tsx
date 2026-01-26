@@ -2,12 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import SplashScreen from './splash-screen';
-<<<<<<< HEAD
-import dynamic from 'next/dynamic';
-
-const CartDrawer = dynamic(() => import('@/components/cart-drawer'), { ssr: false });
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 
 interface AppLoaderProps {
   children: React.ReactNode;
@@ -31,14 +25,5 @@ export default function AppLoader({ children, logoUrl, siteTitle }: AppLoaderPro
     return <SplashScreen logoUrl={logoUrl} siteTitle={siteTitle} />;
   }
 
-<<<<<<< HEAD
-  return (
-    <>
-      {children}
-      <CartDrawer />
-    </>
-  );
-=======
   return <>{children}</>;
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 }

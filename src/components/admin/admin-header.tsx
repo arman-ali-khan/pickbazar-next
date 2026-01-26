@@ -25,10 +25,6 @@ interface Notification {
     message: string | null;
     link: string | null;
     created_at: string;
-<<<<<<< HEAD
-    is_read: boolean;
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 }
 
 export default function AdminHeader() {
@@ -52,26 +48,13 @@ export default function AdminHeader() {
 
     useEffect(() => {
         const fetchNotifications = async () => {
-<<<<<<< HEAD
-            const { data, error, count } = await supabase
-                .from('notifications')
-                .select('*', { count: 'exact' })
-                .filter('user_id', 'is', null)
-                .order('created_at', { ascending: false });
-=======
             const { data, error } = await supabase.rpc('get_admin_notifications');
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 
             if (error) {
                 console.error("Error fetching notifications for header:", error);
             } else if (data) {
-<<<<<<< HEAD
-                setNotifications(data.slice(0, 5));
-                const unreadNotifications = data.filter((n: any) => !n.is_read);
-=======
                 const unreadNotifications = data.filter((n: any) => !n.is_read);
                 setNotifications(unreadNotifications.slice(0, 5));
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                 setUnreadCount(unreadNotifications.length);
             }
         };
@@ -79,11 +62,7 @@ export default function AdminHeader() {
         fetchNotifications();
         
         const channel = supabase.channel('realtime-notifications')
-<<<<<<< HEAD
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications', filter: 'user_id=is.null' },
-=======
             .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' },
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
             (payload) => {
                 fetchNotifications();
             })
@@ -129,11 +108,7 @@ export default function AdminHeader() {
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
                         <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
-<<<<<<< HEAD
-                            {unreadCount > 9 ? '9+' : unreadCount}
-=======
                             {unreadCount}
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                         </span>
                     )}
                     <span className="sr-only">Toggle notifications</span>

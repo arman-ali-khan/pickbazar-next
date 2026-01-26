@@ -7,10 +7,7 @@ import { notFound } from 'next/navigation';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import type { RelatedProduct, ProductReview, Question } from '@/lib/data';
 import type { Metadata } from 'next';
-<<<<<<< HEAD
-=======
 import { submitReview, submitQuestion } from '@/app/actions/product';
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 
 type Props = {
   params: { id: string };
@@ -165,11 +162,7 @@ export default async function ProductPage({ params }: { params: { id: string } }
   return (
     <div className="bg-background min-h-screen">
       <Header />
-<<<<<<< HEAD
-      <main className="container px-2 sm:px-4 py-8">
-=======
       <main className="container px-2 mx-auto sm:px-4 py-8">
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         <ProductPageContent product={productToShow} relatedProducts={relatedProducts} />
       </main>
       <CartDrawer />

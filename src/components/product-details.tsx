@@ -6,24 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Plus, Minus } from 'lucide-react';
 import { Badge } from './ui/badge';
 import type { Product } from '@/lib/data';
-<<<<<<< HEAD
-=======
 import ProductQuickView from './product-quick-view';
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import { useRef, useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { addToCart, updateQuantity, selectItemQuantity, triggerFlyToCart } from '@/lib/redux/slices/cartSlice';
 import WishlistButton from './wishlist-button';
-<<<<<<< HEAD
-import dynamic from 'next/dynamic';
-
-const ProductQuickView = dynamic(() => import('./product-quick-view'));
-
-export default function ProductCard({ product, priority = false }: { product: Product & { stock?: number }, priority?: boolean }) {
-=======
 
 export default function ProductCard({ product }: { product: Product }) {
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
     const dispatch = useAppDispatch();
     const quantity = useAppSelector(selectItemQuantity(product.id));
     const imageRef = useRef<HTMLDivElement>(null);
@@ -35,10 +24,6 @@ export default function ProductCard({ product }: { product: Product }) {
 
     const hasDiscount = product.originalPrice && product.originalPrice > product.price;
     const discountPercentage = hasDiscount ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
-<<<<<<< HEAD
-    const outOfStock = product.stock !== undefined && product.stock <= 0;
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 
     const handleAddToCart = () => {
         dispatch(addToCart({ product }));
@@ -65,23 +50,11 @@ export default function ProductCard({ product }: { product: Product }) {
                         <div className="absolute top-2 left-2 z-10">
                             <WishlistButton productId={product.id} className="h-8 w-8" />
                         </div>
-<<<<<<< HEAD
-                        {hasDiscount && !outOfStock && (
-=======
                         {hasDiscount && (
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                             <Badge className="absolute top-3 right-3 z-10 bg-yellow-400 text-yellow-900 rounded-md px-2 text-xs font-semibold border-none">
                                 {discountPercentage}%
                             </Badge>
                         )}
-<<<<<<< HEAD
-                         {outOfStock && (
-                            <Badge variant="destructive" className="absolute top-3 right-3 z-10">
-                                Out of Stock
-                            </Badge>
-                        )}
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                         <Image
                             width={300}
                             height={200}
@@ -89,10 +62,6 @@ export default function ProductCard({ product }: { product: Product }) {
                             alt={product.name}
                             data-ai-hint={product.image.imageHint}
                             className="w-full h-full object-cover p-1 group-hover:scale-105 transition-transform duration-300"
-<<<<<<< HEAD
-                            priority={priority}
-=======
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                         />
                     </div>
                 </ProductQuickView>
@@ -107,15 +76,7 @@ export default function ProductCard({ product }: { product: Product }) {
                     </h3>
                 </div>
                  <div className="mt-4">
-<<<<<<< HEAD
-                    {outOfStock ? (
-                         <Button disabled variant="outline" className="w-full">
-                            Out of Stock
-                        </Button>
-                    ) : isMounted && quantity > 0 ? (
-=======
                     {isMounted && quantity > 0 ? (
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                         <div className="flex items-center justify-between bg-primary text-primary-foreground rounded-md h-10">
                             <Button size="icon" variant="ghost" className="h-10 w-10 text-white hover:bg-primary/90" onClick={() => dispatch(updateQuantity({ productId: product.id, newQuantity: quantity - 1 }))}>
                                 <Minus className="h-4 w-4" />

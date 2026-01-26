@@ -1,8 +1,5 @@
 
-<<<<<<< HEAD
-=======
 
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import CartDrawer from "@/components/cart-drawer";
 import Header from "@/components/header";
 import HeroBanners from "@/components/product-image-gallery";
@@ -13,10 +10,7 @@ import CustomerReviews from "@/components/customer-reviews";
 import ContactSection from "@/components/contact-section";
 import FaqSection from "@/components/faq-section";
 import { createClient } from '@/lib/supabase/server';
-<<<<<<< HEAD
-=======
 import PromoDialog from "@/components/promo-dialog";
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
 import HomePageCategorySections from "@/components/home-page-category-sections";
 import { Product } from "@/lib/data";
 
@@ -95,10 +89,7 @@ export default async function Home() {
     <div className="bg-background min-h-screen">
       <Header logoUrl={settings?.logo_url} siteTitle={settings?.site_title} />
       <main>
-<<<<<<< HEAD
-=======
         <PromoDialog />
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
         <HeroBanners />
         <OfferCarousel offers={offers} />
         <RecommendedProducts />

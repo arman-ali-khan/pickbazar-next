@@ -139,11 +139,7 @@ export default function OrderSuccessPage() {
     return (
         <div className="bg-muted/20 min-h-screen">
             <Header />
-<<<<<<< HEAD
-            <main className="container py-12">
-=======
             <main className="container mx-auto py-12">
->>>>>>> 87638565616690afc222294213d1ecad9540bc1b
                 <Suspense fallback={<p>Loading...</p>}>
                     <SuccessContent />
                 </Suspense>
