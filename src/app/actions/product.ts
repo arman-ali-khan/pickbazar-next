@@ -106,7 +106,7 @@ export async function submitReview(formData: FormData) {
     product_id: Number(productId),
     rating: Number(rating),
     text: String(text),
-    status: 'Pending'
+    // status: 'Pending'
   }).select().single();
 
   if (error) {
