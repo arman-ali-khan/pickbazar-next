@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from 'react';
 import Header from '@/components/header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
@@ -244,15 +244,18 @@ export default function ProfilePage() {
                         <Card>
                             <CardHeader><Skeleton className="h-6 w-24" /></CardHeader>
                             <CardContent className="space-y-6">
-                                <Skeleton className="h-32 w-full" />
-                                <div className="relative w-28 h-28 -mt-20 ml-8">
-                                    <Skeleton className="h-full w-full rounded-full" />
+                                <div className="flex items-center gap-6">
+                                    <Skeleton className="h-24 w-24 rounded-full" />
+                                    <div className="flex-1 space-y-2">
+                                        <Skeleton className="h-4 w-12" />
+                                        <Skeleton className="h-10 w-full" />
+                                    </div>
                                 </div>
-                                <div className="space-y-4">
-                                    <div className="space-y-2"><Skeleton className="h-4 w-12" /><Skeleton className="h-10 w-full" /></div>
-                                    <div className="space-y-2"><Skeleton className="h-4 w-12" /><Skeleton className="h-20 w-full" /></div>
-                                    <div className="flex justify-end"><Skeleton className="h-10 w-20" /></div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-12" />
+                                    <Skeleton className="h-20 w-full" />
                                 </div>
+                                <div className="flex justify-end"><Skeleton className="h-10 w-20" /></div>
                             </CardContent>
                         </Card>
                         <Card><CardHeader><Skeleton className="h-6 w-16" /></CardHeader><CardContent><Skeleton className="h-10 w-full" /></CardContent></Card>
@@ -282,42 +285,43 @@ export default function ProfilePage() {
 
             <div className="space-y-8 w-full">
                 {/* Profile Form */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Profile</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                        <label htmlFor="avatar-upload" className="flex flex-col items-center gap-6 p-6 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50">
-                            <UploadCloud className="h-12 w-12 text-muted-foreground" />
-                            <div className="text-center">
-                                <p className="font-semibold text-primary">{uploading ? 'Uploading...' : 'Upload an image'} <span className="text-muted-foreground font-normal">or drag and drop</span></p>
-                                <p className="text-xs text-muted-foreground">PNG, JPG up to 1MB</p>
-                            </div>
-                            <input id="avatar-upload" type="file" className="hidden" accept="image/*" onChange={uploadAvatar} disabled={uploading} />
-                        </label>
-
-                        <div className="relative w-28 h-28 -mt-20 ml-8">
-                            <Avatar className="h-full w-full border-4 border-background">
-                                <AvatarImage src={profile.avatar_url || 'https://picsum.photos/seed/profile/200'} alt={userNameForAvatar || 'User'} data-ai-hint="person face" />
-                                <AvatarFallback>{userNameForAvatar?.[0].toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                        </div>
-
-                        <form onSubmit={handleProfileUpdate} className="space-y-4">
-                            <div>
-                                <Label htmlFor="name">Name</Label>
-                                <Input id="name" value={profile.full_name} onChange={(e) => setProfile({...profile, full_name: e.target.value})} />
+                <form onSubmit={handleProfileUpdate}>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Profile</CardTitle>
+                            <CardDescription>This is how others will see you on the site.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-6">
+                             <div className="flex items-center gap-6">
+                                <div className="relative">
+                                    <label htmlFor="avatar-upload" className="cursor-pointer group block">
+                                        <Avatar className="h-24 w-24">
+                                            <AvatarImage src={profile.avatar_url || 'https://picsum.photos/seed/profile/200'} alt={userNameForAvatar || 'User'} data-ai-hint="person face" />
+                                            <AvatarFallback>{userNameForAvatar?.[0].toUpperCase()}</AvatarFallback>
+                                        </Avatar>
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {uploading ? <Skeleton className="h-8 w-8 rounded-full bg-slate-400" /> : <UploadCloud className="h-8 w-8 text-white" />}
+                                        </div>
+                                    </label>
+                                    <input id="avatar-upload" type="file" className="hidden" accept="image/*" onChange={uploadAvatar} disabled={uploading} />
+                                </div>
+                                <div className="space-y-2 flex-1">
+                                    <Label htmlFor="name">Name</Label>
+                                    <Input id="name" value={profile.full_name} onChange={(e) => setProfile({...profile, full_name: e.target.value})} />
+                                </div>
                             </div>
                             <div>
                                 <Label htmlFor="bio">Bio</Label>
                                 <Textarea id="bio" value={profile.bio || ''} onChange={(e) => setProfile({...profile, bio: e.target.value})} placeholder="Tell us about yourself" />
                             </div>
-                            <div className="flex justify-end">
-                                <Button type="submit" disabled={profileLoading}>Save</Button>
-                            </div>
-                        </form>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                        <CardFooter className="justify-end border-t pt-6">
+                            <Button type="submit" disabled={profileLoading || uploading}>
+                                {profileLoading ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </form>
 
                 {/* Email */}
                 <Card>
