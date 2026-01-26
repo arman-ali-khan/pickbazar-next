@@ -268,7 +268,7 @@ function ShopContent() {
 
               {currentProducts.length > 0 ? (
                 viewMode === 'grid' ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 2xl:grid-cols-5 gap-2">
                       {currentProducts.map(product => (
                           <ProductCard key={product.id} product={product} />
                       ))}
