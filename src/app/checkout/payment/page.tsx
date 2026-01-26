@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,6 +20,7 @@ import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
+import { createOrderNotification } from '@/app/actions';
 
 interface ShippingInfo {
   firstName: string;
@@ -151,17 +153,7 @@ export default function PaymentPage() {
         }
 
         // Notify Admins
-        const { error: notificationError } = await supabase.from('notifications').insert({
-            title: `New Order Received: #${orderNumber}`,
-            message: `A new order for $${total.toFixed(2)} has been placed.`,
-            link: `/admin/orders/${orderNumber}`,
-            type: 'new_order'
-        });
-
-        if (notificationError) {
-            // Log the error but don't block the user flow
-            console.error('Failed to create new order notification:', notificationError);
-        }
+        await createOrderNotification(orderNumber, total);
 
         dispatch(clearCart());
         localStorage.removeItem('shippingInfo');

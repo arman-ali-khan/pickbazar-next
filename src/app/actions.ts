@@ -705,3 +705,17 @@ export async function sendCustomNotification(formData: FormData) {
 
     return { success: true, count: userIds.length };
 }
+
+export async function createOrderNotification(orderNumber: string, total: number) {
+    const supabase = createClient();
+    const { error: notificationError } = await supabase.from('notifications').insert({
+        title: `New Order Received: #${orderNumber}`,
+        message: `A new order for $${total.toFixed(2)} has been placed.`,
+        link: `/admin/orders/${orderNumber}`,
+        type: 'new_order'
+    });
+
+    if (notificationError) {
+        console.error("Failed to create new order notification (server action):", notificationError);
+    }
+}
