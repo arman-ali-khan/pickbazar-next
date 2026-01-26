@@ -150,6 +150,19 @@ export default function PaymentPage() {
             return;
         }
 
+        // Notify Admins
+        const { error: notificationError } = await supabase.from('notifications').insert({
+            title: `New Order Received: #${orderNumber}`,
+            message: `A new order for $${total.toFixed(2)} has been placed.`,
+            link: `/admin/orders/${orderNumber}`,
+            type: 'new_order'
+        });
+
+        if (notificationError) {
+            // Log the error but don't block the user flow
+            console.error('Failed to create new order notification:', notificationError);
+        }
+
         dispatch(clearCart());
         localStorage.removeItem('shippingInfo');
         localStorage.removeItem('appliedDiscount');
