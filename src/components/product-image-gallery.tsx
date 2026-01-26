@@ -63,7 +63,7 @@ export default function HeroBanners() {
             />
             <div className="absolute inset-0 bg-black/50" />
         </div>
-        <div className="relative z-10 container h-full flex items-center">
+        <div className="relative z-10 container mx-auto h-full flex items-center">
             <div className="grid md:grid-cols-[300px_1fr] items-center gap-8 w-full">
                 <div className="backdrop-blur-xl rounded-lg shadow-lg h-full hidden md:flex flex-col text-black max-h-[450px]">
                     <h2 className="text-lg text-white font-semibold p-4 border-b">Categories</h2>

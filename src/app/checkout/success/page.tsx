@@ -139,7 +139,7 @@ export default function OrderSuccessPage() {
     return (
         <div className="bg-muted/20 min-h-screen">
             <Header />
-            <main className="container py-12">
+            <main className="container mx-auto py-12">
                 <Suspense fallback={<p>Loading...</p>}>
                     <SuccessContent />
                 </Suspense>

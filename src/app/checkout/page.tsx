@@ -257,7 +257,7 @@ export default function CheckoutPage() {
       return (
           <div className="bg-muted/20 min-h-screen">
             <Header />
-            <main className="container py-12">
+            <main className="container mx-auto py-12">
               <div className="text-center mb-12">
                 <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Checkout</h1>
               </div>
@@ -276,7 +276,7 @@ export default function CheckoutPage() {
   return (
     <div className="bg-muted/20 min-h-screen">
       <Header />
-      <main className="container py-12">
+      <main className="container mx-auto py-12">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Checkout</h1>
         </div>
