@@ -30,9 +30,19 @@ function ShopContent() {
   const { supabase } = useSupabase();
 
   const categoriesQuery = searchParams.get('categories');
+  const categoryQuery = searchParams.get('category');
   const offerProductsQuery = searchParams.get('offer_products');
 
-  const initialCategories = useMemo(() => (categoriesQuery ? categoriesQuery.split(',') : []), [categoriesQuery]);
+  const initialCategories = useMemo(() => {
+    if (categoriesQuery) {
+        return categoriesQuery.split(',');
+    }
+    if (categoryQuery) {
+        return [categoryQuery];
+    }
+    return [];
+  }, [categoriesQuery, categoryQuery]);
+  
   const initialProductIds = useMemo(() => (offerProductsQuery ? offerProductsQuery.split(',').map(Number) : []), [offerProductsQuery]);
 
   const [allProducts, setAllProducts] = useState<Product[]>([]);
@@ -268,7 +278,7 @@ function ShopContent() {
 
               {currentProducts.length > 0 ? (
                 viewMode === 'grid' ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 2xl:grid-cols-5 gap-2">
                       {currentProducts.map((product, index) => (
                           <ProductCard key={product.id} product={product} priority={index < 5} />
                       ))}
