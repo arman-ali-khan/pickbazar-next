@@ -302,12 +302,31 @@ export default function AdminUsersPage() {
                                     </div>
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon">
+                                            <Button variant="ghost" size="icon" disabled={isRoleUpdating}>
                                                 <MoreHorizontal className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
-                                            {/* Actions for mobile view */}
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/admin/users/view/${user.id}`}><Eye className="mr-2 h-4 w-4" /> View</Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/admin/users/edit/${user.id}`}><Pencil className="mr-2 h-4 w-4" /> Edit Profile</Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSub>
+                                                <DropdownMenuSubTrigger disabled={user.id === currentUser?.id || user.role === 'super-admin'}>Change Role</DropdownMenuSubTrigger>
+                                                <DropdownMenuPortal>
+                                                    <DropdownMenuSubContent>
+                                                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'admin')}>Make Admin</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'manager')}>Make Manager</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => handleRoleChange(user.id, 'customer')}>Make Customer (Demote)</DropdownMenuItem>
+                                                    </DropdownMenuSubContent>
+                                                </DropdownMenuPortal>
+                                            </DropdownMenuSub>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(user.id)} disabled={user.role === 'super-admin'}>
+                                                <Trash2 className="mr-2 h-4 w-4" /> Delete User
+                                            </DropdownMenuItem>
                                         </DropdownMenuContent>
                                     </DropdownMenu>
                                 </CardHeader>
