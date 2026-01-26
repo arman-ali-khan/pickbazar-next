@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Mail, Phone, MapPin, Send } from 'lucide-react';
 import { useEffect, useState, useTransition } from 'react';
 import { useSupabase } from '@/lib/supabase/provider';
-import { submitContactMessage } from '@/app/actions';
+import { submitContactMessage } from '@/app/actions/contact';
 
 const formSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters.'),

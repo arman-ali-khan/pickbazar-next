@@ -13,7 +13,7 @@ import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useRouter } from 'next/navigation';
-import { applyCoupon } from '@/app/actions';
+import { applyCoupon } from '@/app/actions/order';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { LoginDialog } from '@/components/login-dialog';
 import { Skeleton } from '@/components/ui/skeleton';

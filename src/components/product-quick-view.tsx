@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import ImageMagnify from './image-magnify';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
 import { addToCart, updateQuantity, selectItemQuantity, triggerFlyToCart } from '@/lib/redux/slices/cartSlice';
-import { getQuickViewData } from '@/app/actions';
+import { getQuickViewData } from '@/app/actions/product';
 import { Skeleton } from './ui/skeleton';
 import WishlistButton from './wishlist-button';
 import parse from 'html-react-parser';

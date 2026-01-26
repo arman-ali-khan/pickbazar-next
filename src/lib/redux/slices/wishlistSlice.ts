@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit'
 import type { RootState } from '../store';
-import { getWishlistIds, toggleWishlistItem } from '@/app/actions';
+import { getWishlistIds, toggleWishlistItem } from '@/app/actions/product';
 
 export interface WishlistState {
   productIds: number[];

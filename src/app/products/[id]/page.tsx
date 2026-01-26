@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation';
 import type { ImagePlaceholder } from '@/lib/placeholder-images';
 import type { RelatedProduct, ProductReview, Question } from '@/lib/data';
 import type { Metadata } from 'next';
+import { submitReview, submitQuestion } from '@/app/actions/product';
 
 type Props = {
   params: { id: string };

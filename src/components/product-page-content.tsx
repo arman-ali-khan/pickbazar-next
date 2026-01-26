@@ -19,7 +19,7 @@ import { Dialog, DialogTrigger } from './ui/dialog';
 import { LoginDialog } from './login-dialog';
 import { Textarea } from './ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { submitReview, submitQuestion } from '@/app/actions';
+import { submitReview, submitQuestion } from '@/app/actions/product';
 import { format } from 'date-fns';
 import WishlistButton from './wishlist-button';
 import parse from 'html-react-parser';

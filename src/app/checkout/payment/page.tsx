@@ -20,7 +20,7 @@ import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
-import { createOrderNotification } from '@/app/actions';
+import { createOrderNotification } from '@/app/actions/order';
 
 interface ShippingInfo {
   firstName: string;

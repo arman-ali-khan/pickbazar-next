@@ -14,7 +14,7 @@ import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import TiptapEditor from '@/components/tiptap-editor';
 import { useSupabase } from '@/lib/supabase/provider';
-import { updateMessageStatus } from '@/app/actions';
+import { updateMessageStatus } from '@/app/actions/contact';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Message {

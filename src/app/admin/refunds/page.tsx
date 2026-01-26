@@ -30,7 +30,7 @@ import Link from "next/link";
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import { format } from 'date-fns';
-import { updateRefundStatus } from "@/app/actions";
+import { updateRefundStatus } from "@/app/actions/order";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 

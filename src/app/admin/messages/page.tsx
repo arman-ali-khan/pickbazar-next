@@ -32,7 +32,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useToast } from '@/hooks/use-toast';
-import { updateMessageStatus, deleteContactMessage } from '@/app/actions';
+import { updateMessageStatus, deleteContactMessage } from '@/app/actions/contact';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface Message {

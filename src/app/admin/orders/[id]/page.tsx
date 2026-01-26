@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { useSupabase } from '@/lib/supabase/provider';
 import type { OrderStatus } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
-import { updateOrderStatus } from '@/app/actions';
+import { updateOrderStatus } from '@/app/actions/order';
 import { Timeline, TimelineItem, TimelinePoint, TimelineTime, TimelineTitle } from '@/components/ui/timeline';
 import { format } from 'date-fns';
 

@@ -15,7 +15,7 @@ import { Suspense, useState, useEffect, useCallback, useTransition } from "react
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { updateSettings } from "@/app/actions";
+import { updateSettings } from "@/app/actions/settings";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -319,9 +319,7 @@ function SettingsContent() {
                             </div>
                         </CardContent>
                         <CardFooter className="border-t pt-6">
-                            <Button onClick={handleSaveChanges} disabled={isSaving}>
-                                {isSaving ? 'Saving...' : 'Save Changes'}
-                            </Button>
+                            <Button onClick={handleSaveChanges} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Changes'}</Button>
                         </CardFooter>
                     </Card>
                 )}

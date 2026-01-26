@@ -39,7 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { format } from 'date-fns';
 import Link from 'next/link';
-import { updateUserRole, sendCustomNotification } from "@/app/actions";
+import { updateUserRole, sendCustomNotification } from "@/app/actions/user";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
