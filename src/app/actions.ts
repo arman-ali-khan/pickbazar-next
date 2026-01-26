@@ -117,18 +117,9 @@ export async function submitReview(formData: FormData) {
     return { error: error.message }
   }
   
-    // Notify admins
-    const { error: notificationError } = await supabase.from('notifications').insert({
-        title: `New review on a product`,
-        message: `A new ${rating}-star review was submitted.`,
-        link: `/admin/reviews`,
-        type: 'new_review'
-    });
-
-    if (notificationError) {
-        console.error("Failed to create admin notification for new review:", notificationError);
-    }
-
+  // Notify admins - This was removed to fix RLS issue.
+  // Admin notifications should be handled by a secure backend mechanism like a database trigger.
+  
   revalidatePath(`/products/${productId}`)
   return { success: true }
 }
