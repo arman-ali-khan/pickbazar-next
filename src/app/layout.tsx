@@ -33,8 +33,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteSubtitle = settings?.site_subtitle || 'An e-commerce storefront for fresh products.';
   const faviconUrl = settings?.favicon_url;
   const linkPreviewImageUrl = settings?.link_preview_image_url;
+  const canonicalUrl = settings?.canonical_url;
 
   return {
+    metadataBase: canonicalUrl ? new URL(canonicalUrl) : null,
     title: {
       default: siteTitle,
       template: `%s | ${siteTitle}`,
@@ -46,7 +48,7 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       title: siteTitle,
       description: siteSubtitle,
-      url: settings?.canonical_url || undefined,
+      url: canonicalUrl || undefined,
       siteName: siteTitle,
       images: linkPreviewImageUrl ? [{ url: linkPreviewImageUrl }] : [],
       type: 'website',
