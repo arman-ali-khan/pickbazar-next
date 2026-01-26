@@ -5,7 +5,7 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     const supabase = createClient();
     const { data } = await supabase.rpc('get_all_settings');
     const settings = data?.[0];
-    const baseUrl = settings?.canonical_url || 'https://example.com';
+    const baseUrl = settings?.canonical_url || 'https://www.schoolbd.top';
 
     return {
         rules: [

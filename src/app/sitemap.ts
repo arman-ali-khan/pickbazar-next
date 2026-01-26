@@ -5,7 +5,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createClient();
 
   const { data: settingsData } = await supabase.rpc('get_all_settings');
-  const baseUrl = settingsData?.[0]?.canonical_url || 'https://example.com'; 
+  const baseUrl = settingsData?.[0]?.canonical_url || 'https://www.schoolbd.top'; 
 
   const staticRoutes = [
     '', 
