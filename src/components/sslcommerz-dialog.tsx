@@ -62,37 +62,47 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
     }, [supabase]);
 
     useEffect(() => {
-        if (settings) {
-            const isSandbox = settings.sslcommerz_mode === 'sandbox';
-            const scriptSrc = isSandbox 
-                ? 'https://sandbox.sslcommerz.com/easycheckout/v1/easyCheckout.js'
-                : 'https://secure.sslcommerz.com/easycheckout/v1/easyCheckout.js';
-            
-            const scriptId = 'sslcommerz-script';
-            const existingScript = document.getElementById(scriptId);
+        if (!settings) return;
 
-            if (existingScript) {
-                setScriptLoaded(true);
-                return;
+        const isSandbox = settings.sslcommerz_mode === 'sandbox';
+        const scriptSrc = isSandbox 
+            ? 'https://sandbox.sslcommerz.com/easycheckout/v1/easyCheckout.js'
+            : 'https://secure.sslcommerz.com/easycheckout/v1/easyCheckout.js';
+        
+        const scriptId = 'sslcommerz-script';
+        
+        if (window.easyCheckout) {
+            setScriptLoaded(true);
+            return;
+        }
+
+        let script = document.getElementById(scriptId) as HTMLScriptElement;
+
+        const handleLoad = () => setScriptLoaded(true);
+        const handleError = () => {
+            toast({ variant: 'destructive', title: 'Error', description: 'Could not load payment gateway script.' });
+            // Remove the failed script so we can try again next time
+            const failedScript = document.getElementById(scriptId);
+            if (failedScript) {
+                document.body.removeChild(failedScript);
             }
+        };
 
-            const script = document.createElement('script');
+        if (!script) {
+            script = document.createElement('script');
             script.src = scriptSrc;
             script.id = scriptId;
             script.async = true;
-            script.onload = () => setScriptLoaded(true);
-            script.onerror = () => {
-                toast({ variant: 'destructive', title: 'Error', description: 'Could not load payment gateway script.' });
-            };
             document.body.appendChild(script);
-
-            return () => {
-                const scriptToRemove = document.getElementById(scriptId);
-                if (scriptToRemove) {
-                    document.body.removeChild(scriptToRemove);
-                }
-            };
         }
+
+        script.addEventListener('load', handleLoad);
+        script.addEventListener('error', handleError);
+
+        return () => {
+            script.removeEventListener('load', handleLoad);
+            script.removeEventListener('error', handleError);
+        };
     }, [settings, toast]);
     
     const handleSslPayment = () => {
@@ -175,7 +185,9 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
                     <div className='space-y-4'>
                         <p>Mode: <span className='font-semibold capitalize'>{settings?.sslcommerz_mode}</span></p>
                         <p>Amount to Pay: <span className='font-bold text-lg'>${amount.toFixed(2)}</span></p>
-                        <p className='text-xs text-muted-foreground'>This is a sandbox environment. No real payment will be processed.</p>
+                        {settings?.sslcommerz_mode === 'sandbox' && (
+                           <p className='text-xs text-muted-foreground'>This is a sandbox environment. No real payment will be processed.</p>
+                        )}
                     </div>
                 ) : (
                     <p className='text-destructive'>SSLCommerz is not configured correctly. Please contact support.</p>
