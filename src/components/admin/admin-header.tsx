@@ -1,4 +1,3 @@
-
 'use client';
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -18,6 +17,8 @@ import { useEffect, useState } from "react";
 import { useSupabase } from "@/lib/supabase/provider";
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 
 interface Notification {
@@ -26,6 +27,7 @@ interface Notification {
     message: string | null;
     link: string | null;
     created_at: string;
+    is_read: boolean;
 }
 
 export default function AdminHeader() {
@@ -34,6 +36,9 @@ export default function AdminHeader() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [profile, setProfile] = useState<{ full_name: string | null, avatar_url: string | null } | null>(null);
+    const router = useRouter();
+    const { toast } = useToast();
+    const [isMarking, setIsMarking] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -55,7 +60,7 @@ export default function AdminHeader() {
                 console.error("Error fetching notifications for header:", error);
             } else if (data) {
                 const unreadNotifications = data.filter((n: any) => !n.is_read);
-                setNotifications(unreadNotifications.slice(0, 5));
+                setNotifications(data.slice(0, 5)); // show latest 5, read or unread
                 setUnreadCount(unreadNotifications.length);
             }
         };
@@ -74,6 +79,34 @@ export default function AdminHeader() {
         };
 
     }, [supabase]);
+
+    const handleNotificationClick = async (notification: Notification) => {
+        if (!notification.is_read) {
+            await supabase
+                .from('notifications')
+                .update({ is_read: true })
+                .eq('id', notification.id);
+        }
+        
+        if (notification.link) {
+            router.push(notification.link);
+        }
+    };
+    
+    const handleMarkAllAsRead = async () => {
+        if (unreadCount === 0) return;
+        setIsMarking(true);
+        const { error } = await supabase
+            .from('notifications')
+            .update({ is_read: true })
+            .is('user_id', null) // Admin notifications
+            .eq('is_read', false);
+    
+        if (error) {
+            toast({ variant: 'destructive', title: 'Error marking notifications as read.', description: error.message });
+        }
+        setIsMarking(false);
+    };
 
     const userName = profile?.full_name || user?.user_metadata?.full_name || 'Admin';
     const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url;
@@ -116,20 +149,25 @@ export default function AdminHeader() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-80">
-                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuLabel className="flex justify-between items-center">
+                    <span>Notifications</span>
+                    {unreadCount > 0 && (
+                        <Button variant="link" size="sm" className="p-0 h-auto" onClick={handleMarkAllAsRead} disabled={isMarking}>
+                            {isMarking ? 'Marking...' : 'Mark all as read'}
+                        </Button>
+                    )}
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {notifications.length > 0 ? (
                     notifications.map(n => (
-                        <DropdownMenuItem key={n.id} asChild className="cursor-pointer bg-primary/10">
-                           <Link href={n.link || '/admin/notifications'}>
-                             <div className="flex flex-col">
-                                <p className="font-bold text-sm">{n.title}</p>
-                                <p className="text-xs text-muted-foreground truncate">{n.message}</p>
-                                <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
-                                    {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
-                                </p>
-                             </div>
-                           </Link>
+                        <DropdownMenuItem key={n.id} className={cn("cursor-pointer", !n.is_read && "bg-primary/10")} onClick={() => handleNotificationClick(n)}>
+                           <div className="flex flex-col">
+                            <p className={cn("font-semibold text-sm", !n.is_read && "font-bold")}>{n.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">{n.message}</p>
+                            <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
+                                {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                            </p>
+                           </div>
                         </DropdownMenuItem>
                     ))
                 ) : (
