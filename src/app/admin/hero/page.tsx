@@ -31,11 +31,19 @@ export default function HeroSettingsPage() {
 
     const fetchSettings = useCallback(async () => {
         setLoading(true);
-        const { data, error } = await supabase.rpc('get_all_settings');
+        const { data, error } = await supabase
+            .from('settings')
+            .select('key, value')
+            .in('key', ['hero_title', 'hero_subtitle', 'hero_button_text', 'hero_button_url', 'hero_image_url']);
+        
         if (error) {
             toast({ variant: 'destructive', title: 'Error fetching settings', description: error.message });
-        } else if (data && data.length > 0) {
-            const settingsData = data[0];
+        } else if (data) {
+            const settingsData = data.reduce((acc, { key, value }) => {
+                if (key) (acc as any)[key] = value;
+                return acc;
+            }, {} as { [key: string]: any });
+            
             setSettings({
                 hero_title: settingsData.hero_title,
                 hero_subtitle: settingsData.hero_subtitle,

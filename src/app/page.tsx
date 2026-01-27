@@ -17,8 +17,8 @@ import { Product } from "@/lib/data";
 export default async function Home() {
   const supabase = createClient();
   
-  const { data: settingsData } = await supabase.rpc('get_all_settings');
-  const settings = settingsData?.[0];
+  const { data: settingsList } = await supabase.from('settings').select('key, value');
+  const settings = settingsList ? Object.fromEntries(settingsList.map(s => [s.key, s.value])) : {};
 
   const heroData = {
     title: settings?.hero_title || 'Groceries Delivered in 90 Mins',
