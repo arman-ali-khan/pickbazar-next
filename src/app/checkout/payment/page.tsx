@@ -22,7 +22,7 @@ import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createOrderNotification } from '@/app/actions/order';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
-import { SslCommerzDialog } from '@/components/sslcommerz-dialog';
+import { AamarPayDialog } from '@/components/aamarpay-dialog';
 
 interface ShippingInfo {
   firstName: string;
@@ -100,8 +100,8 @@ export default function PaymentPage() {
                     setSelectedMethod('card');
                 } else if (settings.enable_mobile_banking) {
                     setSelectedMethod('mobile-banking');
-                } else if (settings.enable_sslcommerz) {
-                    setSelectedMethod('sslcommerz');
+                } else if (settings.enable_aamarpay) {
+                    setSelectedMethod('aamarpay');
                 } else if (settings.enable_cod) {
                     setSelectedMethod('cod');
                 }
@@ -296,14 +296,14 @@ export default function PaymentPage() {
                             )}
                            </>
                         )}
-                        {paymentSettings?.enable_sslcommerz && (
-                             <Label htmlFor="sslcommerz" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
+                        {paymentSettings?.enable_aamarpay && (
+                             <Label htmlFor="aamarpay" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                                 <ShieldCheck className="h-6 w-6 text-primary" />
                                 <div className="flex-1">
-                                <p className="font-semibold">SSLCommerz</p>
+                                <p className="font-semibold">aamarPay</p>
                                 <p className="text-sm text-muted-foreground">Secure online payment gateway</p>
                                 </div>
-                                <RadioGroupItem value="sslcommerz" id="sslcommerz" />
+                                <RadioGroupItem value="aamarpay" id="aamarpay" />
                             </Label>
                         )}
                         {paymentSettings?.enable_cod && (
@@ -343,14 +343,14 @@ export default function PaymentPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                 {selectedMethod === 'sslcommerz' ? (
+                 {selectedMethod === 'aamarpay' ? (
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button className="w-full h-12 text-lg" disabled={isProcessing || total < 0}>
                                 {`Pay $${total.toFixed(2)}`}
                             </Button>
                         </DialogTrigger>
-                        <SslCommerzDialog
+                        <AamarPayDialog
                             amount={total}
                             shippingInfo={shippingInfo}
                             cartItems={cartItems}

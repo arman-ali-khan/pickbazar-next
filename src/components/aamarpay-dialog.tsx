@@ -15,7 +15,6 @@ import type { CartItem } from '@/lib/redux/slices/cartSlice';
 import { useAppDispatch } from '@/lib/redux/hooks';
 import { clearCart } from '@/lib/redux/slices/cartSlice';
 
-
 interface ShippingInfo {
   firstName: string;
   lastName: string;
@@ -32,19 +31,19 @@ interface AppliedDiscount {
   discount: number;
 }
 
-interface SslCommerzDialogProps {
+interface AamarPayDialogProps {
     amount: number;
     shippingInfo: ShippingInfo | null;
     cartItems: CartItem[];
     appliedDiscount: AppliedDiscount | null;
 }
 
-export function SslCommerzDialog({ amount, shippingInfo, cartItems, appliedDiscount }: SslCommerzDialogProps) {
+export function AamarPayDialog({ amount, shippingInfo, cartItems, appliedDiscount }: AamarPayDialogProps) {
     const { toast } = useToast();
     const dispatch = useAppDispatch();
     const [isProcessing, setIsProcessing] = useState(false);
 
-    const handleSslPayment = async () => {
+    const handleAamarPayPayment = async () => {
         if (!shippingInfo) {
             toast({ variant: 'destructive', title: 'Error', description: 'Shipping information is missing.' });
             return;
@@ -52,7 +51,7 @@ export function SslCommerzDialog({ amount, shippingInfo, cartItems, appliedDisco
         setIsProcessing(true);
 
         try {
-            const response = await fetch('/api/payment/init', {
+            const response = await fetch('/api/aamarpay/init', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ amount, shippingInfo, cartItems, appliedDiscount }),
@@ -64,13 +63,11 @@ export function SslCommerzDialog({ amount, shippingInfo, cartItems, appliedDisco
                 throw new Error(data.error || 'Failed to initialize payment.');
             }
 
-            // Clear client-side cart optimistically before redirect
             dispatch(clearCart());
             localStorage.removeItem('shippingInfo');
             localStorage.removeItem('appliedDiscount');
             localStorage.removeItem('shippingCost');
 
-            // Redirect to SSLCommerz Gateway
             window.location.href = data.url;
 
         } catch (error: any) {
@@ -80,26 +77,24 @@ export function SslCommerzDialog({ amount, shippingInfo, cartItems, appliedDisco
     }
 
     return (
-        <>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>SSLCommerz Payment</DialogTitle>
-                    <DialogDescription>
-                        You will be redirected to the secure payment gateway to complete your purchase.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 text-center">
-                    <p>Amount to Pay: <span className='font-bold text-lg'>${amount.toFixed(2)}</span></p>
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <Button onClick={handleSslPayment} disabled={isProcessing}>
-                        {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : 'Proceed to Pay'}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>aamarPay Payment</DialogTitle>
+                <DialogDescription>
+                    You will be redirected to the secure aamarPay gateway to complete your purchase.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 text-center">
+                <p>Amount to Pay: <span className='font-bold text-lg'>${amount.toFixed(2)}</span></p>
+            </div>
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <Button onClick={handleAamarPayPayment} disabled={isProcessing}>
+                    {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : 'Proceed to Pay'}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
     );
 }

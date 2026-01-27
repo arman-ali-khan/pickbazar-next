@@ -43,7 +43,7 @@ interface AllSettings {
     enable_cod: boolean;
     enable_mobile_banking: boolean;
     enable_card_payment: boolean;
-    enable_sslcommerz: boolean;
+    enable_aamarpay: boolean;
     maintenance_mode: boolean;
     maintenance_title: string;
     maintenance_description: string;
@@ -54,11 +54,11 @@ interface AllSettings {
     mobile_banking_number: string | null;
     mobile_banking_options: string[];
     shipping_cost: number | null;
-    sslcommerz_mode: 'sandbox' | 'production';
-    sslcommerz_sandbox_store_id: string | null;
-    sslcommerz_sandbox_store_password: string | null;
-    sslcommerz_production_store_id: string | null;
-    sslcommerz_production_store_password: string | null;
+    aamarpay_mode: 'sandbox' | 'production';
+    aamarpay_sandbox_store_id: string | null;
+    aamarpay_sandbox_signature_key: string | null;
+    aamarpay_production_store_id: string | null;
+    aamarpay_production_signature_key: string | null;
 }
 
 function SettingsContent() {
@@ -371,7 +371,7 @@ function SettingsContent() {
                             <div className="flex items-center justify-between p-4 border rounded-lg"><Label htmlFor="enable_cod" className="flex flex-col gap-1"><span>Cash on Delivery</span><span className="font-normal text-sm text-muted-foreground">Enable this to accept cash on delivery.</span></Label><Switch id="enable_cod" checked={settings.enable_cod} onCheckedChange={(c) => handleSwitchChange('enable_cod', c)} /></div>
                             <div className="flex items-center justify-between p-4 border rounded-lg"><Label htmlFor="enable_mobile_banking" className="flex flex-col gap-1"><span>Mobile Banking</span><span className="font-normal text-sm text-muted-foreground">Accept payments through mobile banking apps.</span></Label><Switch id="enable_mobile_banking" checked={settings.enable_mobile_banking} onCheckedChange={(c) => handleSwitchChange('enable_mobile_banking', c)} /></div>
                             <div className="flex items-center justify-between p-4 border rounded-lg"><Label htmlFor="enable_card_payment" className="flex flex-col gap-1"><span>Card Payment</span><span className="font-normal text-sm text-muted-foreground">Accept credit/debit card payments.</span></Label><Switch id="enable_card_payment" checked={settings.enable_card_payment} onCheckedChange={(c) => handleSwitchChange('enable_card_payment', c)} /></div>
-                            <div className="flex items-center justify-between p-4 border rounded-lg"><Label htmlFor="enable_sslcommerz" className="flex flex-col gap-1"><span>SSLCommerz</span><span className="font-normal text-sm text-muted-foreground">Enable SSLCommerz payment gateway.</span></Label><Switch id="enable_sslcommerz" checked={settings.enable_sslcommerz} onCheckedChange={(c) => handleSwitchChange('enable_sslcommerz', c)} /></div>
+                            <div className="flex items-center justify-between p-4 border rounded-lg"><Label htmlFor="enable_aamarpay" className="flex flex-col gap-1"><span>aamarPay</span><span className="font-normal text-sm text-muted-foreground">Enable aamarPay payment gateway.</span></Label><Switch id="enable_aamarpay" checked={settings.enable_aamarpay} onCheckedChange={(c) => handleSwitchChange('enable_aamarpay', c)} /></div>
                             
                             <div className="space-y-2 pt-4">
                                 <Label htmlFor="mobile_banking_number">Mobile Banking Number</Label>
@@ -402,11 +402,11 @@ function SettingsContent() {
                             </div>
                             <Separator className="my-6" />
                             <div className="space-y-4">
-                                <h4 className="text-md font-semibold">SSLCommerz Settings</h4>
+                                <h4 className="text-md font-semibold">aamarPay Settings</h4>
                                 <div className="space-y-2">
-                                    <Label htmlFor="sslcommerz_mode">Gateway Mode</Label>
-                                    <Select value={settings.sslcommerz_mode || 'sandbox'} onValueChange={(value) => setSettings(prev => ({...prev, sslcommerz_mode: value as any}))}>
-                                        <SelectTrigger id="sslcommerz_mode">
+                                    <Label htmlFor="aamarpay_mode">Gateway Mode</Label>
+                                    <Select value={settings.aamarpay_mode || 'sandbox'} onValueChange={(value) => setSettings(prev => ({...prev, aamarpay_mode: value as any}))}>
+                                        <SelectTrigger id="aamarpay_mode">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -417,22 +417,22 @@ function SettingsContent() {
                                 </div>
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="sslcommerz_sandbox_store_id">Sandbox Store ID</Label>
-                                        <Input id="sslcommerz_sandbox_store_id" value={settings.sslcommerz_sandbox_store_id || ''} onChange={handleInputChange} />
+                                        <Label htmlFor="aamarpay_sandbox_store_id">Sandbox Store ID</Label>
+                                        <Input id="aamarpay_sandbox_store_id" value={settings.aamarpay_sandbox_store_id || ''} onChange={handleInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="sslcommerz_sandbox_store_password">Sandbox Store Password</Label>
-                                        <Input id="sslcommerz_sandbox_store_password" type="password" value={settings.sslcommerz_sandbox_store_password || ''} onChange={handleInputChange} />
+                                        <Label htmlFor="aamarpay_sandbox_signature_key">Sandbox Signature Key</Label>
+                                        <Input id="aamarpay_sandbox_signature_key" type="password" value={settings.aamarpay_sandbox_signature_key || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
                                  <div className="grid md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="sslcommerz_production_store_id">Production Store ID</Label>
-                                        <Input id="sslcommerz_production_store_id" value={settings.sslcommerz_production_store_id || ''} onChange={handleInputChange} />
+                                        <Label htmlFor="aamarpay_production_store_id">Production Store ID</Label>
+                                        <Input id="aamarpay_production_store_id" value={settings.aamarpay_production_store_id || ''} onChange={handleInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="sslcommerz_production_store_password">Production Store Password</Label>
-                                        <Input id="sslcommerz_production_store_password" type="password" value={settings.sslcommerz_production_store_password || ''} onChange={handleInputChange} />
+                                        <Label htmlFor="aamarpay_production_signature_key">Production Signature Key</Label>
+                                        <Input id="aamarpay_production_signature_key" type="password" value={settings.aamarpay_production_signature_key || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
                             </div>
