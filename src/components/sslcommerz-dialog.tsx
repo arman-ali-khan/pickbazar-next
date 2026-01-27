@@ -49,12 +49,24 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
     useEffect(() => {
         const fetchSettings = async () => {
             setIsLoading(true);
-            const { data, error } = await supabase.rpc('get_all_settings');
+            const { data, error } = await supabase.from('settings').select('key, value');
             
             if (error) {
                 console.error('Error fetching SSLCommerz settings:', error);
-            } else if (data && data[0]) {
-                setSettings(data[0]);
+            } else if (data) {
+                const settingsData = data.reduce((acc, { key, value }) => {
+                    if (key) {
+                        if (value === 'true') {
+                             (acc as any)[key] = true;
+                        } else if (value === 'false') {
+                             (acc as any)[key] = false;
+                        } else {
+                             (acc as any)[key] = value;
+                        }
+                    }
+                    return acc;
+                }, {} as { [key: string]: any });
+                setSettings(settingsData);
             }
             setIsLoading(false);
         };
@@ -71,7 +83,7 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
         
         const scriptId = 'sslcommerz-script';
         
-        if (window.easyCheckout) {
+        if (window.easyCheckout && document.getElementById(scriptId)?.src === scriptSrc) {
             setScriptLoaded(true);
             return;
         }
@@ -81,20 +93,21 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
         const handleLoad = () => setScriptLoaded(true);
         const handleError = () => {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load payment gateway script.' });
-            // Remove the failed script so we can try again next time
             const failedScript = document.getElementById(scriptId);
             if (failedScript) {
                 document.body.removeChild(failedScript);
             }
         };
 
-        if (!script) {
-            script = document.createElement('script');
-            script.src = scriptSrc;
-            script.id = scriptId;
-            script.async = true;
-            document.body.appendChild(script);
+        if (script) {
+            script.remove();
         }
+        
+        script = document.createElement('script');
+        script.src = scriptSrc;
+        script.id = scriptId;
+        script.async = true;
+        document.body.appendChild(script);
 
         script.addEventListener('load', handleLoad);
         script.addEventListener('error', handleError);
