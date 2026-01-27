@@ -126,9 +126,14 @@ function SuccessContent() {
                         <p>Total</p>
                         <p>${Number(orderData.total_amount).toFixed(2)}</p>
                     </div>
-                     <Button asChild className="w-full mt-6">
-                        <Link href="/shop">Continue Shopping</Link>
-                    </Button>
+                     <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                        <Button asChild className="w-full" variant="outline">
+                           <Link href="/profile/my-orders">My Orders</Link>
+                        </Button>
+                        <Button asChild className="w-full">
+                           <Link href="/shop">Continue Shopping</Link>
+                        </Button>
+                    </div>
                 </CardContent>
             </Card>
         </div>
