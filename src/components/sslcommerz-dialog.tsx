@@ -50,7 +50,7 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
     useEffect(() => {
         const fetchSettings = async () => {
             setIsLoading(true);
-            const { data, error } = await supabase.from('settings').select('key, value');
+            const { data, error } = await supabase.rpc('get_all_settings');
             
             if (error) {
                 toast({ variant: 'destructive', title: 'Error fetching settings', description: error.message });
@@ -58,33 +58,8 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
                 return;
             } 
             
-            if (data) {
-                const settingsData = data.reduce((acc, { key, value }) => {
-                    if (!key) return acc;
-        
-                    if (value === null) {
-                        (acc as any)[key] = null;
-                        return acc;
-                    }
-        
-                    if (['social_links', 'mobile_banking_options'].includes(key)) {
-                        try {
-                            (acc as any)[key] = JSON.parse(value);
-                        } catch {
-                            (acc as any)[key] = [];
-                        }
-                    } else if (key.startsWith('enable_') || key === 'maintenance_mode') {
-                        (acc as any)[key] = value === 'true';
-                    } else if (key === 'shipping_cost') {
-                        const numValue = parseFloat(value);
-                        (acc as any)[key] = isNaN(numValue) ? null : numValue;
-                    } else {
-                        (acc as any)[key] = value;
-                    }
-                    return acc;
-                }, {} as { [key: string]: any });
-                
-                setSettings(settingsData);
+            if (data && data[0]) {
+                setSettings(data[0]);
             }
             setIsLoading(false);
         };
@@ -143,7 +118,7 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
                 }
             });
         } else {
-             toast({ variant: 'destructive', title: 'Error', description: 'Gateway not ready. Please try again in a moment.' });
+             toast({ variant: 'destructive', title: 'Error', description: 'Gateway not ready. Please refresh.' });
              setIsProcessing(false);
         }
     }
