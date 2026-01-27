@@ -110,7 +110,6 @@ export default function ViewUserPage() {
         }
         const usersData = (getUsers.data as any[]).find(u => u.id === userId);
         setAllUser(usersData as AllUserProfile);
-        console.log(usersData,'usersData')
 
         if (userError || !allUsersData) {
             notFound();
@@ -257,7 +256,7 @@ export default function ViewUserPage() {
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">User Bio</span>
-                                    <span>{allUer.bio}</span>
+                                    <span>{allUer?.bio}</span>
                                 </div>
                                  <div className="flex justify-between items-center">
                                     <span className="text-muted-foreground">Role</span>
@@ -265,7 +264,7 @@ export default function ViewUserPage() {
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">User Phone</span>
-                                    <span>{allUer.contact_number}</span>
+                                    <span>{allUer?.contact_number}</span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Total Orders</span>
