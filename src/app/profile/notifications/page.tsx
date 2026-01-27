@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -140,7 +141,7 @@ export default function NotificationsPage() {
                                             key={notification.id}
                                             className={cn(
                                                 "flex items-start gap-4 p-4 rounded-lg border transition-colors",
-                                                !notification.is_read ? "bg-primary/5 border-primary/20" : "bg-background"
+                                                !notification.is_read ? "bg-primary/10 border-primary/20" : "bg-background"
                                             )}
                                         >
                                             <div className="mt-1">
@@ -148,7 +149,7 @@ export default function NotificationsPage() {
                                             </div>
                                             <div className="flex-1">
                                                 <Link href={notification.link || '#'} className="hover:underline">
-                                                    <p className="font-semibold">{notification.title}</p>
+                                                    <p className={cn("font-semibold", !notification.is_read && "font-bold")}>{notification.title}</p>
                                                 </Link>
                                                 <p className="text-sm text-muted-foreground">{notification.message}</p>
                                                 <p className="text-xs text-muted-foreground mt-2" suppressHydrationWarning>

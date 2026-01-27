@@ -144,7 +144,7 @@ export default function AdminNotificationsPage() {
                                     key={notification.id}
                                     className={cn(
                                         "flex items-start gap-4 p-4 rounded-lg border transition-colors cursor-pointer hover:bg-muted/50",
-                                        !notification.is_read && "bg-primary/5 border-primary/20"
+                                        !notification.is_read && "bg-primary/10 border-primary/20"
                                     )}
                                     onClick={() => handleNotificationClick(notification)}
                                 >

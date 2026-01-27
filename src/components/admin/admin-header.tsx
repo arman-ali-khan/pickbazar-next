@@ -17,6 +17,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
 import { useEffect, useState } from "react";
 import { useSupabase } from "@/lib/supabase/provider";
 import { formatDistanceToNow } from 'date-fns';
+import { cn } from "@/lib/utils";
 
 
 interface Notification {
@@ -119,10 +120,10 @@ export default function AdminHeader() {
                 <DropdownMenuSeparator />
                 {notifications.length > 0 ? (
                     notifications.map(n => (
-                        <DropdownMenuItem key={n.id} asChild className="cursor-pointer">
+                        <DropdownMenuItem key={n.id} asChild className="cursor-pointer bg-primary/10">
                            <Link href={n.link || '/admin/notifications'}>
                              <div className="flex flex-col">
-                                <p className="font-semibold text-sm">{n.title}</p>
+                                <p className="font-bold text-sm">{n.title}</p>
                                 <p className="text-xs text-muted-foreground truncate">{n.message}</p>
                                 <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
                                     {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}

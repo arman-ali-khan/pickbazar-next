@@ -61,7 +61,7 @@ export default function PaymentPage() {
     const total = subtotal + shippingCost - discountAmount;
 
     useEffect(() => {
-        document.title = 'Payment | Pickbazar';
+        document.title = 'Payment';
     }, []);
 
     useEffect(() => {
@@ -155,10 +155,10 @@ export default function PaymentPage() {
         // Notify Admins
         await createOrderNotification(orderNumber, total);
 
-        dispatch(clearCart());
         localStorage.removeItem('shippingInfo');
         localStorage.removeItem('appliedDiscount');
         localStorage.removeItem('shippingCost');
+        dispatch(clearCart());
         
         router.push(`/checkout/success?order_number=${orderNumber}`);
     };

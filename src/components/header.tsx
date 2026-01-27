@@ -459,10 +459,10 @@ export default function Header({ logoUrl: propLogoUrl, siteTitle: propSiteTitle 
                       <DropdownMenuSeparator />
                       {notifications.length > 0 ? (
                         notifications.map(n => (
-                          <DropdownMenuItem key={n.id} asChild className="cursor-pointer">
+                          <DropdownMenuItem key={n.id} asChild className={cn("cursor-pointer", !n.is_read && "bg-primary/10")}>
                             <Link href={n.link || '/profile/notifications'}>
                               <div className="flex flex-col">
-                                <p className="font-semibold text-sm">{n.title}</p>
+                                <p className={cn("font-semibold text-sm", !n.is_read && "font-bold")}>{n.title}</p>
                                 <p className="text-xs text-muted-foreground truncate">{n.message}</p>
                                 <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
                                   {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}

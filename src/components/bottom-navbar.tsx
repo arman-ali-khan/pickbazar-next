@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -24,6 +25,7 @@ import { useState, useEffect, useCallback } from 'react';
 import LucideIcon from './lucide-icon';
 import type { UserNotification } from '@/lib/data';
 import { formatDistanceToNow } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const NavItem = ({ children, href = "#" }: { children: React.ReactNode, href?: string }) => (
     <Link
@@ -269,7 +271,24 @@ export default function BottomNavbar() {
         <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t md:hidden">
             <div className="grid h-full grid-cols-5 mx-auto">
                 <PagesDrawer />
+                
+                <Button id="cart-icon-mobile" variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={() => dispatch(openCart())}>
+                    <ShoppingCart className="h-6 w-6" />
+                    <span className="text-xs">Cart</span>
+                    {totalItems > 0 && (
+                        <span className="absolute top-1 right-3.5 text-xs bg-primary text-primary-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">
+                            {totalItems}
+                        </span>
+                    )}
+                </Button>
 
+                <Link href="/" className="inline-flex flex-col items-center justify-center p-2 text-muted-foreground hover:bg-gray-50 dark:hover:bg-gray-800 group">
+                    <div className="w-14 h-14 -mt-8 flex items-center justify-center rounded-full bg-primary text-white shadow-lg">
+                        <Home className="h-7 w-7" />
+                    </div>
+                    <span className="sr-only">Home</span>
+                </Link>
+                
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2">
@@ -287,9 +306,9 @@ export default function BottomNavbar() {
                         <DropdownMenuSeparator />
                         {notifications.length > 0 ? (
                             notifications.slice(0, 4).map((notification) => (
-                                 <DropdownMenuItem key={notification.id} onSelect={() => markAsRead(notification.id)} asChild className="flex flex-col items-start gap-1 p-2 cursor-pointer">
-                                    <Link href={notification.link || '#'}>
-                                        <p className="font-semibold text-sm">{notification.title}</p>
+                                 <DropdownMenuItem key={notification.id} onSelect={() => markAsRead(notification.id)} asChild className={cn("flex flex-col items-start gap-1 p-2 cursor-pointer", !notification.is_read && "bg-primary/10")}>
+                                    <Link href={notification.link || '/profile/notifications'}>
+                                        <p className={cn("font-semibold text-sm", !notification.is_read && "font-bold")}>{notification.title}</p>
                                         <p className="text-xs text-muted-foreground whitespace-normal">{notification.message}</p>
                                         <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
                                             {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
@@ -306,23 +325,6 @@ export default function BottomNavbar() {
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-
-                <Link href="/" className="inline-flex flex-col items-center justify-center p-2 text-muted-foreground hover:bg-gray-50 dark:hover:bg-gray-800 group">
-                    <div className="w-14 h-14 -mt-8 flex items-center justify-center rounded-full bg-primary text-white shadow-lg">
-                        <Home className="h-7 w-7" />
-                    </div>
-                    <span className="sr-only">Home</span>
-                </Link>
-                
-                <Button id="cart-icon-mobile" variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={() => dispatch(openCart())}>
-                    <ShoppingCart className="h-6 w-6" />
-                    <span className="text-xs">Cart</span>
-                    {totalItems > 0 && (
-                        <span className="absolute top-1 right-3.5 text-xs bg-primary text-primary-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">
-                            {totalItems}
-                        </span>
-                    )}
-                </Button>
 
                 {renderProfileButton()}
 
