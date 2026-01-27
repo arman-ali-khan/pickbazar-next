@@ -109,6 +109,15 @@ export function LoginDialog() {
     }
     setIsSubmitting(false);
   };
+  
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        if (view === 'login') handleLogin();
+        if (view === 'register') handleRegister();
+        if (view === 'forgotPassword') handleForgotPassword();
+    }
+  }
 
   const headerContent: Record<View, {title: string, description: React.ReactNode}> = {
     login: {
@@ -151,36 +160,34 @@ export function LoginDialog() {
       </DialogHeader>
       
       {view === 'login' && (
-         <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
-            <div className="space-y-4">
-                <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="customer@demo.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                    <Label htmlFor="password">Password</Label>
-                    <Button variant="link" size="sm" type="button" className="h-auto p-0 text-xs text-primary" onClick={() => setView('forgotPassword')}>
-                        Forgot password?
-                    </Button>
-                </div>
-                <div className="relative">
-                    <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                    <Button
-                    variant="ghost"
-                    size="icon"
-                    type="button"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-gray-500"
-                    onClick={togglePassword}
-                    >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </Button>
-                </div>
-                </div>
-                <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
-                  {isSubmitting ? 'Logging in...' : 'Login'}
+         <div className="space-y-4">
+            <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input id="email" type="email" placeholder="customer@demo.com" value={email} onChange={(e) => setEmail(e.target.value)} required onKeyDown={handleKeyDown} />
+            </div>
+            <div className="space-y-2">
+            <div className="flex justify-between items-center">
+                <Label htmlFor="password">Password</Label>
+                <Button variant="link" size="sm" type="button" className="h-auto p-0 text-xs text-primary" onClick={() => setView('forgotPassword')}>
+                    Forgot password?
                 </Button>
             </div>
+            <div className="relative">
+                <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} required onKeyDown={handleKeyDown} />
+                <Button
+                variant="ghost"
+                size="icon"
+                type="button"
+                className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-gray-500"
+                onClick={togglePassword}
+                >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+            </div>
+            </div>
+            <Button type="button" onClick={handleLogin} className="w-full h-12 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+              {isSubmitting ? 'Logging in...' : 'Login'}
+            </Button>
             <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                 <span className="w-full border-t" />
@@ -205,39 +212,37 @@ export function LoginDialog() {
                     Register
                 </Button>
             </p>
-        </form>
+        </div>
       )}
 
       {view === 'register' && (
-        <form onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
-            <div className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" type="text" placeholder="Enter your name" value={name} onChange={(e) => setName(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
-                    <Input id="register-email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="register-password">Password</Label>
-                    <div className="relative">
-                        <Input id="register-password" type={showPassword ? 'text' : 'password'} placeholder="Create a password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          type="button"
-                          className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-gray-500"
-                          onClick={togglePassword}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
-                    </div>
-                </div>
-                <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
-                    {isSubmitting ? 'Registering...' : 'Register'}
-                </Button>
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input id="name" type="text" placeholder="Enter your name" value={name} onChange={(e) => setName(e.target.value)} required onKeyDown={handleKeyDown}/>
             </div>
+            <div className="space-y-2">
+                <Label htmlFor="register-email">Email</Label>
+                <Input id="register-email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required onKeyDown={handleKeyDown}/>
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="register-password">Password</Label>
+                <div className="relative">
+                    <Input id="register-password" type={showPassword ? 'text' : 'password'} placeholder="Create a password" value={password} onChange={(e) => setPassword(e.target.value)} required onKeyDown={handleKeyDown}/>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      type="button"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 text-gray-500"
+                      onClick={togglePassword}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                </div>
+            </div>
+            <Button type="button" onClick={handleRegister} className="w-full h-12 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+                {isSubmitting ? 'Registering...' : 'Register'}
+            </Button>
             <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                     <span className="w-full border-t" />
@@ -252,26 +257,24 @@ export function LoginDialog() {
                     Login
                 </Button>
             </p>
-        </form>
+        </div>
       )}
 
       {view === 'forgotPassword' && (
-         <form onSubmit={(e) => { e.preventDefault(); handleForgotPassword(); }}>
-            <div className="space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="forgot-email">Email</Label>
-                    <Input id="forgot-email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                </div>
-                <Button type="submit" className="w-full h-12 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
-                  {isSubmitting ? 'Sending...' : 'Submit'}
-                </Button>
+         <div className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="forgot-email">Email</Label>
+                <Input id="forgot-email" type="email" placeholder="Enter your email" value={email} onChange={(e) => setEmail(e.target.value)} required onKeyDown={handleKeyDown}/>
             </div>
+            <Button type="button" onClick={handleForgotPassword} className="w-full h-12 bg-primary hover:bg-primary/90" disabled={isSubmitting}>
+              {isSubmitting ? 'Sending...' : 'Submit'}
+            </Button>
             <p className="mt-6 text-center text-sm text-muted-foreground">
                 <Button variant="link" type="button" className="p-0 h-auto font-semibold text-primary" onClick={() => setView('login')}>
                     Back to login
                 </Button>
             </p>
-        </form>
+        </div>
       )}
 
     </DialogContent>

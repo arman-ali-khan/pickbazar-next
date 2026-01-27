@@ -278,7 +278,7 @@ export default function CheckoutPage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-800">Checkout</h1>
         </div>
-        <form onSubmit={(e) => { e.preventDefault(); handleProceedToPayment(); }}>
+        <div>
             <div className="grid lg:grid-cols-2 gap-12 items-start">
             <div className="space-y-8">
                 {user ? (
@@ -399,13 +399,13 @@ export default function CheckoutPage() {
             <div>
                 {renderOrderSummary()}
                 {user && (
-                <Button type="submit" className="w-full mt-6 h-12" disabled={isProceeding || loadingSettings}>
+                <Button onClick={handleProceedToPayment} className="w-full mt-6 h-12" disabled={isProceeding || loadingSettings}>
                     {isProceeding ? 'Processing...' : 'Proceed to Payment'}
                 </Button>
                 )}
             </div>
             </div>
-        </form>
+        </div>
       </main>
       <CartDrawer />
     </div>
