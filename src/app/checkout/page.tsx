@@ -177,7 +177,7 @@ export default function CheckoutPage() {
             } else {
                 localStorage.removeItem('appliedDiscount');
             }
-            router.push('/checkout/payment');
+            router.push('/checkout');
         });
     };
     
