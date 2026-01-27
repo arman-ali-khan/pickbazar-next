@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -314,9 +313,7 @@ export default function BottomNavbar() {
                     </div>
                     <span className="sr-only">Home</span>
                 </Link>
-
-                {renderProfileButton()}
-
+                
                 <Button id="cart-icon-mobile" variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={() => dispatch(openCart())}>
                     <ShoppingCart className="h-6 w-6" />
                     <span className="text-xs">Cart</span>
@@ -326,6 +323,9 @@ export default function BottomNavbar() {
                         </span>
                     )}
                 </Button>
+
+                {renderProfileButton()}
+
             </div>
         </div>
     );
