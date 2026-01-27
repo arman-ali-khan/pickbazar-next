@@ -65,9 +65,9 @@ export default function FlyToCartAnimation() {
         left: `${endRect.left + endRect.width / 2}px`,
         width: '32px',
         height: '32px',
-        opacity: 0,
-        transform: 'translate(-50%, -50%) scale(0.2)',
-        transition: 'all 0.5s cubic-bezier(0.5, 0, 1, 0.5)',
+        opacity: 1,
+        transform: 'translate(-50%, -50%) scale(0.5)',
+        transition: 'all 0.5s cubic-bezier(0, 0, 0, 0)',
       }));
 
       // After animation duration, mark as done

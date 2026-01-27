@@ -271,24 +271,7 @@ export default function BottomNavbar() {
         <div className="fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t md:hidden">
             <div className="grid h-full grid-cols-5 mx-auto">
                 <PagesDrawer />
-                
-                <Button id="cart-icon-mobile" variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={() => dispatch(openCart())}>
-                    <ShoppingCart className="h-6 w-6" />
-                    <span className="text-xs">Cart</span>
-                    {totalItems > 0 && (
-                        <span className="absolute top-1 right-3.5 text-xs bg-primary text-primary-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">
-                            {totalItems}
-                        </span>
-                    )}
-                </Button>
-
-                <Link href="/" className="inline-flex flex-col items-center justify-center p-2 text-muted-foreground hover:bg-gray-50 dark:hover:bg-gray-800 group">
-                    <div className="w-14 h-14 -mt-8 flex items-center justify-center rounded-full bg-primary text-white shadow-lg">
-                        <Home className="h-7 w-7" />
-                    </div>
-                    <span className="sr-only">Home</span>
-                </Link>
-                
+              
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <Button variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2">
@@ -325,6 +308,23 @@ export default function BottomNavbar() {
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
+
+                <Link href="/" className="inline-flex flex-col items-center justify-center p-2 text-muted-foreground hover:bg-gray-50 dark:hover:bg-gray-800 group">
+                    <div className="w-14 h-14 -mt-8 flex items-center justify-center rounded-full bg-primary text-white shadow-lg">
+                        <Home className="h-7 w-7" />
+                    </div>
+                    <span className="sr-only">Home</span>
+                </Link>
+                  
+                <Button id="cart-icon-mobile" variant="ghost" className="relative flex flex-col h-full rounded-none text-muted-foreground p-2" onClick={() => dispatch(openCart())}>
+                    <ShoppingCart className="h-6 w-6" />
+                    <span className="text-xs">Cart</span>
+                    {totalItems > 0 && (
+                        <span className="absolute top-1 right-3.5 text-xs bg-primary text-primary-foreground rounded-full h-4 w-4 flex items-center justify-center text-[10px]">
+                            {totalItems}
+                        </span>
+                    )}
+                </Button>
 
                 {renderProfileButton()}
 
