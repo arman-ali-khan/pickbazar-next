@@ -22,6 +22,8 @@ import { useToast } from '@/hooks/use-toast';
 import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createOrderNotification } from '@/app/actions/order';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
+import { SslCommerzDialog } from '@/components/sslcommerz-dialog';
 
 interface ShippingInfo {
   firstName: string;
@@ -343,9 +345,20 @@ export default function PaymentPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                 <Button onClick={handlePayment} className="w-full h-12 text-lg" disabled={isProcessing || total < 0 || (selectedMethod === 'mobile-banking' && (!trxId || !mobileLast4))}>
-                    {isProcessing ? 'Processing...' : `Pay $${total.toFixed(2)}`}
-                </Button>
+                 {selectedMethod === 'sslcommerz' ? (
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button className="w-full h-12 text-lg" disabled={isProcessing || total < 0}>
+                                {`Pay $${total.toFixed(2)}`}
+                            </Button>
+                        </DialogTrigger>
+                        <SslCommerzDialog amount={total} onSuccess={handlePayment} />
+                    </Dialog>
+                ) : (
+                    <Button onClick={handlePayment} className="w-full h-12 text-lg" disabled={isProcessing || total < 0 || (selectedMethod === 'mobile-banking' && (!trxId || !mobileLast4))}>
+                        {isProcessing ? 'Processing...' : `Pay $${total.toFixed(2)}`}
+                    </Button>
+                )}
               </CardFooter>
             </Card>
         </div>

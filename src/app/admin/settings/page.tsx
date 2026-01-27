@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
@@ -22,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { iconList } from "@/lib/icon-list";
 import LucideIcon from "@/components/lucide-icon";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem } from "@/components/ui/dropdown-menu";
+import { Separator } from "@/components/ui/separator";
 
 interface SocialLink {
     url: string;
@@ -54,6 +54,11 @@ interface AllSettings {
     mobile_banking_number: string | null;
     mobile_banking_options: string[];
     shipping_cost: number | null;
+    sslcommerz_mode: 'sandbox' | 'production';
+    sslcommerz_sandbox_store_id: string | null;
+    sslcommerz_sandbox_store_password: string | null;
+    sslcommerz_production_store_id: string | null;
+    sslcommerz_production_store_password: string | null;
 }
 
 function SettingsContent() {
@@ -364,6 +369,42 @@ function SettingsContent() {
                                         ))}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+                            </div>
+                            <Separator className="my-6" />
+                            <div className="space-y-4">
+                                <h4 className="text-md font-semibold">SSLCommerz Settings</h4>
+                                <div className="space-y-2">
+                                    <Label htmlFor="sslcommerz_mode">Gateway Mode</Label>
+                                    <Select value={settings.sslcommerz_mode || 'sandbox'} onValueChange={(value) => setSettings(prev => ({...prev, sslcommerz_mode: value as any}))}>
+                                        <SelectTrigger id="sslcommerz_mode">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="sandbox">Sandbox</SelectItem>
+                                            <SelectItem value="production">Production</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="sslcommerz_sandbox_store_id">Sandbox Store ID</Label>
+                                        <Input id="sslcommerz_sandbox_store_id" value={settings.sslcommerz_sandbox_store_id || ''} onChange={handleInputChange} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="sslcommerz_sandbox_store_password">Sandbox Store Password</Label>
+                                        <Input id="sslcommerz_sandbox_store_password" type="password" value={settings.sslcommerz_sandbox_store_password || ''} onChange={handleInputChange} />
+                                    </div>
+                                </div>
+                                 <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="sslcommerz_production_store_id">Production Store ID</Label>
+                                        <Input id="sslcommerz_production_store_id" value={settings.sslcommerz_production_store_id || ''} onChange={handleInputChange} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="sslcommerz_production_store_password">Production Store Password</Label>
+                                        <Input id="sslcommerz_production_store_password" type="password" value={settings.sslcommerz_production_store_password || ''} onChange={handleInputChange} />
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
                         <CardFooter className="border-t pt-6">
