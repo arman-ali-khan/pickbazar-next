@@ -152,7 +152,7 @@ const SettingsAccordion = () => {
                     >
                        <Settings className="h-5 w-5 shrink-0" />
                        <span className="truncate flex-1 text-left">Settings</span>
-                        <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 data-[state=open]:-rotate-180" />
+                        {/* <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 data-[state=open]:-rotate-180" /> */}
                     </AccordionTrigger>
                     <AccordionContent className="pt-1">
                         <SidebarMenu className="pl-6">
