@@ -48,14 +48,46 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
     useEffect(() => {
         const fetchSettings = async () => {
             setIsLoading(true);
-            const { data } = await supabase.rpc('get_all_settings');
-            if (data && data[0]) {
-                setSettings(data[0]);
+            const { data, error } = await supabase.from('settings').select('key, value');
+            
+            if (error) {
+                toast({ variant: 'destructive', title: 'Error fetching settings', description: error.message });
+                setIsLoading(false);
+                return;
+            } 
+            
+            if (data) {
+                const settingsData = data.reduce((acc, { key, value }) => {
+                    if (!key) return acc;
+        
+                    if (value === null) {
+                        (acc as any)[key] = null;
+                        return acc;
+                    }
+        
+                    if (['social_links', 'mobile_banking_options'].includes(key)) {
+                        try {
+                            (acc as any)[key] = JSON.parse(value);
+                        } catch {
+                            (acc as any)[key] = [];
+                        }
+                    } else if (key.startsWith('enable_') || key === 'maintenance_mode') {
+                        (acc as any)[key] = value === 'true';
+                    } else if (key === 'shipping_cost') {
+                        const numValue = parseFloat(value);
+                        (acc as any)[key] = isNaN(numValue) ? null : numValue;
+                    } else {
+                        (acc as any)[key] = value;
+                    }
+                    return acc;
+                }, {} as { [key: string]: any });
+                
+                setSettings(settingsData);
             }
             setIsLoading(false);
         };
         fetchSettings();
-    }, [supabase]);
+    }, [supabase, toast]);
 
     useEffect(() => {
         if (!settings) return;
@@ -66,20 +98,21 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
             : 'https://secure.sslcommerz.com/easycheckout/v1/easyCheckout.js';
         const scriptId = 'sslcommerz-script';
         
-        if (window.easyCheckout) {
-            setScriptLoaded(true);
-            return;
-        }
-
         let script = document.getElementById(scriptId) as HTMLScriptElement | null;
-
-        // If a script with the wrong source exists, remove it.
+        
+        // If a script exists but has the wrong source, replace it
         if (script && script.src !== scriptSrc) {
             script.remove();
             script = null;
         }
         
-        // If script doesn't exist, create it. This is the main path.
+        // If the script is already loaded and correct, we're done
+        if (script && window.easyCheckout) {
+            setScriptLoaded(true);
+            return;
+        }
+        
+        // If script doesn't exist, create and append it
         if (!script) {
             const newScript = document.createElement('script');
             newScript.id = scriptId;
@@ -92,9 +125,10 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
                 newScript.removeEventListener('error', handleError);
             };
 
-            const handleError = () => {
+            const handleError = (e: Event) => {
                 toast({ variant: 'destructive', title: 'Error', description: 'Could not load payment gateway script.' });
-                document.getElementById(scriptId)?.remove();
+                document.getElementById(scriptId)?.remove(); // Clean up failed script
+                setScriptLoaded(false); // Reset loaded state
                 newScript.removeEventListener('load', handleLoad);
                 newScript.removeEventListener('error', handleError);
             };
@@ -199,7 +233,7 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
                 <DialogClose asChild>
                     <Button variant="outline">Cancel</Button>
                 </DialogClose>
-                <Button onClick={handleSslPayment} disabled={isLoading || isProcessing || !storeId}>
+                <Button onClick={handleSslPayment} disabled={isLoading || isProcessing || !storeId || !scriptLoaded}>
                     {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Connecting...</> : 'Pay Now'}
                 </Button>
             </DialogFooter>
