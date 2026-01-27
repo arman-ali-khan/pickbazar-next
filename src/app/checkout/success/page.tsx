@@ -37,7 +37,7 @@ function SuccessContent() {
     const orderNumber = searchParams.get('order_number');
     const [orderData, setOrderData] = useState<OrderData | null>(null);
     const [loading, setLoading] = useState(true);
-    const { supabase } = useSupabase();
+    const { supabase, user, loading: authLoading } = useSupabase();
     const dispatch = useAppDispatch();
 
     useEffect(() => {
@@ -54,7 +54,7 @@ function SuccessContent() {
     }, [dispatch, supabase]);
 
     const getOrderDetails = useCallback(async () => {
-        if (!orderNumber) {
+        if (!orderNumber || !user) {
             setLoading(false);
             return;
         }
@@ -85,13 +85,15 @@ function SuccessContent() {
             setOrderData(data as OrderData);
         }
         setLoading(false);
-    }, [orderNumber, supabase]);
+    }, [orderNumber, supabase, user]);
 
     useEffect(() => {
-        getOrderDetails();
-    }, [getOrderDetails]);
+        if (!authLoading) {
+            getOrderDetails();
+        }
+    }, [getOrderDetails, authLoading]);
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
             <div className="text-center">
                 <p>Loading order details...</p>
