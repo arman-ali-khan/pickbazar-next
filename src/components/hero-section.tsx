@@ -19,8 +19,15 @@ interface HierarchicalCategory extends DbCategory {
     sub: DbCategory[];
 }
 
+interface HeroSectionProps {
+    title: string;
+    subtitle: string;
+    buttonText: string;
+    buttonUrl: string;
+    imageUrl: string;
+}
 
-export default function HeroBanners() {
+export default function HeroSection({ title, subtitle, buttonText, buttonUrl, imageUrl }: HeroSectionProps) {
   const { supabase } = useSupabase();
   const [categoryTree, setCategoryTree] = useState<HierarchicalCategory[]>([]);
   
@@ -54,8 +61,8 @@ export default function HeroBanners() {
     <section className="relative w-full h-[550px]">
         <div className="absolute inset-0 z-0">
             <Image 
-                src="https://images.unsplash.com/photo-1610832958506-aa56368176cf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxmcnVpdHN8ZW58MHx8fHwxNzY4OTI5MzY5fDA&ixlib=rb-4.1.0&q=80&w=1080" 
-                alt="Fresh fruits banner" 
+                src={imageUrl}
+                alt={title} 
                 data-ai-hint="fresh fruits"
                 fill
                 className="object-cover"
@@ -93,13 +100,13 @@ export default function HeroBanners() {
                 </div>
                 <div className="space-y-6 text-center md:text-left text-white">
                     <h1 className="text-4xl md:text-6xl font-bold leading-tight">
-                        Groceries Delivered in 90 Mins
+                        {title}
                     </h1>
                     <p className="text-lg md:text-xl text-gray-200">
-                        Get your groceries delivered to your door in as fast as 90 minutes.
+                        {subtitle}
                     </p>
                     <Button asChild size="lg" className="font-semibold px-8 py-6 text-base">
-                        <Link href="/shop">Shop Now</Link>
+                        <Link href={buttonUrl}>{buttonText}</Link>
                     </Button>
                 </div>
             </div>

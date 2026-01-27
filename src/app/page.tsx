@@ -2,7 +2,7 @@
 
 import CartDrawer from "@/components/cart-drawer";
 import Header from "@/components/header";
-import HeroBanners from "@/components/product-image-gallery";
+import HeroSection from "@/components/hero-section";
 import OfferCarousel, { type OfferForCarousel } from "@/components/offer-carousel";
 import RecommendedProducts from "@/components/recommended-products";
 import RecentlyAddedProducts from "@/components/recently-added-products";
@@ -19,6 +19,14 @@ export default async function Home() {
   
   const { data: settingsData } = await supabase.rpc('get_all_settings');
   const settings = settingsData?.[0];
+
+  const heroData = {
+    title: settings?.hero_title || 'Groceries Delivered in 90 Mins',
+    subtitle: settings?.hero_subtitle || 'Get your groceries delivered to your door in as fast as 90 minutes.',
+    buttonText: settings?.hero_button_text || 'Shop Now',
+    buttonUrl: settings?.hero_button_url || '/shop',
+    imageUrl: settings?.hero_image_url || 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxmcnVpdHN8ZW58MHx8fHwxNzY4OTI5MzY5fDA&ixlib=rb-4.1.0&q=80&w=1080',
+  };
 
   const { data: homeSectionsData } = await supabase
     .from('home_page_sections')
@@ -90,7 +98,7 @@ export default async function Home() {
       <Header logoUrl={settings?.logo_url} siteTitle={settings?.site_title} />
       <main>
         <PromoDialog />
-        <HeroBanners />
+        <HeroSection {...heroData} />
         <OfferCarousel offers={offers} />
         <RecommendedProducts />
         <RecentlyAddedProducts />

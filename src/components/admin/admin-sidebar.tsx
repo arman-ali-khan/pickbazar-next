@@ -33,7 +33,8 @@ import {
   LayoutTemplate,
   Files,
   Bell,
-  Megaphone
+  Megaphone,
+  LayoutPanelTop
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
@@ -54,6 +55,7 @@ const navItems = [
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders', countKey: 'orders' },
   { href: '/admin/categories', icon: LayoutGrid, label: 'Categories' },
   { href: '/admin/tags', icon: Tag, label: 'Tags' },
+  { href: '/admin/hero', icon: LayoutPanelTop, label: 'Hero Section' },
   { href: '/admin/home-sections', icon: LayoutTemplate, label: 'Home Sections' },
   { href: '/admin/refunds', icon: RefreshCcw, label: 'Refunds', countKey: 'refunds' },
   { href: '/admin/users', icon: Users, label: 'Users' },
