@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { UploadCloud, Settings as SettingsIcon, Search, CreditCard, Wrench, Megaphone, X, Share2, Plus, Trash2, Truck } from "lucide-react";
+import { UploadCloud, Settings as SettingsIcon, Search, CreditCard, Wrench, Megaphone, X, Share2, Plus, Trash2, Truck, ShieldCheck } from "lucide-react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Suspense, useState, useEffect, useCallback, useTransition } from "react";
 import { useSupabase } from "@/lib/supabase/provider";
