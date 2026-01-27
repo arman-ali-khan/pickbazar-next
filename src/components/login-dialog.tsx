@@ -45,8 +45,7 @@ export function LoginDialog() {
 
   const togglePassword = () => setShowPassword(prev => !prev);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async () => {
     setIsSubmitting(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
@@ -58,8 +57,7 @@ export function LoginDialog() {
     setIsSubmitting(false);
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRegister = async () => {
     setIsSubmitting(true);
     const { error } = await supabase.auth.signUp({
       email,
@@ -94,8 +92,7 @@ export function LoginDialog() {
     setIsSubmitting(false);
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleForgotPassword = async () => {
     if (!email) {
       toast({ variant: "destructive", title: "Error", description: "Please enter your email address." });
       return;
@@ -154,7 +151,7 @@ export function LoginDialog() {
       </DialogHeader>
       
       {view === 'login' && (
-         <form onSubmit={handleLogin}>
+         <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }}>
             <div className="space-y-4">
                 <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -212,7 +209,7 @@ export function LoginDialog() {
       )}
 
       {view === 'register' && (
-        <form onSubmit={handleRegister}>
+        <form onSubmit={(e) => { e.preventDefault(); handleRegister(); }}>
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="name">Name</Label>
@@ -259,7 +256,7 @@ export function LoginDialog() {
       )}
 
       {view === 'forgotPassword' && (
-         <form onSubmit={handleForgotPassword}>
+         <form onSubmit={(e) => { e.preventDefault(); handleForgotPassword(); }}>
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="forgot-email">Email</Label>

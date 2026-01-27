@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
@@ -177,7 +176,7 @@ export default function CheckoutPage() {
             } else {
                 localStorage.removeItem('appliedDiscount');
             }
-            router.push('/checkout');
+            router.push('/checkout/payment');
         });
     };
     
