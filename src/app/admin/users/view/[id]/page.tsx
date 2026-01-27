@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -22,7 +23,7 @@ interface UserProfile {
     avatar_url: string | null;
     created_at: string;
     role: UserRole;
-    contact_number:string;
+    contact_number:string | null;
 }
 interface AllUserProfile {
     id: string;
