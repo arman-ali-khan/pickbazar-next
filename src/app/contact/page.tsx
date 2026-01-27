@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useForm } from 'react-hook-form';
@@ -43,17 +44,16 @@ export default function ContactPage() {
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
-    document.title = 'Contact Us | Pickbazar';
-  }, []);
-
-  useEffect(() => {
-    const fetchContactInfo = async () => {
-      const { data } = await supabase.from('pages').select('content').eq('slug', 'contact').single();
-      if (data) {
-        setContactInfo(data.content as ContactInfo);
+    const fetchPageData = async () => {
+      const { data: pageData } = await supabase.from('pages').select('content').eq('slug', 'contact').single();
+      if (pageData) {
+        setContactInfo(pageData.content as ContactInfo);
       }
+      const { data: settingsData } = await supabase.rpc('get_all_settings');
+      const siteTitle = settingsData?.[0]?.site_title || 'Karwanbazar';
+      document.title = `Contact Us | ${siteTitle}`;
     };
-    fetchContactInfo();
+    fetchPageData();
   }, [supabase]);
   
   const form = useForm<z.infer<typeof formSchema>>({

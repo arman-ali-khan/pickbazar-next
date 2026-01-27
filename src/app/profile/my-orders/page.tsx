@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -32,8 +33,13 @@ export default function MyOrdersPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        document.title = 'My Orders | Pickbazar';
-    }, []);
+        const setPageTitle = async () => {
+            const { data } = await supabase.rpc('get_all_settings');
+            const siteTitle = data?.[0]?.site_title || 'Karwanbazar';
+            document.title = `My Orders | ${siteTitle}`;
+        }
+        setPageTitle();
+    }, [supabase]);
 
     const getOrders = useCallback(async () => {
         if (!user) return;

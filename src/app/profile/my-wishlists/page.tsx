@@ -1,3 +1,4 @@
+
 'use client';
 
 import Header from '@/components/header';
@@ -16,8 +17,13 @@ export default function MyWishlistPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        document.title = 'My Wishlist | Pickbazar';
-    }, []);
+        const setPageTitle = async () => {
+            const { data } = await supabase.rpc('get_all_settings');
+            const siteTitle = data?.[0]?.site_title || 'Karwanbazar';
+            document.title = `My Wishlist | ${siteTitle}`;
+        }
+        setPageTitle();
+    }, [supabase]);
 
     useEffect(() => {
         const fetchWishlist = async () => {

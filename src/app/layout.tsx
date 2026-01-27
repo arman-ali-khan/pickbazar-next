@@ -20,7 +20,7 @@ const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 export async function generateMetadata(): Promise<Metadata> {
   if (!isSupabaseConfigured) {
     return {
-      title: 'Pickbazar',
+      title: 'Karwanbazar',
       description: 'An e-commerce storefront for fresh products.',
     };
   }
@@ -29,7 +29,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const { data } = await supabase.rpc('get_all_settings');
   const settings = data?.[0];
 
-  const siteTitle = settings?.site_title || 'Pickbazar';
+  const siteTitle = settings?.site_title || 'Karwanbazar';
   const siteSubtitle = settings?.site_subtitle || 'An e-commerce storefront for fresh products.';
   const faviconUrl = settings?.favicon_url;
   const linkPreviewImageUrl = settings?.link_preview_image_url;

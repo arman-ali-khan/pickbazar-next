@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -40,12 +41,17 @@ function SuccessContent() {
     const dispatch = useAppDispatch();
 
     useEffect(() => {
-        document.title = 'Order Successful | Pickbazar';
+        const setPageTitle = async () => {
+          const { data } = await supabase.rpc('get_all_settings');
+          const siteTitle = data?.[0]?.site_title || 'Karwanbazar';
+          document.title = `Order Successful | ${siteTitle}`;
+        }
+        setPageTitle();
         dispatch(clearCart());
         localStorage.removeItem('shippingInfo');
         localStorage.removeItem('appliedDiscount');
         localStorage.removeItem('shippingCost');
-    }, [dispatch]);
+    }, [dispatch, supabase]);
 
     const getOrderDetails = useCallback(async () => {
         if (!orderNumber) {
@@ -161,5 +167,3 @@ export default function OrderSuccessPage() {
         </div>
     );
 }
-
-    

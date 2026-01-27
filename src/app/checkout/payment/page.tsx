@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -62,10 +63,6 @@ export default function PaymentPage() {
     const total = subtotal + shippingCost - discountAmount;
 
     useEffect(() => {
-        document.title = 'Payment';
-    }, []);
-
-    useEffect(() => {
         if (!authLoading && !user) {
             toast({ variant: 'destructive', title: 'Authentication Required', description: 'Please login to continue.' });
             router.push('/checkout');
@@ -97,6 +94,7 @@ export default function PaymentPage() {
             if (data && data[0]) {
                 const settings = data[0];
                 setPaymentSettings(settings);
+                document.title = `Payment | ${settings.site_title || 'Karwanbazar'}`;
                 // Set default payment method
                 if (settings.enable_card_payment) {
                     setSelectedMethod('card');
@@ -107,6 +105,8 @@ export default function PaymentPage() {
                 } else if (settings.enable_cod) {
                     setSelectedMethod('cod');
                 }
+            } else {
+                 document.title = `Payment | Karwanbazar`;
             }
             setLoadingSettings(false);
         };
@@ -370,5 +370,3 @@ export default function PaymentPage() {
     </div>
   );
 }
-
-    

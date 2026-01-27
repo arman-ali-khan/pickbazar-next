@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -30,7 +31,7 @@ export default function SplashScreen({ logoUrl, siteTitle }: SplashScreenProps) 
         ) : (
           <Leaf className="h-12 w-12 text-primary" />
         )}
-        <span className="font-bold text-4xl">{siteTitle || 'Pickbazar'}</span>
+        <span className="font-bold text-4xl">{siteTitle || 'Karwanbazar'}</span>
       </div>
       <div className="w-1/4 max-w-xs">
          <Progress value={progress} className="w-full h-2" />

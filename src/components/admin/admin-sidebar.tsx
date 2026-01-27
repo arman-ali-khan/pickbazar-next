@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import {
@@ -252,7 +251,7 @@ export default function AdminSidebar({ logoUrl, siteTitle }: AdminSidebarProps) 
   }, [supabase]);
   
   const userName = profile?.full_name || user?.user_metadata?.full_name || 'Admin Name';
-  const userEmail = user?.email || 'admin@pickbazar.com';
+  const userEmail = user?.email || 'admin@karwanbazar.com';
   const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url;
 
   return (
@@ -264,7 +263,7 @@ export default function AdminSidebar({ logoUrl, siteTitle }: AdminSidebarProps) 
             ) : (
                 <Leaf className="h-6 w-6 text-primary" />
             )}
-            <Link href="/" className="font-bold text-lg">{siteTitle || 'Pickbazar'}</Link>
+            <Link href="/" className="font-bold text-lg">{siteTitle || 'Karwanbazar'}</Link>
         </div>
         <SidebarTrigger className="hidden md:flex">
             <ChevronLeft />

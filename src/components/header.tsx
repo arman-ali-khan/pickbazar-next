@@ -194,7 +194,7 @@ export default function Header({ logoUrl: propLogoUrl, siteTitle: propSiteTitle 
           setLogoUrl(data[0].logo_url);
         }
         if (propSiteTitle === undefined) {
-          setSiteTitle(data[0].site_title);
+          setSiteTitle(data[0].site_title || 'Karwanbazar');
         }
       }
     };
@@ -414,7 +414,7 @@ export default function Header({ logoUrl: propLogoUrl, siteTitle: propSiteTitle 
                 ) : (
                     <Leaf className="h-7 w-7 text-primary" />
                 )}
-                <h1 className="text-2xl font-bold text-gray-800">{siteTitle || 'PickBazar'}</h1>
+                <h1 className="text-2xl font-bold text-gray-800">{siteTitle || 'Karwanbazar'}</h1>
               </Link>
             </div>
 

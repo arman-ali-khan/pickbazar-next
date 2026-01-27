@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -114,11 +115,11 @@ export function LoginDialog() {
 
   const headerContent: Record<View, {title: string, description: React.ReactNode}> = {
     login: {
-      title: 'PickBazar',
+      title: 'Karwanbazar',
       description: 'Login with your email & password',
     },
     register: {
-      title: 'PickBazar',
+      title: 'Karwanbazar',
       description: (
         <>
           By signing up, you agree to our{' '}

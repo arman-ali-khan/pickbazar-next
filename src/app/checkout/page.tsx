@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useTransition } from 'react';
@@ -77,17 +78,15 @@ export default function CheckoutPage() {
     const total = subtotal + shippingCost - discountAmount;
 
     useEffect(() => {
-      document.title = 'Checkout | Pickbazar';
-    }, []);
-
-    useEffect(() => {
-        const fetchSettings = async () => {
+        const fetchSettingsAndTitle = async () => {
             setLoadingSettings(true);
             const { data } = await supabase.rpc('get_all_settings');
-            if (data && data[0] && data[0].shipping_cost) {
-                setShippingCost(Number(data[0].shipping_cost));
+            if (data && data[0]) {
+                setShippingCost(Number(data[0].shipping_cost || 5.00));
+                document.title = `Checkout | ${data[0].site_title || 'Karwanbazar'}`;
             } else {
                 setShippingCost(5.00); // Fallback
+                document.title = `Checkout | Karwanbazar`;
             }
             setLoadingSettings(false);
         };
@@ -120,7 +119,7 @@ export default function CheckoutPage() {
             setShippingInfo(prev => ({ ...prev, email: user.email || '' }));
         }
         
-        fetchSettings();
+        fetchSettingsAndTitle();
     }, [user, supabase]);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

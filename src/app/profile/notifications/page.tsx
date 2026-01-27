@@ -43,8 +43,13 @@ export default function NotificationsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        document.title = 'Notifications | Pickbazar';
-    }, []);
+        const setPageTitle = async () => {
+            const { data } = await supabase.rpc('get_all_settings');
+            const siteTitle = data?.[0]?.site_title || 'Karwanbazar';
+            document.title = `Notifications | ${siteTitle}`;
+        }
+        setPageTitle();
+    }, [supabase]);
 
     const getNotifications = useCallback(async () => {
         if (!user) {

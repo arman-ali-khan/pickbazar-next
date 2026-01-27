@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSupabase } from '@/lib/supabase/provider';
@@ -42,8 +43,13 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
-    document.title = 'My Profile | Pickbazar';
-  }, []);
+    const setPageTitle = async () => {
+        const { data } = await supabase.rpc('get_all_settings');
+        const siteTitle = data?.[0]?.site_title || 'Karwanbazar';
+        document.title = `My Profile | ${siteTitle}`;
+    }
+    setPageTitle();
+  }, [supabase]);
 
   const getAddresses = useCallback(async () => {
     if (!user) return;

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -22,8 +23,13 @@ export default function ChangePasswordPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        document.title = 'Change Password | Pickbazar';
-    }, []);
+        const setPageTitle = async () => {
+            const { data } = await supabase.rpc('get_all_settings');
+            const siteTitle = data?.[0]?.site_title || 'Karwanbazar';
+            document.title = `Change Password | ${siteTitle}`;
+        }
+        setPageTitle();
+    }, [supabase]);
 
     useEffect(() => {
         if (!authLoading && !user) {
