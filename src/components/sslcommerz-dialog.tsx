@@ -49,24 +49,9 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
     useEffect(() => {
         const fetchSettings = async () => {
             setIsLoading(true);
-            const { data, error } = await supabase.from('settings').select('key, value');
-            
-            if (error) {
-                console.error('Error fetching SSLCommerz settings:', error);
-            } else if (data) {
-                const settingsData = data.reduce((acc, { key, value }) => {
-                    if (key) {
-                        if (value === 'true') {
-                             (acc as any)[key] = true;
-                        } else if (value === 'false') {
-                             (acc as any)[key] = false;
-                        } else {
-                             (acc as any)[key] = value;
-                        }
-                    }
-                    return acc;
-                }, {} as { [key: string]: any });
-                setSettings(settingsData);
+            const { data } = await supabase.rpc('get_all_settings');
+            if (data && data[0]) {
+                setSettings(data[0]);
             }
             setIsLoading(false);
         };
@@ -77,20 +62,23 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
         if (!settings) return;
 
         const isSandbox = settings.sslcommerz_mode === 'sandbox';
-        const scriptSrc = isSandbox 
+        const scriptSrc = isSandbox
             ? 'https://sandbox.sslcommerz.com/easycheckout/v1/easyCheckout.js'
             : 'https://secure.sslcommerz.com/easycheckout/v1/easyCheckout.js';
-        
         const scriptId = 'sslcommerz-script';
-        
-        if (window.easyCheckout && document.getElementById(scriptId)?.src === scriptSrc) {
+
+        // If script is already loaded and ready, we're good.
+        if (window.easyCheckout) {
             setScriptLoaded(true);
             return;
         }
 
         let script = document.getElementById(scriptId) as HTMLScriptElement;
 
-        const handleLoad = () => setScriptLoaded(true);
+        const handleLoad = () => {
+            setScriptLoaded(true);
+        };
+        
         const handleError = () => {
             toast({ variant: 'destructive', title: 'Error', description: 'Could not load payment gateway script.' });
             const failedScript = document.getElementById(scriptId);
@@ -100,21 +88,34 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
         };
 
         if (script) {
-            script.remove();
+            // If a script tag exists but has the wrong src (e.g. switched from sandbox to prod), replace it
+            if(script.src !== scriptSrc) {
+                script.remove();
+                script = document.createElement('script');
+                script.id = scriptId;
+                script.src = scriptSrc;
+                script.async = true;
+                document.body.appendChild(script);
+            }
+        } else {
+            // If no script tag exists, create it
+            script = document.createElement('script');
+            script.id = scriptId;
+            script.src = scriptSrc;
+            script.async = true;
+            document.body.appendChild(script);
         }
-        
-        script = document.createElement('script');
-        script.src = scriptSrc;
-        script.id = scriptId;
-        script.async = true;
-        document.body.appendChild(script);
 
+        // Add listeners regardless. If already loaded, it might fire immediately.
         script.addEventListener('load', handleLoad);
         script.addEventListener('error', handleError);
 
         return () => {
-            script.removeEventListener('load', handleLoad);
-            script.removeEventListener('error', handleError);
+            // ONLY remove the listeners on cleanup. Don't remove the script tag itself.
+            if (script) {
+                script.removeEventListener('load', handleLoad);
+                script.removeEventListener('error', handleError);
+            }
         };
     }, [settings, toast]);
     
