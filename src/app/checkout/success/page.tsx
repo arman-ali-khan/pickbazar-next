@@ -11,6 +11,9 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { Separator } from '@/components/ui/separator';
 import { useSupabase } from '@/lib/supabase/provider';
+import { useAppDispatch } from '@/lib/redux/hooks';
+import { clearCart } from '@/lib/redux/slices/cartSlice';
+
 
 interface OrderItem {
     id: number;
@@ -34,10 +37,15 @@ function SuccessContent() {
     const [orderData, setOrderData] = useState<OrderData | null>(null);
     const [loading, setLoading] = useState(true);
     const { supabase } = useSupabase();
+    const dispatch = useAppDispatch();
 
     useEffect(() => {
         document.title = 'Order Successful | Pickbazar';
-    }, []);
+        dispatch(clearCart());
+        localStorage.removeItem('shippingInfo');
+        localStorage.removeItem('appliedDiscount');
+        localStorage.removeItem('shippingCost');
+    }, [dispatch]);
 
     const getOrderDetails = useCallback(async () => {
         if (!orderNumber) {
@@ -153,3 +161,5 @@ export default function OrderSuccessPage() {
         </div>
     );
 }
+
+    
