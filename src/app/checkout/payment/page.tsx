@@ -90,19 +90,35 @@ export default function PaymentPage() {
 
         const fetchSettings = async () => {
             setLoadingSettings(true);
-            const { data } = await supabase.rpc('get_all_settings');
-            if (data && data[0]) {
-                const settings = data[0];
-                setPaymentSettings(settings);
-                document.title = `Payment | ${settings.site_title || 'Karwanbazar'}`;
+            const { data, error } = await supabase.from('settings').select('key, value');
+            if (error) {
+                toast({ variant: 'destructive', title: 'Error fetching settings' });
+                setLoadingSettings(false);
+                return;
+            }
+
+            if (data) {
+                const settingsData = data.reduce((acc, { key, value }) => {
+                    if (!key) return acc;
+                    if (key.startsWith('enable_') || key === 'maintenance_mode') {
+                        (acc as any)[key] = value === 'true';
+                    } else {
+                        (acc as any)[key] = value;
+                    }
+                    return acc;
+                }, {} as { [key: string]: any });
+                
+                setPaymentSettings(settingsData);
+                document.title = `Payment | ${settingsData.site_title || 'Karwanbazar'}`;
+
                 // Set default payment method
-                if (settings.enable_card_payment) {
+                if (settingsData.enable_card_payment) {
                     setSelectedMethod('card');
-                } else if (settings.enable_mobile_banking) {
+                } else if (settingsData.enable_mobile_banking) {
                     setSelectedMethod('mobile-banking');
-                } else if (settings.enable_aamarpay) {
+                } else if (settingsData.enable_aamarpay) {
                     setSelectedMethod('aamarpay');
-                } else if (settings.enable_cod) {
+                } else if (settingsData.enable_cod) {
                     setSelectedMethod('cod');
                 }
             } else {
@@ -111,7 +127,7 @@ export default function PaymentPage() {
             setLoadingSettings(false);
         };
         fetchSettings();
-    }, [router, cartItems, authLoading, user, toast, supabase]);
+    }, [router, cartItems.length, authLoading, user, toast, supabase]);
     
     const handlePayment = async () => {
         if (!shippingInfo || !user) {
