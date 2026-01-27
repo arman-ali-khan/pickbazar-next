@@ -1,4 +1,3 @@
-
 'use client';
 import {
   DialogContent,
@@ -66,57 +65,46 @@ export function SslCommerzDialog({ amount, onSuccess, shippingInfo }: SslCommerz
             ? 'https://sandbox.sslcommerz.com/easycheckout/v1/easyCheckout.js'
             : 'https://secure.sslcommerz.com/easycheckout/v1/easyCheckout.js';
         const scriptId = 'sslcommerz-script';
-
-        // If script is already loaded and ready, we're good.
+        
         if (window.easyCheckout) {
             setScriptLoaded(true);
             return;
         }
 
-        let script = document.getElementById(scriptId) as HTMLScriptElement;
+        let script = document.getElementById(scriptId) as HTMLScriptElement | null;
 
-        const handleLoad = () => {
-            setScriptLoaded(true);
-        };
-        
-        const handleError = () => {
-            toast({ variant: 'destructive', title: 'Error', description: 'Could not load payment gateway script.' });
-            const failedScript = document.getElementById(scriptId);
-            if (failedScript) {
-                document.body.removeChild(failedScript);
-            }
-        };
-
-        if (script) {
-            // If a script tag exists but has the wrong src (e.g. switched from sandbox to prod), replace it
-            if(script.src !== scriptSrc) {
-                script.remove();
-                script = document.createElement('script');
-                script.id = scriptId;
-                script.src = scriptSrc;
-                script.async = true;
-                document.body.appendChild(script);
-            }
-        } else {
-            // If no script tag exists, create it
-            script = document.createElement('script');
-            script.id = scriptId;
-            script.src = scriptSrc;
-            script.async = true;
-            document.body.appendChild(script);
+        // If a script with the wrong source exists, remove it.
+        if (script && script.src !== scriptSrc) {
+            script.remove();
+            script = null;
         }
+        
+        // If script doesn't exist, create it. This is the main path.
+        if (!script) {
+            const newScript = document.createElement('script');
+            newScript.id = scriptId;
+            newScript.src = scriptSrc;
+            newScript.async = true;
 
-        // Add listeners regardless. If already loaded, it might fire immediately.
-        script.addEventListener('load', handleLoad);
-        script.addEventListener('error', handleError);
+            const handleLoad = () => {
+                setScriptLoaded(true);
+                newScript.removeEventListener('load', handleLoad);
+                newScript.removeEventListener('error', handleError);
+            };
 
-        return () => {
-            // ONLY remove the listeners on cleanup. Don't remove the script tag itself.
-            if (script) {
-                script.removeEventListener('load', handleLoad);
-                script.removeEventListener('error', handleError);
-            }
-        };
+            const handleError = () => {
+                toast({ variant: 'destructive', title: 'Error', description: 'Could not load payment gateway script.' });
+                document.getElementById(scriptId)?.remove();
+                newScript.removeEventListener('load', handleLoad);
+                newScript.removeEventListener('error', handleError);
+            };
+
+            newScript.addEventListener('load', handleLoad);
+            newScript.addEventListener('error', handleError);
+            
+            document.body.appendChild(newScript);
+        }
+        
     }, [settings, toast]);
     
     const handleSslPayment = () => {
