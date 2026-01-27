@@ -35,7 +35,7 @@ export default function OfferCarousel({ offers }: { offers: OfferForCarousel[] }
       <Carousel
         plugins={[Autoplay({ delay: 5000 })]}
         opts={{ loop: true }}
-        className="w-full relative"
+        className="w-full"
       >
         <CarouselContent className="-ml-4">
           {offers.map((offer, index) => {
@@ -74,8 +74,8 @@ export default function OfferCarousel({ offers }: { offers: OfferForCarousel[] }
             );
           })}
         </CarouselContent>
-        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10" />
-        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10" />
+        <CarouselPrevious />
+        <CarouselNext />
       </Carousel>
     </section>
   )
