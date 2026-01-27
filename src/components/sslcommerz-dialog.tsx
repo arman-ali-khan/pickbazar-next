@@ -48,7 +48,6 @@ export function SslCommerzDialog({ amount, shippingInfo, cartItems, appliedDisco
     const [settings, setSettings] = useState<any>(null);
     const [isLoadingSettings, setIsLoadingSettings] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [scriptLoaded, setScriptLoaded] = useState(false);
 
     useEffect(() => {
         const fetchSettings = async () => {
@@ -63,79 +62,95 @@ export function SslCommerzDialog({ amount, shippingInfo, cartItems, appliedDisco
     }, [supabase]);
 
     const handleSslPayment = async () => {
-        if (typeof window === 'undefined' || !window.easyCheckout) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Payment gateway is not ready. Please refresh and try again.' });
-            return;
-        }
-        if (!settings || !shippingInfo || !user) {
-            toast({ variant: 'destructive', title: 'Error', description: 'Configuration, shipping info, or user session is missing.' });
-            return;
-        }
+        if (isProcessing) return;
 
-        const isSandbox = settings.sslcommerz_mode === 'sandbox';
-        const store_id = isSandbox ? settings.sslcommerz_sandbox_store_id : settings.sslcommerz_production_store_id;
-        const store_password = isSandbox ? settings.sslcommerz_sandbox_store_password : settings.sslcommerz_production_store_password;
-
-        if (!store_id || !store_password) {
-            toast({ variant: 'destructive', title: 'Configuration Error', description: 'SSLCommerz is not configured correctly in admin settings.' });
-            return;
-        }
-
-        setIsProcessing(true);
-
-        const orderItems = cartItems.map(item => ({
-            product_id: item.id,
-            quantity: item.quantity,
-            price: item.price,
-        }));
-        
-        const { data: orderNumber, error: createOrderError } = await supabase.rpc('create_order', {
-            p_total_amount: amount,
-            p_shipping_details: shippingInfo,
-            p_items: orderItems,
-            p_payment_method: 'sslcommerz',
-            p_transaction_details: null,
-            p_coupon_code: appliedDiscount?.code || null,
-            p_discount_amount: appliedDiscount?.discount || 0,
-            p_initial_status: 'Pending'
-        });
-
-        if (createOrderError || !orderNumber) {
-            toast({ variant: 'destructive', title: 'Order Creation Failed', description: createOrderError?.message || 'Could not initiate the order.' });
-            setIsProcessing(false);
-            return;
-        }
-        
-        dispatch(clearCart());
-        localStorage.removeItem('shippingInfo');
-        localStorage.removeItem('appliedDiscount');
-        localStorage.removeItem('shippingCost');
-
-        const paymentData = {
-            store_id,
-            store_password,
-            total_amount: amount,
-            currency: 'BDT',
-            tran_id: orderNumber,
-            success_url: `${window.location.origin}/api/payment/success`,
-            fail_url: `${window.location.origin}/api/payment/fail`,
-            cancel_url: `${window.location.origin}/api/payment/cancel`,
-            ipn_url: `${window.location.origin}/api/payment/ipn`,
-            cus_name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
-            cus_email: shippingInfo.email,
-            cus_phone: shippingInfo.phone,
-            cus_add1: shippingInfo.address,
-            cus_city: shippingInfo.city,
-            cus_state: shippingInfo.state,
-            cus_postcode: shippingInfo.zip,
-            cus_country: 'Bangladesh',
-            shipping_method: 'Courier',
-            product_name: 'Various Items from Pickbazar',
-            product_category: 'Ecommerce',
-            product_profile: 'general',
+        const checkGateway = (retries = 10): Promise<void> => {
+            return new Promise((resolve, reject) => {
+                if (typeof window !== 'undefined' && window.easyCheckout) {
+                    return resolve();
+                }
+                if (retries === 0) {
+                    return reject(new Error('Payment gateway is not ready. Please refresh and try again.'));
+                }
+                setTimeout(() => {
+                    checkGateway(retries - 1).then(resolve, reject);
+                }, 500);
+            });
         };
+        
+        try {
+            setIsProcessing(true);
+            await checkGateway();
 
-        window.easyCheckout(paymentData);
+            if (!settings || !shippingInfo || !user) {
+                throw new Error('Configuration, shipping info, or user session is missing.');
+            }
+
+            const isSandbox = settings.sslcommerz_mode === 'sandbox';
+            const store_id = isSandbox ? settings.sslcommerz_sandbox_store_id : settings.sslcommerz_production_store_id;
+            const store_password = isSandbox ? settings.sslcommerz_sandbox_store_password : settings.sslcommerz_production_store_password;
+
+            if (!store_id || !store_password) {
+                throw new Error('SSLCommerz is not configured correctly in admin settings.');
+            }
+
+            const orderItems = cartItems.map(item => ({
+                product_id: item.id,
+                quantity: item.quantity,
+                price: item.price,
+            }));
+            
+            const { data: orderNumber, error: createOrderError } = await supabase.rpc('create_order', {
+                p_total_amount: amount,
+                p_shipping_details: shippingInfo,
+                p_items: orderItems,
+                p_payment_method: 'sslcommerz',
+                p_transaction_details: null,
+                p_coupon_code: appliedDiscount?.code || null,
+                p_discount_amount: appliedDiscount?.discount || 0,
+                p_initial_status: 'Pending'
+            });
+
+            if (createOrderError || !orderNumber) {
+                throw new Error(createOrderError?.message || 'Could not initiate the order.');
+            }
+            
+            dispatch(clearCart());
+            localStorage.removeItem('shippingInfo');
+            localStorage.removeItem('appliedDiscount');
+            localStorage.removeItem('shippingCost');
+
+            const paymentData = {
+                store_id,
+                store_password,
+                total_amount: amount,
+                currency: 'BDT',
+                tran_id: orderNumber,
+                success_url: `${window.location.origin}/api/payment/success`,
+                fail_url: `${window.location.origin}/api/payment/fail`,
+                cancel_url: `${window.location.origin}/api/payment/cancel`,
+                ipn_url: `${window.location.origin}/api/payment/ipn`,
+                cus_name: `${shippingInfo.firstName} ${shippingInfo.lastName}`,
+                cus_email: shippingInfo.email,
+                cus_phone: shippingInfo.phone,
+                cus_add1: shippingInfo.address,
+                cus_city: shippingInfo.city,
+                cus_state: shippingInfo.state,
+                cus_postcode: shippingInfo.zip,
+                cus_country: 'Bangladesh',
+                shipping_method: 'NO',
+                product_name: 'Various Items from Pickbazar',
+                product_category: 'Ecommerce',
+                product_profile: 'general',
+            };
+
+            window.easyCheckout(paymentData);
+            // Don't set isProcessing false, as the page will redirect or popup will be shown
+
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Error', description: error.message });
+            setIsProcessing(false);
+        }
     }
 
     const scriptSrc = settings?.sslcommerz_mode === 'sandbox'
@@ -144,7 +159,17 @@ export function SslCommerzDialog({ amount, shippingInfo, cartItems, appliedDisco
 
     return (
         <>
-            {settings && <Script src={scriptSrc} strategy="lazyOnload" onLoad={() => setScriptLoaded(true)} />}
+            {settings && <Script 
+                src={scriptSrc} 
+                strategy="lazyOnload" 
+                onError={() => {
+                     toast({
+                        variant: 'destructive',
+                        title: 'Script Load Error',
+                        description: 'Could not load payment gateway script. Please check your ad blocker or network and try again.'
+                    });
+                }}
+            />}
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>SSLCommerz Payment</DialogTitle>
@@ -168,7 +193,7 @@ export function SslCommerzDialog({ amount, shippingInfo, cartItems, appliedDisco
                     <DialogClose asChild>
                         <Button variant="outline">Cancel</Button>
                     </DialogClose>
-                    <Button onClick={handleSslPayment} disabled={isLoadingSettings || isProcessing || !scriptLoaded}>
+                    <Button onClick={handleSslPayment} disabled={isLoadingSettings || isProcessing}>
                         {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : 'Proceed to Pay'}
                     </Button>
                 </DialogFooter>
@@ -176,4 +201,3 @@ export function SslCommerzDialog({ amount, shippingInfo, cartItems, appliedDisco
         </>
     );
 }
-    
