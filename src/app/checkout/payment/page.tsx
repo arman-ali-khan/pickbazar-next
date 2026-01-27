@@ -160,6 +160,7 @@ export default function PaymentPage() {
         });
 
         if (error) {
+            console.log('error',error)
             toast({
                 variant: 'destructive',
                 title: 'Order Failed',

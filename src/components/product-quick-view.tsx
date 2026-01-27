@@ -82,7 +82,7 @@ function RelatedProductCard({ product }: { product: RelatedProduct }) {
                             className="w-full flex items-center justify-between bg-gray-100 border-gray-200 hover:bg-gray-200 hover:border-gray-300 text-gray-700"
                             onClick={() => dispatch(addToCart({ product: product as Product }))}
                         >
-                            <span>Add</span>
+                            <span>Add to cart</span>
                             <Plus className="h-4 w-4" />
                         </Button>
                     )}

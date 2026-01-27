@@ -20,10 +20,10 @@ export async function POST(request: NextRequest) {
 
     // 1. Fetch aamarPay settings
     const { data: settingsData } = await supabase.rpc('get_all_settings');
-    const settings = settingsData?.[0];
-
+    const settings: any    = settingsData?.[0];
+    console.log(settings,'settings')
     if (settings?.enable_aamarpay !== 'true') {
-        return NextResponse.json({ error: 'aamarPay is not enabled.' }, { status: 500 });
+        return NextResponse.json({ error: 'aamarPay is not enabled.',settings:settingsData }, { status: 500 });
     }
 
     const isSandbox = settings.aamarpay_mode === 'sandbox';
