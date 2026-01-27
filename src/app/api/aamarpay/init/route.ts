@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to create order: ${createOrderError.message}`);
     }
 
-    const origin = "https://6000-firebase-bazaarclone-test-1769341384586.cluster-44kx2eiocbhe2tyk3zoyo3ryuo.cloudworkstations.dev";
+    const origin = request.nextUrl.origin;
     const paymentData = {
         store_id,
         signature_key,
