@@ -26,9 +26,23 @@ export function SslCommerzDialog({ amount, onSuccess }: SslCommerzDialogProps) {
 
     useEffect(() => {
         const fetchSettings = async () => {
-            const { data } = await supabase.rpc('get_all_settings');
-            if (data && data[0]) {
-                setSettings(data[0]);
+            const { data, error } = await supabase
+                .from('settings')
+                .select('key, value')
+                .in('key', [
+                    'sslcommerz_mode',
+                    'sslcommerz_sandbox_store_id',
+                    'sslcommerz_production_store_id'
+                ]);
+            
+            if (error) {
+                console.error('Error fetching SSLCommerz settings:', error);
+            } else if (data) {
+                const settingsData = data.reduce((acc, { key, value }) => {
+                    if (key) (acc as any)[key] = value;
+                    return acc;
+                }, {} as { [key: string]: any });
+                setSettings(settingsData);
             }
             setIsLoading(false);
         };

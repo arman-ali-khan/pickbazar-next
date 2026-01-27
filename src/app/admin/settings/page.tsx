@@ -86,11 +86,41 @@ function SettingsContent() {
 
     const fetchSettings = useCallback(async () => {
         setLoading(true);
-        const { data, error } = await supabase.rpc('get_all_settings');
+        const { data, error } = await supabase.from('settings').select('key, value');
+        
         if (error) {
             toast({ variant: 'destructive', title: 'Error fetching settings', description: error.message });
-        } else if (data && data.length > 0) {
-            const settingsData = data[0];
+            setLoading(false);
+            return;
+        } 
+        
+        if (data) {
+            const settingsData = data.reduce((acc, { key, value }) => {
+                if (!key) return acc;
+    
+                if (value === null) {
+                    (acc as any)[key] = null;
+                    return acc;
+                }
+    
+                // Specific parsing for known non-string types
+                if (['social_links', 'mobile_banking_options'].includes(key)) {
+                    try {
+                        (acc as any)[key] = JSON.parse(value);
+                    } catch {
+                        (acc as any)[key] = []; // fallback to empty array on parse error
+                    }
+                } else if (key.startsWith('enable_') || key === 'maintenance_mode') {
+                    (acc as any)[key] = value === 'true';
+                } else if (key === 'shipping_cost') {
+                    const numValue = parseFloat(value);
+                    (acc as any)[key] = isNaN(numValue) ? null : numValue;
+                } else {
+                    (acc as any)[key] = value;
+                }
+                return acc;
+            }, {} as { [key: string]: any });
+            
             setSettings(settingsData);
             setSocialLinks(Array.isArray(settingsData.social_links) ? settingsData.social_links : []);
             setMobileBankingOptions(Array.isArray(settingsData.mobile_banking_options) ? settingsData.mobile_banking_options : []);
