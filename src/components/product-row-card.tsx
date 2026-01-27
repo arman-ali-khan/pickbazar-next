@@ -88,7 +88,7 @@ export default function ProductRowCard({ product }: { product: Product }) {
                                     className="w-full flex items-center justify-between"
                                     onClick={handleAddToCart}
                                 >
-                                    <span>Add</span>
+                                    <span>Add to cart</span>
                                     <Plus className="h-4 w-4" />
                                 </Button>
                             )}

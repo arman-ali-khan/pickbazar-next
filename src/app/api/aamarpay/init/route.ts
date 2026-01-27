@@ -1,3 +1,4 @@
+
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers';
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
     const { data: settingsData } = await supabase.rpc('get_all_settings');
     const settings = settingsData?.[0];
 
-    if (!settings?.enable_aamarpay) {
+    if (settings?.enable_aamarpay !== 'true') {
         return NextResponse.json({ error: 'aamarPay is not enabled.' }, { status: 500 });
     }
 
