@@ -352,7 +352,7 @@ export default function PaymentPage() {
                                 {`Pay $${total.toFixed(2)}`}
                             </Button>
                         </DialogTrigger>
-                        <SslCommerzDialog amount={total} onSuccess={handlePayment} />
+                        <SslCommerzDialog amount={total} onSuccess={handlePayment} shippingInfo={shippingInfo} />
                     </Dialog>
                 ) : (
                     <Button onClick={handlePayment} className="w-full h-12 text-lg" disabled={isProcessing || total < 0 || (selectedMethod === 'mobile-banking' && (!trxId || !mobileLast4))}>
