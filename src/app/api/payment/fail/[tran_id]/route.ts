@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { supabaseUrl, supabaseAnonKey } from '@/lib/supabase/config';
 
 export async function POST(request: NextRequest, { params }: { params: { tran_id: string } }) {
   const tran_id = params.tran_id;
@@ -7,7 +9,12 @@ export async function POST(request: NextRequest, { params }: { params: { tran_id
   
   if (tran_id) {
     try {
-        const supabase = createClient();
+        const cookieStore = cookies();
+        const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+            cookies: {
+                get(name: string) { return cookieStore.get(name)?.value },
+            },
+        });
         await supabase
             .from('orders')
             .update({ status: 'Failed' })

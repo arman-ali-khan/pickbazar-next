@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { supabaseUrl, supabaseAnonKey } from '@/lib/supabase/config';
 import SSLCommerzPayment from 'sslcommerz-lts';
 
 export async function POST(request: NextRequest) {
@@ -7,7 +9,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { amount, shippingInfo, cartItems, appliedDiscount } = body;
 
-    const supabase = createClient();
+    const cookieStore = cookies();
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+        cookies: {
+            get(name: string) {
+              return cookieStore.get(name)?.value
+            },
+        },
+    });
 
     // 1. Fetch settings
     const { data: settingsData } = await supabase.rpc('get_all_settings');

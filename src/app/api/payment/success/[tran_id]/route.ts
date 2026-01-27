@@ -1,4 +1,6 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { supabaseUrl, supabaseAnonKey } from '@/lib/supabase/config';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { createOrderNotification } from '@/app/actions';
@@ -8,7 +10,13 @@ export async function POST(request: NextRequest, { params }: { params: { tran_id
   try {
     const formData = await request.formData();
     const data = Object.fromEntries(formData.entries());
-    const supabase = createClient();
+    
+    const cookieStore = cookies();
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+        cookies: {
+            get(name: string) { return cookieStore.get(name)?.value },
+        },
+    });
     
     const { status, tran_id, val_id, amount } = data;
 
