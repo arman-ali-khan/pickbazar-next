@@ -19,11 +19,19 @@ export async function POST(request: NextRequest) {
     });
 
     // 1. Fetch aamarPay settings
-    const { data: settingsData } = await supabase.rpc('get_all_settings');
-    const settings: any    = settingsData?.[0];
-    console.log(settings,'settings')
+    const { data: settingsList, error: settingsError } = await supabase.from('settings').select('key, value');
+
+    if (settingsError) {
+        throw new Error(`Failed to fetch settings: ${settingsError.message}`);
+    }
+
+    const settings = (settingsList || []).reduce((acc, { key, value }) => {
+        if (key) (acc as any)[key] = value;
+        return acc;
+    }, {} as { [key: string]: any });
+    
     if (settings?.enable_aamarpay !== 'true') {
-        return NextResponse.json({ error: 'aamarPay is not enabled.',settings:settingsData }, { status: 500 });
+        return NextResponse.json({ error: 'aamarPay is not enabled.',settings:settings }, { status: 500 });
     }
 
     const isSandbox = settings.aamarpay_mode === 'sandbox';
