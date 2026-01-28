@@ -59,7 +59,7 @@ export function LoginDialog() {
 
   const handleRegister = async () => {
     setIsSubmitting(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -72,6 +72,15 @@ export function LoginDialog() {
     if (error) {
       toast({ variant: "destructive", title: "Registration Failed", description: error.message });
     } else {
+       if (data.user) {
+        // Manually ensure the profile is created. Use upsert to avoid race conditions with the trigger.
+        await supabase
+          .from('profiles')
+          .upsert({ 
+            id: data.user.id, 
+            full_name: name,
+          });
+      }
       toast({ title: 'Registration Pending', description: "Please check your email to confirm your account." });
       setView('login');
     }
