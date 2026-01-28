@@ -10,6 +10,7 @@ import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
 import LucideIcon from '@/components/lucide-icon';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 interface Category {
   id: number;
@@ -175,7 +176,7 @@ export default function HomeSectionsManagerPage() {
                                 <div key={section.category_id} className="flex items-center gap-4 p-3 border rounded-lg bg-muted/50">
                                     <GripVertical className="h-5 w-5 text-muted-foreground" />
                                     <LucideIcon name={section.categories.icon} className="h-5 w-5 text-muted-foreground" />
-                                    <p className="flex-1 font-medium">{section.categories.name}</p>
+                                   <p className="flex-1 font-medium">{section.categories.name}</p>
                                     <div className="flex items-center gap-1">
                                         <Button variant="ghost" size="icon" onClick={() => handleMove(index, 'up')} disabled={index === 0}>
                                             <ArrowUp className="h-4 w-4" />
