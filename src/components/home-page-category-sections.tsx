@@ -21,6 +21,7 @@ export default function HomePageCategorySections({ sections }: { sections: any[]
                     <div className="flex justify-between items-center mb-6">
                         <h2 className="text-2xl font-bold flex items-center gap-3">
                            <LucideIcon name={section.categories.icon} className="h-6 w-6 text-primary" />
+                           
                            <span>{section.categories.name}</span>
                         </h2>
                         <Button variant="link" asChild>

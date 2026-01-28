@@ -82,7 +82,10 @@ export default function HeroSection({ title, subtitle, buttonText, buttonUrl, im
                                         <AccordionTrigger className="p-3 text-sm font-medium text-white hover:text-primary hover:no-underline rounded-md hover:bg-gray-100">
                                             <div className="flex items-center gap-3">
                                                 <LucideIcon name={category.icon} className="h-5 w-5 text-muted-foreground" />
+                                               
+                                                <Link href={`/shop?category=${encodeURIComponent(category.name)}`}>
                                                 <span>{category.name}</span>
+                                                </Link>
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent>
