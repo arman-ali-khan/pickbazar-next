@@ -64,7 +64,7 @@ export default function EditProductPage() {
         
         const { data: productData, error: productError } = await supabase
             .from('products')
-            .select('*, tags(*), product_categories(category_id)')
+            .select('*, product_tags(tags(*)), product_categories(category_id)')
             .eq('id', productId)
             .single();
 
@@ -87,7 +87,10 @@ export default function EditProductPage() {
         setOriginalPrice(productData.original_price);
         setStock(productData.stock);
         setStatus(productData.status);
-        setSelectedTags(productData.tags || []);
+        
+        const fetchedTags = productData.product_tags ? (productData.product_tags as any[]).map((pt: any) => pt.tags).filter(Boolean) : [];
+        setSelectedTags(fetchedTags);
+
         setFeaturedImagePreview(productData.featured_image_url);
         setGalleryImagePreviews(productData.gallery_urls || []);
         if (productData.product_categories) {
@@ -470,3 +473,5 @@ export default function EditProductPage() {
         </main>
     );
 }
+
+    
