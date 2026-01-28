@@ -9,7 +9,7 @@ export default async function RecommendedProducts() {
   const { data, error } = await supabase.rpc('get_recommended_products', { p_limit: 12 });
 
   if (error && error.message) {
-    console.error("Error fetching recommended products:", error.message);
+    // Error is handled gracefully by not showing the section.
   }
 
   const productsToShow: Product[] = (data || []).map((p: any) => ({
