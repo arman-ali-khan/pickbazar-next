@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -44,13 +45,11 @@ interface OrderDetails {
     order_items: OrderItem[];
     coupon_code: string | null;
     discount_amount: number | null;
-    transactions: {
-        payment_method: string;
-        transaction_details: {
-            trxId: string;
-            mobileLast4: string;
-        } | null;
-    }[];
+    payment_method: string | null;
+    payment_details: {
+        trxId: string;
+        mobileLast4: string;
+    } | null;
 }
 
 interface OrderTimelineItem {
@@ -82,8 +81,7 @@ export default function MyOrderDetailsPage() {
             .from('orders')
             .select(`
                 *,
-                order_items ( id, quantity, price_at_purchase, products ( name, featured_image_url ) ),
-                transactions ( payment_method, transaction_details )
+                order_items ( id, quantity, price_at_purchase, products ( name, featured_image_url ) )
             `)
             .eq('user_id', user.id)
             .eq('order_number', orderNumber)
@@ -172,7 +170,7 @@ export default function MyOrderDetailsPage() {
 
     const subtotal = order.order_items.reduce((acc, item) => acc + item.price_at_purchase * item.quantity, 0);
     const shipping = Number(order.total_amount) + (order.discount_amount || 0) - subtotal;
-    const transaction = order.transactions?.[0];
+    const transactionDetails = order.payment_details;
 
     return (
         <div className="bg-muted/20 min-h-screen">
@@ -268,13 +266,13 @@ export default function MyOrderDetailsPage() {
                              <Separator className="my-4" />
                              <div>
                                 <h4 className="font-semibold mb-2">Payment Information</h4>
-                                {transaction ? (
+                                {order.payment_method ? (
                                     <div className="text-sm text-muted-foreground">
-                                        <p className="capitalize">Method: {transaction.payment_method}</p>
-                                        {transaction.payment_method === 'mobile-banking' && transaction.transaction_details && (
+                                        <p className="capitalize">Method: {order.payment_method}</p>
+                                        {order.payment_method === 'mobile-banking' && transactionDetails && (
                                             <div className="mt-1">
-                                                <p>Transaction ID: {transaction.transaction_details.trxId}</p>
-                                                <p>Mobile (last 4): {transaction.transaction_details.mobileLast4}</p>
+                                                <p>Transaction ID: {transactionDetails.trxId}</p>
+                                                <p>Mobile (last 4): {transactionDetails.mobileLast4}</p>
                                             </div>
                                         )}
                                     </div>
