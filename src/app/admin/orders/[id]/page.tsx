@@ -7,9 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ChevronLeft, Bell } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { useSupabase } from '@/lib/supabase/provider';
@@ -18,7 +17,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { updateOrderStatus } from '@/app/actions/order';
 import { Timeline, TimelineItem, TimelinePoint, TimelineTime, TimelineTitle } from '@/components/ui/timeline';
 import { format } from 'date-fns';
-
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Label } from '@/components/ui/label';
 
 interface OrderItem {
     id: number;
@@ -82,7 +82,6 @@ export default function OrderDetailsPage() {
     const [order, setOrder] = useState<OrderDetails | null>(null);
     const [timeline, setTimeline] = useState<OrderTimelineItem[]>([]);
     const [loading, setLoading] = useState(true);
-    const [status, setStatus] = useState<OrderStatus>('Pending');
     const [isUpdating, startUpdateTransition] = useTransition();
 
     const fetchOrder = useCallback(async () => {
@@ -96,7 +95,6 @@ export default function OrderDetailsPage() {
         } else {
             const orderData = data[0] as OrderDetails;
             setOrder(orderData);
-            setStatus(orderData.status as OrderStatus);
 
             const { data: timelineData } = await supabase.rpc('get_order_history', { p_order_id: orderData.id });
             if (timelineData) {
@@ -110,22 +108,29 @@ export default function OrderDetailsPage() {
         fetchOrder();
     }, [fetchOrder]);
     
-    const handleUpdate = async () => {
+    const handleStatusUpdate = (newStatus: OrderStatus) => {
         if (!order) return;
         startUpdateTransition(async () => {
-            const result = await updateOrderStatus(order.id, status);
+            const result = await updateOrderStatus(order.id, newStatus);
 
             if (result.error) {
                 toast({ variant: "destructive", title: "Update Failed", description: result.error });
             } else {
                 toast({
                     title: "Order Status Updated",
-                    description: `Order #${result.orderNumber} is now ${status}. A notification has been sent.`,
+                    description: `Order #${result.orderNumber} is now ${newStatus}. A notification has been sent.`,
                 });
                 fetchOrder(); // Re-fetch to confirm update
             }
         });
     };
+
+    const orderStatusSequence: OrderStatus[] = ['Pending', 'Processing', 'Shipped', 'Delivered'];
+    const currentStatusIndex = order ? orderStatusSequence.indexOf(order.status) : -1;
+    const nextStatus = currentStatusIndex !== -1 && currentStatusIndex < orderStatusSequence.length - 1
+        ? orderStatusSequence[currentStatusIndex + 1]
+        : null;
+
 
     if (loading) {
         return (
@@ -135,7 +140,6 @@ export default function OrderDetailsPage() {
                     <Skeleton className="h-6 w-40" />
                     <div className="hidden items-center gap-2 md:ml-auto md:flex">
                         <Skeleton className="h-9 w-24" />
-                        <Skeleton className="h-9 w-40" />
                     </div>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -229,10 +233,6 @@ export default function OrderDetailsPage() {
                 </h1>
                 <div className="hidden items-center gap-2 md:ml-auto md:flex">
                     <Button variant="outline" size="sm">Invoice</Button>
-                    <Button size="sm" onClick={handleUpdate} disabled={isUpdating}>
-                        <Bell className="mr-2 h-4 w-4" />
-                        {isUpdating ? 'Sending...' : 'Send Notification'}
-                    </Button>
                 </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -240,7 +240,7 @@ export default function OrderDetailsPage() {
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
                             <CardTitle>Order {order.order_number}</CardTitle>
-                             <Badge variant={getStatusVariant(status)}>{status}</Badge>
+                             <Badge variant={getStatusVariant(order.status)}>{order.status}</Badge>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
@@ -346,25 +346,45 @@ export default function OrderDetailsPage() {
                     </Card>
                     <Card>
                         <CardHeader>
-                             <CardTitle>Order Status</CardTitle>
+                            <CardTitle>Manage Order</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <Select value={status} onValueChange={(value) => setStatus(value as OrderStatus)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Pending">Pending</SelectItem>
-                                    <SelectItem value="Processing">Processing</SelectItem>
-                                    <SelectItem value="Shipped">Shipped</SelectItem>
-                                    <SelectItem value="Delivered">Delivered</SelectItem>
-                                    <SelectItem value="Cancelled">Cancelled</SelectItem>
-                                </SelectContent>
-                            </Select>
+                        <CardContent className="space-y-4">
+                             {nextStatus && (
+                                <div>
+                                    <Label className="text-sm text-muted-foreground">Next Step</Label>
+                                    <Button className="w-full mt-1" onClick={() => handleStatusUpdate(nextStatus as OrderStatus)} disabled={isUpdating}>
+                                        {isUpdating ? 'Updating...' : `Mark as ${nextStatus}`}
+                                    </Button>
+                                </div>
+                            )}
+                            {order.status === 'Delivered' && (
+                                <p className="text-sm text-center text-green-600 font-medium py-2">Order has been delivered.</p>
+                            )}
+                            {order.status === 'Cancelled' && (
+                                <p className="text-sm text-center text-destructive font-medium py-2">Order has been cancelled.</p>
+                            )}
                         </CardContent>
-                        <CardFooter>
-                            <Button className="w-full" onClick={handleUpdate} disabled={isUpdating}>{isUpdating ? 'Updating...' : 'Update Status'}</Button>
-                        </CardFooter>
+                         {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
+                            <CardFooter className="border-t pt-4">
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive" className="w-full" disabled={isUpdating}>Cancel Order</Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will cancel the order and cannot be undone. A notification will be sent to the customer.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Go Back</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleStatusUpdate('Cancelled')}>Yes, Cancel Order</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </CardFooter>
+                        )}
                     </Card>
                  </div>
             </div>
