@@ -72,15 +72,8 @@ export function LoginDialog() {
     if (error) {
       toast({ variant: "destructive", title: "Registration Failed", description: error.message });
     } else {
-       if (data.user) {
-        // Manually ensure the profile is created. Use upsert to avoid race conditions with the trigger.
-        await supabase
-          .from('profiles')
-          .upsert({ 
-            id: data.user.id, 
-            full_name: name,
-          });
-      }
+      // The database trigger 'on_auth_user_created' will automatically create the profile.
+      // No need to manually insert/upsert here, as it was causing a race condition.
       toast({ title: 'Registration Pending', description: "Please check your email to confirm your account." });
       setView('login');
     }
