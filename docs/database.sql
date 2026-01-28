@@ -1,415 +1,750 @@
--- Drop potentially problematic old functions first to avoid ambiguity errors.
+
+-- Enable RLS
+alter table
+  public.profiles enable row level security;
+
+alter table
+  public.pages enable row level security;
+
+alter table
+  public.settings enable row level security;
+
+alter table
+  public.categories enable row level security;
+
+alter table
+  public.tags enable row level security;
+
+alter table
+  public.products enable row level security;
+
+alter table
+  public.product_categories enable row level security;
+
+alter table
+  public.product_tags enable row level security;
+
+alter table
+  public.orders enable row level security;
+
+alter table
+  public.order_items enable row level security;
+
+alter table
+  public.transactions enable row level security;
+
+alter table
+  public.reviews enable row level security;
+
+alter table
+  public.questions enable row level security;
+
+alter table
+  public.wishlist enable row level security;
+
+alter table
+  public.cards enable row level security;
+
+alter table
+  public.addresses enable row level security;
+
+alter table
+  public.refunds enable row level security;
+
+alter table
+  public.offers enable row level security;
+
+alter table
+  public.promos enable row level security;
+
+alter table
+  public.contact_messages enable row level security;
+
+alter table
+  public.notifications enable row level security;
+
+-- Create Policies
+-- PROFILES
+CREATE POLICY "Public profiles are viewable by everyone." ON profiles FOR
+SELECT
+  USING (TRUE);
+
+CREATE POLICY "Users can insert their own profile." ON profiles FOR INSERT
+WITH
+  CHECK (auth.uid () = id);
+
+CREATE POLICY "Users can update their own profile." ON profiles FOR
+UPDATE
+  USING (auth.uid () = id)
+WITH
+  CHECK (auth.uid () = id);
+
+-- PAGES
+CREATE POLICY "Pages are public." ON pages FOR
+SELECT
+  USING (TRUE);
+
+-- CATEGORIES
+CREATE POLICY "Categories are public." ON categories FOR
+SELECT
+  USING (TRUE);
+
+-- TAGS
+CREATE POLICY "Tags are public." ON tags FOR
+SELECT
+  USING (TRUE);
+
+-- PRODUCTS
+CREATE POLICY "Products are public." ON products FOR
+SELECT
+  USING (TRUE);
+
+-- PRODUCT_CATEGORIES
+CREATE POLICY "Product-categories are public." ON product_categories FOR
+SELECT
+  USING (TRUE);
+
+-- PRODUCT_TAGS
+CREATE POLICY "Product-tags are public." ON product_tags FOR
+SELECT
+  USING (TRUE);
+
+-- REVIEWS
+CREATE POLICY "Reviews are public." ON reviews FOR
+SELECT
+  USING (TRUE);
+
+CREATE POLICY "Users can manage their own reviews." ON reviews FOR ALL USING (auth.uid () = user_id)
+WITH
+  CHECK (auth.uid () = user_id);
+
+-- QUESTIONS
+CREATE POLICY "Questions are public." ON questions FOR
+SELECT
+  USING (TRUE);
+
+CREATE POLICY "Users can manage their own questions." ON questions FOR ALL USING (auth.uid () = user_id)
+WITH
+  CHECK (auth.uid () = user_id);
+
+-- WISHLIST
+CREATE POLICY "Users can manage their own wishlist." ON wishlist FOR ALL USING (auth.uid () = user_id)
+WITH
+  CHECK (auth.uid () = user_id);
+
+-- CARDS
+CREATE POLICY "Users can manage their own cards." ON cards FOR ALL USING (auth.uid () = user_id)
+WITH
+  CHECK (auth.uid () = user_id);
+
+-- ADDRESSES
+CREATE POLICY "Users can manage their own addresses." ON addresses FOR ALL USING (auth.uid () = user_id)
+WITH
+  CHECK (auth.uid () = user_id);
+
+-- ORDERS
+CREATE POLICY "Users can view their own orders." ON orders FOR
+SELECT
+  USING (auth.uid () = user_id);
+
+-- REFUNDS
+CREATE POLICY "Users can manage their own refund requests." ON refunds FOR ALL USING (auth.uid () = user_id AND status = 'Pending')
+WITH
+  CHECK (auth.uid () = user_id);
+
+CREATE POLICY "Admins can manage refund requests." ON refunds FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+);
+
+-- NOTIFICATIONS
+CREATE POLICY "Users can view their own notifications." ON notifications FOR
+SELECT
+  USING (auth.uid () = user_id);
+
+CREATE POLICY "Admins can view admin notifications." ON notifications FOR
+SELECT
+  USING (
+    user_id IS NULL
+    AND (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+-- ADMIN-ONLY WRITE ACCESS
+CREATE POLICY "Admins have full access to everything." ON pages FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+)
+WITH
+  CHECK (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins have full access to everything." ON settings FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+)
+WITH
+  CHECK (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins have full access to everything." ON categories FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+)
+WITH
+  CHECK (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins have full access to everything." ON tags FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+)
+WITH
+  CHECK (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins have full access to everything." ON products FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+)
+WITH
+  CHECK (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins have full access to everything." ON product_categories FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+)
+WITH
+  CHECK (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins have full access to everything." ON product_tags FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+)
+WITH
+  CHECK (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins can manage all reviews." ON reviews FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+);
+
+CREATE POLICY "Admins can manage all questions." ON questions FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+);
+
+CREATE POLICY "Admins can view all wishlists." ON wishlist FOR
+SELECT
+  USING (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins can view all cards." ON cards FOR
+SELECT
+  USING (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins can view all addresses." ON addresses FOR
+SELECT
+  USING (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins can manage all orders." ON orders FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+);
+
+CREATE POLICY "Admins can manage all notifications." ON notifications FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+);
+
+CREATE POLICY "Admins have full access to everything." ON offers FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+)
+WITH
+  CHECK (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins have full access to everything." ON promos FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+)
+WITH
+  CHECK (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+CREATE POLICY "Admins have full access to everything." ON contact_messages FOR ALL USING (
+  (
+    SELECT
+      role
+    FROM
+      profiles
+    WHERE
+      id = auth.uid ()
+  ) IN ('admin', 'manager', 'super-admin')
+)
+WITH
+  CHECK (
+    (
+      SELECT
+        role
+      FROM
+        profiles
+      WHERE
+        id = auth.uid ()
+    ) IN ('admin', 'manager', 'super-admin')
+  );
+
+-- Create required types
+CREATE TYPE public.order_status AS ENUM (
+  'Pending',
+  'Processing',
+  'Shipped',
+  'Delivered',
+  'Cancelled',
+  'Failed'
+);
+
+CREATE TYPE public.user_role AS ENUM (
+  'customer',
+  'manager',
+  'admin',
+  'super-admin'
+);
+
+CREATE TYPE public.notification_type AS ENUM (
+  'new_order',
+  'order_update',
+  'new_review',
+  'new_question',
+  'question_answered',
+  'new_refund',
+  'refund_update',
+  'promotion',
+  'security',
+  'role_update',
+  'new_message'
+);
+
+CREATE TYPE public.address_type AS ENUM ('billing', 'shipping');
+
+CREATE TYPE public.review_status AS ENUM (
+  'Pending',
+  'Approved',
+  'Hidden'
+);
+
+CREATE TYPE public.question_status AS ENUM ('Pending', 'Answered');
+
+CREATE TYPE public.refund_status AS ENUM (
+  'Pending',
+  'Approved',
+  'Rejected'
+);
+
+CREATE TYPE public.offer_status AS ENUM (
+  'active',
+  'inactive',
+  'expired'
+);
+
+CREATE TYPE public.promo_status AS ENUM ('active', 'inactive');
+
+CREATE TYPE public.contact_message_status AS ENUM (
+  'read',
+  'unread'
+);
+
+-- Drop all potential old versions of create_order to avoid signature conflicts.
+-- This is necessary because CREATE OR REPLACE FUNCTION cannot change argument types or defaults.
 DROP FUNCTION IF EXISTS public.create_order(numeric, jsonb, jsonb, text, jsonb, text, numeric);
+
 DROP FUNCTION IF EXISTS public.create_order(numeric, jsonb, jsonb, text, jsonb, text, numeric, text);
 
+DROP FUNCTION IF EXISTS public.create_order(numeric, jsonb, jsonb, text, jsonb, text, numeric, public.order_status);
 
--- EXTENSIONS
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
--- ENUM TYPES
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-        CREATE TYPE public.user_role AS ENUM ('customer', 'manager', 'admin', 'super-admin');
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status') THEN
-        CREATE TYPE public.order_status AS ENUM ('Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Failed');
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'review_status') THEN
-        CREATE TYPE public.review_status AS ENUM ('Pending', 'Approved', 'Hidden');
-    END IF;
-     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'question_status') THEN
-        CREATE TYPE public.question_status AS ENUM ('Pending', 'Answered');
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'refund_status') THEN
-        CREATE TYPE public.refund_status AS ENUM ('Pending', 'Approved', 'Rejected');
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'offer_status') THEN
-        CREATE TYPE public.offer_status AS ENUM ('active', 'inactive', 'expired');
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'product_status') THEN
-        CREATE TYPE public.product_status AS ENUM ('draft', 'active', 'archived');
-    END IF;
-END$$;
-
-
--- TABLES
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id uuid NOT NULL PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name text,
-  avatar_url text,
-  bio text,
-  contact_number text,
-  role public.user_role DEFAULT 'customer'::public.user_role
-);
-
-CREATE TABLE IF NOT EXISTS public.categories (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    name text NOT NULL,
-    slug text NOT NULL UNIQUE,
-    description text,
-    parent_id bigint REFERENCES public.categories(id) ON DELETE SET NULL,
-    icon text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.tags (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    name text NOT NULL UNIQUE,
-    slug text NOT NULL UNIQUE,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.products (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    name text NOT NULL,
-    slug text NOT NULL UNIQUE,
-    description text,
-    unit text,
-    price numeric(10,2) NOT NULL,
-    original_price numeric(10,2),
-    stock integer DEFAULT 0,
-    status public.product_status DEFAULT 'draft'::public.product_status,
-    featured_image_url text,
-    gallery_urls text[],
-    view_count integer DEFAULT 0,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.product_categories (
-    product_id bigint NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-    category_id bigint NOT NULL REFERENCES public.categories(id) ON DELETE CASCADE,
-    PRIMARY KEY (product_id, category_id)
-);
-
-CREATE TABLE IF NOT EXISTS public.product_tags (
-    product_id bigint NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-    tag_id bigint NOT NULL REFERENCES public.tags(id) ON DELETE CASCADE,
-    PRIMARY KEY (product_id, tag_id)
-);
-
-CREATE TABLE IF NOT EXISTS public.orders (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    user_id uuid REFERENCES auth.users(id) ON DELETE SET NULL,
-    order_number text UNIQUE NOT NULL,
-    total_amount numeric(10, 2) NOT NULL,
-    status public.order_status DEFAULT 'Pending'::public.order_status,
-    shipping_details jsonb,
-    payment_details jsonb,
-    coupon_code text,
-    discount_amount numeric(10, 2) DEFAULT 0,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.order_items (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    order_id bigint NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
-    product_id bigint REFERENCES public.products(id) ON DELETE SET NULL,
-    quantity integer NOT NULL,
-    price_at_purchase numeric(10, 2) NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.order_history (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    order_id bigint NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
-    status public.order_status NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.transactions (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    order_id bigint NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
-    amount numeric(10, 2) NOT NULL,
-    payment_method text NOT NULL,
-    transaction_details jsonb,
-    status text NOT NULL, -- e.g., 'Completed', 'Failed'
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.reviews (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    product_id bigint NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-    rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    text text,
-    status public.review_status DEFAULT 'Pending'::public.review_status,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    UNIQUE (user_id, product_id)
-);
-
-CREATE TABLE IF NOT EXISTS public.questions (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    product_id bigint NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-    question_text text NOT NULL,
-    answer_text text,
-    status public.question_status DEFAULT 'Pending'::public.question_status,
-    answered_at timestamp with time zone,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.wishlist (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    product_id bigint NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    UNIQUE (user_id, product_id)
-);
-
-CREATE TABLE IF NOT EXISTS public.refunds (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    order_id bigint NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
-    amount numeric(10, 2) NOT NULL,
-    reason text NOT NULL,
-    status public.refund_status DEFAULT 'Pending'::public.refund_status,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.contact_messages (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    name text NOT NULL,
-    email text NOT NULL,
-    subject text NOT NULL,
-    message text NOT NULL,
-    status text DEFAULT 'unread', -- 'read', 'unread'
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.notifications (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE,
-    title text NOT NULL,
-    message text,
-    link text,
-    is_read boolean DEFAULT false,
-    type text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.settings (
-    key text PRIMARY KEY,
-    value text
-);
-
-CREATE TABLE IF NOT EXISTS public.pages (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    slug text NOT NULL UNIQUE,
-    title text NOT NULL,
-    content jsonb,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.offers (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    title text NOT NULL,
-    subtitle text,
-    code text NOT NULL UNIQUE,
-    discount_percentage numeric(5, 2) NOT NULL,
-    status public.offer_status DEFAULT 'inactive'::public.offer_status,
-    start_date timestamp with time zone,
-    end_date timestamp with time zone,
-    image_url text,
-    category_ids bigint[],
-    product_ids bigint[],
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.promos (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    title text NOT NULL,
-    subtitle text,
-    button_text text,
-    button_link text,
-    image_url text,
-    status text DEFAULT 'inactive', -- 'active', 'inactive'
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.addresses (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    address_type text, -- 'billing', 'shipping'
-    title text,
-    country text,
-    city text,
-    state text,
-    zip text,
-    street_address text,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.cards (
-    id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    card_type text,
-    last4 text,
-    expiry_month integer,
-    expiry_year integer,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS public.home_page_sections (
-  id bigint PRIMARY KEY GENERATED BY DEFAULT AS IDENTITY,
-  category_id bigint NOT NULL REFERENCES public.categories(id) ON DELETE CASCADE,
-  display_order integer NOT NULL,
-  UNIQUE(category_id),
-  UNIQUE(display_order)
-);
-
--- RLS POLICIES
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.product_categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.product_tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.order_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.refunds ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.pages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.offers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.promos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.home_page_sections ENABLE ROW LEVEL SECURITY;
-
--- Allow public read access to most tables
-CREATE POLICY "Allow public read access" ON public.products FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.categories FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.tags FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.product_categories FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.product_tags FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.reviews FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.questions FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.settings FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.pages FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.offers FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.promos FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.home_page_sections FOR SELECT USING (true);
-CREATE POLICY "Allow public read access" ON public.profiles FOR SELECT USING (true);
-
--- Allow authenticated users to manage their own data
-CREATE POLICY "Users can manage their own orders" ON public.orders FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can manage their own order items" ON public.order_items FOR ALL USING (
-  (SELECT user_id FROM public.orders WHERE id = order_id) = auth.uid()
-);
-CREATE POLICY "Users can manage their own addresses" ON public.addresses FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can manage their own cards" ON public.cards FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can manage their own wishlist" ON public.wishlist FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can manage their own reviews" ON public.reviews FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can manage their own questions" ON public.questions FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can manage their own refunds" ON public.refunds FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Users can read their own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can update their own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id);
-
--- Allow admins to do anything (you would lock this down in production)
-CREATE POLICY "Enable all access for admin users" ON public.products FOR ALL USING (
-  (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'super-admin', 'manager')
-) WITH CHECK (
-  (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'super-admin', 'manager')
-);
--- ... repeat for all other tables as needed ...
-
-
--- FUNCTIONS
-CREATE OR REPLACE FUNCTION public.create_order(
-    p_total_amount numeric,
-    p_shipping_details jsonb,
-    p_items jsonb,
-    p_payment_method text,
-    p_transaction_details jsonb,
-    p_coupon_code text,
-    p_discount_amount numeric,
-    p_initial_status public.order_status
-)
-RETURNS text
-LANGUAGE plpgsql
-AS $$
+-- Function to create an order and its items
+CREATE
+OR REPLACE FUNCTION public.create_order(
+  p_total_amount numeric,
+  p_shipping_details jsonb,
+  p_items jsonb,
+  p_payment_method text,
+  p_transaction_details jsonb,
+  p_coupon_code text,
+  p_discount_amount numeric,
+  p_initial_status public.order_status DEFAULT 'Pending'::public.order_status
+) RETURNS text AS $$
 DECLARE
     new_order_id bigint;
     new_order_number text;
     item record;
+    new_transaction_id bigint;
 BEGIN
     -- Generate a unique order number
-    new_order_number := 'KB-' || to_char(now(), 'YYMMDD') || '-' || substr(uuid_generate_v4()::text, 1, 6);
+    new_order_number := 'KB-' || to_char(now(), 'YYMMDD') || '-' || nextval('orders_id_seq');
 
-    -- Insert the order
-    INSERT INTO public.orders (user_id, order_number, total_amount, status, shipping_details, coupon_code, discount_amount)
-    VALUES (auth.uid(), new_order_number, p_total_amount, p_initial_status, p_shipping_details, p_coupon_code, p_discount_amount)
+    -- Create the order
+    INSERT INTO public.orders (
+        user_id, order_number, total_amount, status, shipping_details,
+        coupon_code, discount_amount
+    )
+    VALUES (
+        auth.uid(), new_order_number, p_total_amount, p_initial_status, p_shipping_details,
+        p_coupon_code, p_discount_amount
+    )
     RETURNING id INTO new_order_id;
+    
+    -- Log the initial status in order_history
+    INSERT INTO public.order_history (order_id, status)
+    VALUES (new_order_id, p_initial_status);
 
-    -- Insert order items
+    -- Create order items
     FOR item IN SELECT * FROM jsonb_to_recordset(p_items) AS x(product_id int, quantity int, price numeric)
     LOOP
         INSERT INTO public.order_items (order_id, product_id, quantity, price_at_purchase)
         VALUES (new_order_id, item.product_id, item.quantity, item.price);
-        
-        -- Decrement stock
-        UPDATE public.products
-        SET stock = stock - item.quantity
-        WHERE id = item.product_id;
     END LOOP;
-    
-    -- Insert transaction
-    IF p_payment_method IS NOT NULL THEN
-        INSERT INTO public.transactions(user_id, order_id, amount, payment_method, transaction_details, status)
-        VALUES(auth.uid(), new_order_id, p_total_amount, p_payment_method, p_transaction_details, 'Completed');
-    END IF;
 
-    -- Log initial status
-    INSERT INTO public.order_history (order_id, status) VALUES (new_order_id, p_initial_status);
+    -- Create transaction
+    INSERT INTO public.transactions (order_id, amount, payment_method, status, transaction_details)
+    VALUES (new_order_id, p_total_amount, p_payment_method, 'Completed', p_transaction_details)
+    RETURNING id INTO new_transaction_id;
+
+    -- Update order with transaction ID
+    UPDATE public.orders
+    SET transaction_id = new_transaction_id
+    WHERE id = new_order_id;
 
     RETURN new_order_number;
 END;
-$$;
+$$ LANGUAGE plpgsql;
 
-
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-  INSERT INTO public.profiles (id, full_name, avatar_url)
-  VALUES (
-    new.id,
-    new.raw_user_meta_data->>'full_name',
-    new.raw_user_meta_data->>'avatar_url'
+--
+-- Name: order_history; Type: TABLE; Schema: public; Owner: -
+--
+CREATE TABLE
+  IF NOT EXISTS public.order_history (
+    id bigint NOT NULL,
+    order_id bigint NOT NULL,
+    status public.order_status NOT NULL,
+    created_at timestamp
+    with
+      time zone DEFAULT now() NOT NULL
   );
-  RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
 
+--
+-- Name: order_history_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+CREATE SEQUENCE
+  IF NOT EXISTS public.order_history_id_seq START
+  WITH
+    1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
 
--- TRIGGERS
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+ALTER SEQUENCE public.order_history_id_seq OWNED BY public.order_history.id;
 
+--
+-- Name: orders_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+CREATE SEQUENCE
+  IF NOT EXISTS public.orders_id_seq START
+  WITH
+    1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
 
--- INITIAL DATA (optional, for setup)
--- Example: INSERT settings if they don't exist
-INSERT INTO public.settings (key, value)
-VALUES
-    ('site_title', 'Karwanbazar'),
-    ('site_subtitle', 'Your one-stop shop for fresh, high-quality groceries.'),
-    ('maintenance_mode', 'false')
-ON CONFLICT (key) DO NOTHING;
+--
+-- Name: orders; Type: TABLE; Schema: public; Owner: -
+--
+CREATE TABLE
+  IF NOT EXISTS public.orders (
+    id bigint DEFAULT nextval('public.orders_id_seq'::regclass) NOT NULL,
+    user_id uuid,
+    order_number text NOT NULL,
+    created_at timestamp
+    with
+      time zone DEFAULT now() NOT NULL,
+      updated_at timestamp
+    with
+      time zone DEFAULT now(),
+      total_amount numeric(10, 2) NOT NULL,
+      status public.order_status DEFAULT 'Pending'::public.order_status NOT NULL,
+      shipping_details jsonb,
+      payment_details jsonb,
+      coupon_code text,
+      discount_amount numeric(10, 2) DEFAULT 0,
+      transaction_id bigint
+  );
 
-INSERT INTO public.pages (slug, title, content)
-VALUES
-    ('about', 'About Us', '{"title": "About Karwanbazar", "subtitle": "Freshness Delivered.", "missionTitle": "Our Mission", "missionText": "To bring you the freshest groceries with the best service.", "teamTitle": "Meet the Team", "team": [{"name": "John Doe", "role": "CEO", "bio": "Passionate about fresh food."}, {"name": "Jane Smith", "role": "COO", "bio": "Expert in operations."}, {"name": "Peter Jones", "role": "Lead Developer", "bio": "Builds amazing things."}] }'),
-    ('contact', 'Contact Us', '{"address": "123 Green St, Dhaka, Bangladesh", "email": "support@karwanbazar.com", "phone": "+880123456789"}'),
-    ('faq', 'FAQs', '{"faqs": [{"question": "How fast is delivery?", "answer": "We aim for 90 minutes in most areas."}]}'),
-    ('privacy-policy', 'Privacy Policy', '{"html": "<p>Your privacy is important to us. It is Karwanbazars policy to respect your privacy regarding any information we may collect from you across our website.</p>"}'),
-    ('terms-and-conditions', 'Terms & Conditions', '{"html": "<p>By accessing the website at karwanbazar.com, you are agreeing to be bound by these terms of service, all applicable laws and regulations, and agree that you are responsible for compliance with any applicable local laws.</p>"}')
-ON CONFLICT (slug) DO NOTHING;
+--
+-- Name: order_items_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+CREATE SEQUENCE
+  IF NOT EXISTS public.order_items_id_seq START
+  WITH
+    1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+
+--
+-- Name: order_items; Type: TABLE; Schema: public; Owner: -
+--
+CREATE TABLE
+  IF NOT EXISTS public.order_items (
+    id bigint DEFAULT nextval('public.order_items_id_seq'::regclass) NOT NULL,
+    order_id bigint NOT NULL,
+    product_id bigint NOT NULL,
+    quantity integer NOT NULL,
+    price_at_purchase numeric(10, 2) NOT NULL,
+    created_at timestamp
+    with
+      time zone DEFAULT now() NOT NULL
+  );
+
+--
+-- Name: transactions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+CREATE SEQUENCE
+  IF NOT EXISTS public.transactions_id_seq START
+  WITH
+    1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+
+--
+-- Name: transactions; Type: TABLE; Schema: public; Owner: -
+--
+CREATE TABLE
+  IF NOT EXISTS public.transactions (
+    id bigint DEFAULT nextval('public.transactions_id_seq'::regclass) NOT NULL,
+    order_id bigint,
+    user_id uuid,
+    amount numeric(10, 2) NOT NULL,
+    payment_method text NOT NULL,
+    status text DEFAULT 'Pending'::text NOT NULL,
+    transaction_details jsonb,
+    created_at timestamp
+    with
+      time zone DEFAULT now() NOT NULL,
+      CONSTRAINT chk_status CHECK (
+        (
+          status = ANY (
+            ARRAY['Pending'::text, 'Completed'::text, 'Failed'::text]
+          )
+        )
+      )
+  );
+
+--
+-- Name: profiles; Type: TABLE; Schema: public; Owner: -
+--
+CREATE TABLE
+  IF NOT EXISTS public.profiles (
+    id uuid NOT NULL,
+    created_at timestamp
+    with
+      time zone DEFAULT now() NOT NULL,
+      updated_at timestamp
+    with
+      time zone DEFAULT now() NOT NULL,
+      full_name text,
+      avatar_url text,
+      bio text,
+      contact_number text,
+      role public.user_role DEFAULT 'customer'::public.user_role NOT NULL
+  );
+
+ALTER TABLE ONLY public.profiles
+ADD
+  CONSTRAINT profiles_pkey PRIMARY KEY (id);
+
+-- Add foreign key constraint
+ALTER TABLE ONLY public.profiles
+ADD
+  CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE;
+
