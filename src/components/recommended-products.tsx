@@ -9,7 +9,7 @@ export default async function RecommendedProducts() {
   const { data, error } = await supabase.rpc('get_recommended_products', { p_limit: 12 });
 
   if (error) {
-    console.warn("Could not fetch recommended products:", error.message);
+    // This can happen if the function doesn't exist yet, so we fail gracefully.
     return null;
   }
 
