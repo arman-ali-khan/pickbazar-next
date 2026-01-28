@@ -356,9 +356,9 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                 </Tabs>
             </div>
 
-            <div className="mt-12">
-                <h2 className="text-2xl font-bold mb-6">Related Products</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-1">
+            <div className="mt-16 py-8 bg-muted/20 rounded-lg">
+                <h2 className="text-2xl font-bold mb-6 text-center">Related Products</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 px-4">
                     {relatedProducts.map((p) => (
                         <ProductCard key={p.id} product={p as Product} />
                     ))}
