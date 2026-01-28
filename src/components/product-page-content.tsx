@@ -170,6 +170,7 @@ export default function ProductPageContent({ product, relatedProducts }: Product
     const quantity = useAppSelector(selectItemQuantity(product.id));
     const [mainImage, setMainImage] = useState(product.images[0]);
     const imageRef = useRef<HTMLDivElement>(null);
+    const [activeTab, setActiveTab] = useState('description');
 
     const totalReviews = product.ratingDistribution.reduce((acc, item) => acc + item.count, 0);
     
@@ -224,7 +225,12 @@ export default function ProductPageContent({ product, relatedProducts }: Product
                                 <Star key={i} className={`h-5 w-5 ${i < Math.floor(product.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} />
                             ))}
                         </div>
-                        <span className="text-sm text-muted-foreground">({product.reviewsCount} Reviews)</span>
+                        <button
+                            onClick={() => setActiveTab('reviews')}
+                            className="text-sm text-muted-foreground hover:text-primary hover:underline"
+                        >
+                            ({product.reviewsCount} Reviews)
+                        </button>
                     </div>
 
                     <div className="flex items-baseline gap-2 mb-4">
@@ -268,7 +274,7 @@ export default function ProductPageContent({ product, relatedProducts }: Product
             </div>
 
             <div className="mt-12">
-                <Tabs defaultValue="description">
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
                     <TabsList>
                         <TabsTrigger value="description">Description</TabsTrigger>
                         <TabsTrigger value="reviews">Reviews ({product.reviewsCount})</TabsTrigger>
