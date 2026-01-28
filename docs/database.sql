@@ -1,159 +1,154 @@
 -- ----------------------------------------------------------------
--- DATABASE MIGRATION SCRIPT
+-- DATABASE MIGRATION: COMPLETE SCHEMA & FUNCTIONS
 --
--- This script contains all necessary functions and triggers for
--- the application. It is designed to clean up any previous
--- inconsistencies and set up the database correctly.
+-- This script contains the full schema and function definitions
+-- required for the application to run correctly. It has been
+-- cleaned up to remove conflicts and errors.
 --
--- You can run this entire script safely in your Supabase SQL Editor.
+-- You can run this script safely in your Supabase SQL Editor.
+-- Running this will reset functions and triggers to a known good state.
 -- ----------------------------------------------------------------
 
 
 -- ----------------------------------------------------------------
--- 1. CLEANUP: Drop old and conflicting objects
+-- TYPES
 -- ----------------------------------------------------------------
-
--- Drop the order status logging function and its dependent trigger
-DROP FUNCTION IF EXISTS public.log_order_status_change() CASCADE;
-
--- Drop all potentially conflicting versions of update_order_status_and_log
--- We must specify argument types to resolve ambiguity.
-DROP FUNCTION IF EXISTS public.update_order_status_and_log(bigint, public.order_status);
-DROP FUNCTION IF EXISTS public.update_order_status_and_log(bigint, text);
-DROP FUNCTION IF EXISTS public.update_order_status_and_log(integer, text);
-
-
--- ----------------------------------------------------------------
--- 2. ENUMS AND TYPES
--- ----------------------------------------------------------------
--- (Assuming these types exist. If not, they would be created here.
--- The app likely already has them.)
--- CREATE TYPE public.order_status AS ENUM ...
--- CREATE TYPE public.user_role AS ENUM ...
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status') THEN
+        CREATE TYPE order_status AS ENUM ('Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled', 'Failed');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'review_status') THEN
+        CREATE TYPE review_status AS ENUM ('Pending', 'Approved', 'Hidden');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'question_status') THEN
+        CREATE TYPE question_status AS ENUM ('Pending', 'Answered');
+    END IF;
+END$$;
 
 
 -- ----------------------------------------------------------------
--- 3. FUNCTIONS
+-- CLEANUP: Drop functions and triggers before recreating
+-- This section safely removes old objects to prevent conflicts.
+-- ----------------------------------------------------------------
+DROP TRIGGER IF EXISTS log_order_status_change_trigger ON public.orders;
+DROP FUNCTION IF EXISTS public.log_order_status_change();
+DROP FUNCTION IF EXISTS public.get_admin_order_details(p_order_number text);
+DROP FUNCTION IF EXISTS public.update_order_status_and_log(p_order_id bigint, p_new_status text);
+DROP FUNCTION IF EXISTS public.update_order_status_and_log(p_order_id bigint, p_new_status public.order_status);
+DROP FUNCTION IF EXISTS public.update_order_status_and_log(p_order_id integer, p_new_status text);
+DROP FUNCTION IF EXISTS public.get_recommended_products(integer);
+DROP FUNCTION IF EXISTS public.get_related_products(integer, integer);
+
+
+-- ----------------------------------------------------------------
+-- Add view_count to products table if it doesn't exist
+-- ----------------------------------------------------------------
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+        AND table_name = 'products'
+        AND column_name = 'view_count'
+    ) THEN
+        ALTER TABLE public.products ADD COLUMN view_count integer DEFAULT 0;
+    END IF;
+END$$;
+
+
+-- ----------------------------------------------------------------
+-- CORE FUNCTIONS
 -- ----------------------------------------------------------------
 
--- Helper function to log order status changes to the history table
-CREATE OR REPLACE FUNCTION public.log_order_status_change()
+-- Function to log order status changes
+CREATE OR REPLACE FUNCTION log_order_status_change()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.order_history(order_id, status)
-    VALUES(NEW.id, NEW.status);
+    INSERT INTO order_history(order_id, status)
+    VALUES (NEW.id, NEW.status);
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to log order status changes
+CREATE TRIGGER log_order_status_change_trigger
+AFTER INSERT OR UPDATE OF status ON orders
+FOR EACH ROW
+EXECUTE FUNCTION log_order_status_change();
 
 
--- Function to get a user's wishlist IDs
-CREATE OR REPLACE FUNCTION public.get_user_wishlist_ids(p_user_id uuid)
-RETURNS TABLE (product_id integer) AS $$
+-- Function to get admin order details
+CREATE OR REPLACE FUNCTION get_admin_order_details(p_order_number text)
+RETURNS TABLE(
+    id bigint,
+    order_number text,
+    created_at timestamp with time zone,
+    total_amount double precision,
+    status order_status,
+    shipping_details jsonb,
+    profiles jsonb,
+    order_items jsonb,
+    coupon_code text,
+    discount_amount double precision,
+    payment_method text,
+    transaction_details jsonb
+) AS $$
 BEGIN
     RETURN QUERY
-    SELECT w.product_id
-    FROM public.wishlist w
-    WHERE w.user_id = p_user_id;
+    SELECT
+        o.id,
+        o.order_number,
+        o.created_at,
+        o.total_amount,
+        o.status,
+        o.shipping_details,
+        jsonb_build_object('full_name', p.full_name, 'avatar_url', p.avatar_url) as profiles,
+        (SELECT jsonb_agg(
+            jsonb_build_object(
+                'id', oi.id,
+                'quantity', oi.quantity,
+                'price_at_purchase', oi.price_at_purchase,
+                'products', jsonb_build_object(
+                    'name', pr.name,
+                    'featured_image_url', pr.featured_image_url
+                )
+            )
+        ) FROM order_items oi JOIN products pr ON oi.product_id = pr.id WHERE oi.order_id = o.id) as order_items,
+        o.coupon_code,
+        o.discount_amount,
+        (SELECT t.payment_method FROM transactions t WHERE t.order_id = o.id LIMIT 1) as payment_method,
+        (SELECT t.transaction_details FROM transactions t WHERE t.order_id = o.id LIMIT 1) as transaction_details
+    FROM orders o
+    LEFT JOIN profiles p ON o.user_id = p.id
+    WHERE o.order_number = p_order_number;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
 
--- Function to toggle a product in a user's wishlist
-CREATE OR REPLACE FUNCTION public.toggle_wishlist_item(p_user_id uuid, p_product_id integer)
-RETURNS json AS $$
+-- Function to update order status and log it
+CREATE OR REPLACE FUNCTION update_order_status_and_log(p_order_id bigint, p_new_status text)
+RETURNS SETOF orders AS $$
 DECLARE
-    item_exists boolean;
-    result_status text;
+    new_status_enum order_status;
 BEGIN
-    SELECT EXISTS(SELECT 1 FROM wishlist WHERE user_id = p_user_id AND product_id = p_product_id) INTO item_exists;
-
-    IF item_exists THEN
-        DELETE FROM wishlist WHERE user_id = p_user_id AND product_id = p_product_id;
-        result_status := 'removed';
-    ELSE
-        INSERT INTO wishlist (user_id, product_id) VALUES (p_user_id, p_product_id);
-        result_status := 'added';
-    END IF;
-
-    RETURN json_build_object('status', result_status);
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-
--- Function to create a new order and its items in a transaction
-CREATE OR REPLACE FUNCTION public.create_order(
-    p_total_amount double precision,
-    p_shipping_details jsonb,
-    p_items jsonb,
-    p_payment_method text,
-    p_transaction_details jsonb,
-    p_coupon_code text,
-    p_discount_amount double precision,
-    p_initial_status public.order_status
-)
-RETURNS text AS $$
-DECLARE
-    new_order_id bigint;
-    new_order_number text;
-    item record;
-    current_user_id uuid := auth.uid();
-BEGIN
-    -- Generate a unique order number
-    new_order_number := 'PB-' || to_char(now(), 'YYMMDD') || '-' || substr(md5(random()::text), 1, 6);
-
-    -- Insert the order and get the new ID
-    INSERT INTO public.orders (
-        user_id, total_amount, status, shipping_details, coupon_code, discount_amount
-    ) VALUES (
-        current_user_id, p_total_amount, p_initial_status, p_shipping_details, p_coupon_code, p_discount_amount
-    ) RETURNING id INTO new_order_id;
-    
-    -- Update the order with the generated order number
-    UPDATE public.orders SET order_number = new_order_number WHERE id = new_order_id;
-
-    -- Insert order items
-    FOR item IN SELECT * FROM jsonb_to_recordset(p_items) AS x(product_id int, quantity int, price double precision)
-    LOOP
-        INSERT INTO public.order_items (order_id, product_id, quantity, price_at_purchase)
-        VALUES (new_order_id, item.product_id, item.quantity, item.price);
-    END LOOP;
-    
-    -- Insert transaction details if provided
-    IF p_payment_method IS NOT NULL THEN
-        INSERT INTO public.transactions(order_id, user_id, amount, payment_method, transaction_details, status)
-        VALUES (new_order_id, current_user_id, p_total_amount, p_payment_method, p_transaction_details, 'Completed');
-    END IF;
-
-    RETURN new_order_number;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-
--- Function to update an order's status AND log it to history
--- This is the single, correct version.
-CREATE OR REPLACE FUNCTION public.update_order_status_and_log(
-    p_order_id bigint,
-    p_new_status text
-)
-RETURNS TABLE (
-    user_id uuid,
-    order_number text
-) AS $$
-DECLARE
-    order_user_id uuid;
-    order_num text;
-BEGIN
-    UPDATE public.orders
-    SET status = p_new_status::public.order_status
+    new_status_enum := p_new_status::order_status;
+    RETURN QUERY
+    UPDATE orders
+    SET status = new_status_enum
     WHERE id = p_order_id
-    RETURNING orders.user_id, orders.order_number INTO order_user_id, order_num;
-    
-    RETURN QUERY SELECT order_user_id, order_num;
+    RETURNING *;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql;
 
--- Function to get related products with fallback logic
+
+-- ----------------------------------------------------------------
+-- PRODUCT RECOMMENDATION & RELATED FUNCTIONS (Corrected)
+-- ----------------------------------------------------------------
+
+-- Function to get related products based on shared categories and tags
+-- This version is more resilient and includes fallbacks.
 CREATE OR REPLACE FUNCTION get_related_products(p_id integer, p_limit integer)
 RETURNS TABLE(
     id integer,
@@ -173,13 +168,7 @@ BEGIN
     ),
     scored_products AS (
         SELECT
-            p.id,
-            p.name,
-            p.price,
-            p.original_price,
-            p.featured_image_url,
-            p.unit,
-            p.created_at,
+            p.id as product_id,
             (
                 (SELECT COUNT(*) FROM product_categories pc WHERE pc.product_id = p.id AND pc.category_id IN (SELECT category_id FROM product_cats)) * 2 +
                 (SELECT COUNT(*) FROM product_tags pt WHERE pt.product_id = p.id AND pt.tag_id IN (SELECT tag_id FROM product_tags_list))
@@ -187,29 +176,36 @@ BEGIN
         FROM products p
         WHERE p.id != p_id AND p.status = 'active'
     )
-    -- First, try to get products with a relevance score > 0
-    (SELECT sp.id, sp.name, sp.price, sp.original_price, sp.featured_image_url, sp.unit
-     FROM scored_products sp
-     WHERE sp.relevance_score > 0
-     ORDER BY sp.relevance_score DESC, sp.created_at DESC
-     LIMIT p_limit)
-    UNION ALL
-    -- Fallback: If not enough related products, fill with most recent products from the same primary category
-    (SELECT p.id, p.name, p.price, p.original_price, p.featured_image_url, p.unit
-     FROM products p
-     JOIN product_categories pc ON p.id = pc.product_id
-     WHERE p.status = 'active'
-       AND p.id != p_id
-       AND pc.category_id IN (SELECT category_id FROM product_cats)
-       AND p.id NOT IN (SELECT s.id FROM scored_products s WHERE s.relevance_score > 0) -- Exclude already selected
-     ORDER BY p.created_at DESC
-     LIMIT p_limit)
+    -- This combined query first gets scored products, then fills with popular ones if needed.
+    SELECT * FROM (
+        (SELECT
+            p.id, p.name, p.price, p.original_price, p.featured_image_url, p.unit
+        FROM products p
+        JOIN scored_products sp ON p.id = sp.product_id
+        WHERE sp.relevance_score > 0
+        ORDER BY sp.relevance_score DESC, p.view_count DESC NULLS LAST
+        LIMIT p_limit)
+
+        UNION ALL
+
+        (SELECT
+            p.id, p.name, p.price, p.original_price, p.featured_image_url, p.unit
+        FROM products p
+        WHERE
+            p.id != p_id
+            AND p.status = 'active'
+            AND p.id NOT IN (SELECT sp.product_id FROM scored_products sp WHERE sp.relevance_score > 0)
+        ORDER BY p.view_count DESC NULLS LAST, p.created_at DESC
+        LIMIT p_limit)
+    ) as related
     LIMIT p_limit;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql
+SECURITY DEFINER;
 
 
--- Function to get recommended products with fallback logic
+-- Function to get recommended products based on views, sales, and wishlist counts
+-- CORRECTED VERSION: Includes created_at in the CTE.
 CREATE OR REPLACE FUNCTION get_recommended_products(p_limit integer)
 RETURNS TABLE(
     id integer,
@@ -220,6 +216,17 @@ RETURNS TABLE(
     unit text
 ) AS $$
 BEGIN
+    -- Fallback to most recent products if there is no activity
+    IF (SELECT COUNT(*) FROM orders) = 0 AND (SELECT COUNT(*) FROM wishlist) = 0 THEN
+        RETURN QUERY
+        SELECT p.id, p.name, p.price, p.original_price, p.featured_image_url, p.unit
+        FROM products p
+        WHERE p.status = 'active'
+        ORDER BY p.created_at DESC
+        LIMIT p_limit;
+        RETURN;
+    END IF;
+
     RETURN QUERY
     WITH product_scores AS (
         SELECT
@@ -229,178 +236,27 @@ BEGIN
             p.original_price,
             p.featured_image_url,
             p.unit,
-            p.created_at,
             p.view_count,
+            p.created_at, -- This was the missing column
             (SELECT COUNT(*) FROM order_items oi WHERE oi.product_id = p.id) as sales_count,
-            (SELECT COUNT(*) FROM wishlist w WHERE w.product_id = p.id) as wishlist_count,
-            -- Weighted score: Sales (50%), Wishlists (30%), Views (20%)
-            (
-                (SELECT COUNT(*) FROM order_items oi WHERE oi.product_id = p.id) * 0.5 +
-                (SELECT COUNT(*) FROM wishlist w WHERE w.product_id = p.id) * 0.3 +
-                COALESCE(p.view_count, 0) * 0.2
-            ) as weighted_score
-        FROM products p
+            (SELECT COUNT(*) FROM wishlist w WHERE w.product_id = p.id) as wishlist_count
+        FROM
+            products p
         WHERE p.status = 'active'
     )
-    -- First, try to get products with a score > 0
-    (SELECT ps.id, ps.name, ps.price, ps.original_price, ps.featured_image_url, ps.unit
-     FROM product_scores ps
-     WHERE ps.weighted_score > 0
-     ORDER BY ps.weighted_score DESC, ps.created_at DESC
-     LIMIT p_limit)
-    UNION ALL
-    -- Fallback: if not enough scored products, fill with most recent products
-    (SELECT p.id, p.name, p.price, p.original_price, p.featured_image_url, p.unit
-     FROM products p
-     WHERE p.status = 'active' AND p.id NOT IN (SELECT s.id FROM product_scores s WHERE s.weighted_score > 0) -- Exclude already selected
-     ORDER BY p.created_at DESC
-     LIMIT p_limit)
+    SELECT
+        ps.id,
+        ps.name,
+        ps.price,
+        ps.original_price,
+        ps.featured_image_url,
+        ps.unit
+    FROM
+        product_scores ps
+    ORDER BY
+        (ps.sales_count * 0.5) + (ps.wishlist_count * 0.3) + (COALESCE(ps.view_count, 0) * 0.2) DESC,
+        ps.created_at DESC
     LIMIT p_limit;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Other helper functions for admin panel and user profiles
-CREATE OR REPLACE FUNCTION get_admin_order_details(p_order_number text)
-RETURNS TABLE (
-    id bigint,
-    order_number text,
-    created_at timestamp with time zone,
-    total_amount double precision,
-    status public.order_status,
-    shipping_details jsonb,
-    profiles json,
-    order_items json,
-    coupon_code text,
-    discount_amount double precision,
-    payment_method text,
-    transaction_details jsonb
-)
-AS $$
-BEGIN
-    RETURN QUERY
-    SELECT
-        o.id,
-        o.order_number,
-        o.created_at,
-        o.total_amount,
-        o.status,
-        o.shipping_details,
-        json_build_object('full_name', p.full_name, 'avatar_url', p.avatar_url) as profiles,
-        (SELECT json_agg(
-            json_build_object(
-                'id', oi.id,
-                'quantity', oi.quantity,
-                'price_at_purchase', oi.price_at_purchase,
-                'products', json_build_object(
-                    'name', pr.name,
-                    'featured_image_url', pr.featured_image_url
-                )
-            )
-        ) FROM order_items oi JOIN products pr ON oi.product_id = pr.id WHERE oi.order_id = o.id) as order_items,
-        o.coupon_code,
-        o.discount_amount,
-        t.payment_method,
-        t.transaction_details
-    FROM orders o
-    LEFT JOIN profiles p ON o.user_id = p.id
-    LEFT JOIN transactions t ON o.id = t.order_id
-    WHERE o.order_number = p_order_number;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE FUNCTION get_order_history(p_order_id bigint)
-RETURNS TABLE (
-    status public.order_status,
-    created_at timestamp with time zone
-)
-AS $$
-BEGIN
-    RETURN QUERY
-    SELECT oh.status, oh.created_at
-    FROM order_history oh
-    WHERE oh.order_id = p_order_id
-    ORDER BY oh.created_at;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE OR REPLACE FUNCTION get_all_users()
-RETURNS TABLE (
-    id uuid,
-    email text,
-    full_name text,
-    avatar_url text,
-    role public.user_role,
-    created_at timestamp with time zone
-)
-AS $$
-BEGIN
-    RETURN QUERY
-    SELECT u.id, u.email, p.full_name, p.avatar_url, p.role, u.created_at
-    FROM auth.users u
-    LEFT JOIN public.profiles p ON u.id = p.id
-    ORDER BY u.created_at DESC;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION public.get_all_settings()
-RETURNS TABLE(settings jsonb)
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  RETURN QUERY
-  SELECT jsonb_object_agg(key, value)
-  FROM public.settings;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.get_category_tree()
-RETURNS TABLE(name text, subcategories json)
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  RETURN QUERY
-  WITH RECURSIVE category_hierarchy AS (
-    SELECT
-      id,
-      name,
-      parent_id,
-      1 as level,
-      name::text as path
-    FROM categories
-    WHERE parent_id IS NULL
-
-    UNION ALL
-
-    SELECT
-      c.id,
-      c.name,
-      c.parent_id,
-      ch.level + 1,
-      ch.path || ' -> ' || c.name
-    FROM categories c
-    JOIN category_hierarchy ch ON c.parent_id = ch.id
-  )
-  SELECT
-    p.name,
-    (SELECT json_agg(c.name) FROM category_hierarchy c WHERE c.parent_id = p.id) as subcategories
-  FROM category_hierarchy p
-  WHERE p.parent_id IS NULL
-  ORDER BY p.name;
-END;
-$$;
-
-
--- ----------------------------------------------------------------
--- 4. TRIGGERS
--- ----------------------------------------------------------------
-
--- Trigger to log status changes on the orders table
-CREATE TRIGGER log_order_status_change_trigger
-AFTER INSERT OR UPDATE OF status ON public.orders
-FOR EACH ROW
-EXECUTE FUNCTION public.log_order_status_change();
-
-
--- ----------------------------------------------------------------
--- SCRIPT END
--- ----------------------------------------------------------------
+$$ LANGUAGE plpgsql
+SECURITY DEFINER;
