@@ -5,7 +5,6 @@ import RecommendedProductsClient from './recommended-products-client';
 export default async function RecommendedProducts() {
   const supabase = createClient();
   
-  // The new RPC function `get_recommended_products` now contains the fallback logic.
   const { data, error } = await supabase.rpc('get_recommended_products', { p_limit: 12 });
 
   if (error && error.message) {
