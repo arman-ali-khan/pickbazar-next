@@ -86,7 +86,11 @@ export default async function ProductPage({ params }: { params: { id: string } }
     notFound();
   }
   
-  const { data: relatedProductsData } = relatedRes;
+  const { data: relatedProductsData, error: relatedError } = relatedRes;
+  if (relatedError) {
+    console.error('Error fetching related products:', relatedError);
+  }
+
   const { data: reviewsData } = reviewsRes;
   const { data: ratingStatsData } = ratingStatsRes;
   const { data: questionsData } = questionsRes;

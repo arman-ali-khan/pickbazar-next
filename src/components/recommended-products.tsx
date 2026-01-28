@@ -4,12 +4,13 @@ import RecommendedProductsClient from './recommended-products-client';
 
 export default async function RecommendedProducts() {
   const supabase = createClient();
-  const { data } = await supabase
-    .from('products')
-    .select('*')
-    .eq('status', 'active')
-    .order('view_count', { ascending: false, nullsFirst: false })
-    .limit(12);
+  // Use the new RPC function to get recommended products
+  const { data, error } = await supabase.rpc('get_recommended_products', { p_limit: 12 });
+
+  if (error) {
+    console.error("Error fetching recommended products:", error);
+    return null;
+  }
 
   const recommendedProducts: Product[] = (data || []).map(p => ({
       id: p.id,
@@ -18,8 +19,8 @@ export default async function RecommendedProducts() {
       originalPrice: p.original_price,
       image: { id: `prod-${p.id}`, imageUrl: p.featured_image_url || 'https://picsum.photos/seed/placeholder/200', imageHint: 'product', description: p.name },
       weight: p.unit || '',
-      category: '',
-      rating: 0,
+      category: '', // This info isn't returned by the RPC, and not needed for the card
+      rating: 0, // This info isn't returned by the RPC, and not needed for the card
   }));
 
   if (recommendedProducts.length === 0) {
