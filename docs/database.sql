@@ -1,660 +1,514 @@
-
--- Drop conflicting functions first to ensure a clean slate
-DROP FUNCTION IF EXISTS public.create_order(numeric,jsonb,jsonb,text,jsonb,text,numeric);
+-- Drop existing functions to avoid conflicts
 DROP FUNCTION IF EXISTS public.create_order(numeric,jsonb,jsonb,text,jsonb,text,numeric,text);
-DROP FUNCTION IF EXISTS public.create_order(numeric,jsonb,jsonb,text,jsonb,text,numeric,public.order_status);
+DROP FUNCTION IF EXISTS public.create_order(numeric,jsonb,jsonb,text,jsonb,text,numeric,order_status);
+DROP FUNCTION IF EXISTS public.log_order_history();
 
--- =================================================================
--- 1. TYPES
--- =================================================================
+-- Create enums and tables if they don't exist
+CREATE TYPE public.order_status AS ENUM (
+    'Pending',
+    'Processing',
+    'Shipped',
+    'Delivered',
+    'Cancelled',
+    'Failed'
+);
 
--- Ensure order_status enum type exists
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status') THEN
-        CREATE TYPE public.order_status AS ENUM (
-            'Pending',
-            'Processing',
-            'Shipped',
-            'Delivered',
-            'Cancelled',
-            'Failed'
-        );
-    END IF;
-END$$;
-
--- Ensure user_role enum type exists
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-        CREATE TYPE public.user_role AS ENUM (
-            'customer',
-            'manager',
-            'admin',
-            'super-admin'
-        );
-    END IF;
-END$$;
-
-
--- =================================================================
--- 2. TABLES
--- =================================================================
-
--- Profiles Table
 CREATE TABLE IF NOT EXISTS public.profiles (
-    id uuid NOT NULL PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    id uuid NOT NULL,
     full_name text,
     avatar_url text,
-    bio text,
     contact_number text,
-    role public.user_role DEFAULT 'customer'::public.user_role,
-    created_at timestamp with time zone DEFAULT now()
+    bio text,
+    role text DEFAULT 'customer'::text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
--- Products Table
-CREATE TABLE IF NOT EXISTS public.products (
-    id bigint NOT NULL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS public.categories (
+    id bigint NOT NULL,
     name text NOT NULL,
-    slug text NOT NULL UNIQUE,
+    slug text NOT NULL,
     description text,
-    unit text,
+    parent_id bigint,
+    icon text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.tags (
+    id bigint NOT NULL,
+    name text NOT NULL,
+    slug text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.products (
+    id bigint NOT NULL,
+    name text NOT NULL,
+    slug text,
+    description text,
     price numeric(10,2) NOT NULL,
     original_price numeric(10,2),
-    stock integer DEFAULT 0,
-    status text DEFAULT 'draft'::text,
     featured_image_url text,
-    gallery_urls text[],
+    status text DEFAULT 'draft'::text NOT NULL,
+    stock integer DEFAULT 0,
+    unit text,
     view_count integer DEFAULT 0,
-    created_at timestamp with time zone DEFAULT now()
+    gallery_urls text[],
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
-CREATE SEQUENCE IF NOT EXISTS public.products_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.products ALTER COLUMN id SET DEFAULT nextval('public.products_id_seq'::regclass);
 
--- Categories Table
-CREATE TABLE IF NOT EXISTS public.categories (
-    id bigint NOT NULL PRIMARY KEY,
-    name text NOT NULL,
-    slug text NOT NULL UNIQUE,
-    description text,
-    parent_id bigint REFERENCES public.categories(id),
-    icon text,
-    created_at timestamp with time zone DEFAULT now()
-);
-CREATE SEQUENCE IF NOT EXISTS public.categories_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.categories ALTER COLUMN id SET DEFAULT nextval('public.categories_id_seq'::regclass);
-
-
--- Tags Table
-CREATE TABLE IF NOT EXISTS public.tags (
-    id bigint NOT NULL PRIMARY KEY,
-    name text NOT NULL UNIQUE,
-    slug text NOT NULL UNIQUE,
-    created_at timestamp with time zone DEFAULT now()
-);
-CREATE SEQUENCE IF NOT EXISTS public.tags_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.tags ALTER COLUMN id SET DEFAULT nextval('public.tags_id_seq'::regclass);
-
--- Product_Categories Junction Table
 CREATE TABLE IF NOT EXISTS public.product_categories (
-    product_id bigint NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-    category_id bigint NOT NULL REFERENCES public.categories(id) ON DELETE CASCADE,
-    PRIMARY KEY (product_id, category_id)
+    product_id bigint NOT NULL,
+    category_id bigint NOT NULL
 );
 
--- Product_Tags Junction Table
 CREATE TABLE IF NOT EXISTS public.product_tags (
-    product_id bigint NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-    tag_id bigint NOT NULL REFERENCES public.tags(id) ON DELETE CASCADE,
-    PRIMARY KEY (product_id, tag_id)
+    product_id bigint NOT NULL,
+    tag_id bigint NOT NULL
 );
 
--- Reviews Table
+CREATE TABLE IF NOT EXISTS public.orders (
+    id bigint NOT NULL,
+    user_id uuid,
+    order_number text NOT NULL,
+    total_amount numeric(10,2) NOT NULL,
+    status public.order_status DEFAULT 'Pending'::public.order_status NOT NULL,
+    shipping_details jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    coupon_code text,
+    discount_amount numeric(10,2)
+);
+
+CREATE TABLE IF NOT EXISTS public.order_items (
+    id bigint NOT NULL,
+    order_id bigint NOT NULL,
+    product_id bigint NOT NULL,
+    quantity integer NOT NULL,
+    price_at_purchase numeric(10,2) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.transactions (
+    id bigint NOT NULL,
+    order_id bigint NOT NULL,
+    payment_method text NOT NULL,
+    transaction_details jsonb,
+    status text DEFAULT 'Completed'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS public.reviews (
-    id bigint NOT NULL PRIMARY KEY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    product_id bigint NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-    rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    id bigint NOT NULL,
+    user_id uuid NOT NULL,
+    product_id bigint NOT NULL,
+    rating integer NOT NULL,
     text text,
-    status text DEFAULT 'Pending'::text,
-    created_at timestamp with time zone DEFAULT now(),
-    UNIQUE (user_id, product_id)
+    status text DEFAULT 'Pending'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
-CREATE SEQUENCE IF NOT EXISTS public.reviews_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.reviews ALTER COLUMN id SET DEFAULT nextval('public.reviews_id_seq'::regclass);
 
--- Questions Table
 CREATE TABLE IF NOT EXISTS public.questions (
-    id bigint NOT NULL PRIMARY KEY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    product_id bigint NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
+    id bigint NOT NULL,
+    user_id uuid NOT NULL,
+    product_id bigint NOT NULL,
     question_text text NOT NULL,
     answer_text text,
-    status text DEFAULT 'Pending'::text,
-    created_at timestamp with time zone DEFAULT now(),
+    status text DEFAULT 'Pending'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
     answered_at timestamp with time zone
 );
-CREATE SEQUENCE IF NOT EXISTS public.questions_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.questions ALTER COLUMN id SET DEFAULT nextval('public.questions_id_seq'::regclass);
 
--- Addresses Table
-CREATE TABLE IF NOT EXISTS public.addresses (
-    id bigint NOT NULL PRIMARY KEY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    address_type text,
+CREATE TABLE IF NOT EXISTS public.wishlist (
+    id bigint NOT NULL,
+    user_id uuid NOT NULL,
+    product_id bigint NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.settings (
+    key text NOT NULL,
+    value text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.pages (
+    id bigint NOT NULL,
+    slug text NOT NULL,
     title text NOT NULL,
+    content jsonb,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.offers (
+    id bigint NOT NULL,
+    title text NOT NULL,
+    subtitle text,
+    code text NOT NULL,
+    discount_percentage numeric(5,2) NOT NULL,
+    status text NOT NULL,
+    start_date timestamp with time zone NOT NULL,
+    end_date timestamp with time zone NOT NULL,
+    image_url text,
+    category_ids bigint[],
+    product_ids bigint[],
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.promos (
+    id bigint NOT NULL,
+    title text NOT NULL,
+    subtitle text,
+    button_text text,
+    button_link text,
+    status text NOT NULL,
+    image_url text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.home_page_sections (
+    id bigint NOT NULL,
+    category_id bigint NOT NULL,
+    display_order integer NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.addresses (
+    id bigint NOT NULL,
+    user_id uuid NOT NULL,
+    address_type text,
+    title text,
     country text,
     city text,
     state text,
     zip text,
     street_address text,
-    created_at timestamp with time zone DEFAULT now()
-);
-CREATE SEQUENCE IF NOT EXISTS public.addresses_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.addresses ALTER COLUMN id SET DEFAULT nextval('public.addresses_id_seq'::regclass);
-
--- Orders Table
-CREATE TABLE IF NOT EXISTS public.orders (
-    id bigint NOT NULL PRIMARY KEY,
-    user_id uuid REFERENCES auth.users(id),
-    order_number text NOT NULL UNIQUE,
-    total_amount numeric(10,2) NOT NULL,
-    status public.order_status NOT NULL,
-    shipping_details jsonb,
-    coupon_code text,
-    discount_amount numeric(10,2),
-    created_at timestamp with time zone DEFAULT now()
-);
-CREATE SEQUENCE IF NOT EXISTS public.orders_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.orders ALTER COLUMN id SET DEFAULT nextval('public.orders_id_seq'::regclass);
-
--- Order_Items Table
-CREATE TABLE IF NOT EXISTS public.order_items (
-    id bigint NOT NULL PRIMARY KEY,
-    order_id bigint NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
-    product_id bigint NOT NULL REFERENCES public.products(id),
-    quantity integer NOT NULL,
-    price_at_purchase numeric(10,2) NOT NULL
-);
-CREATE SEQUENCE IF NOT EXISTS public.order_items_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.order_items ALTER COLUMN id SET DEFAULT nextval('public.order_items_id_seq'::regclass);
-
-
--- Transactions Table
-CREATE TABLE IF NOT EXISTS public.transactions (
-    id bigint NOT NULL PRIMARY KEY,
-    order_id bigint NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
-    user_id uuid NOT NULL REFERENCES auth.users(id),
-    amount numeric(10,2) NOT NULL,
-    payment_method text,
-    transaction_details jsonb,
-    status text,
-    created_at timestamp with time zone DEFAULT now()
-);
-CREATE SEQUENCE IF NOT EXISTS public.transactions_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.transactions ALTER COLUMN id SET DEFAULT nextval('public.transactions_id_seq'::regclass);
-
-
--- Wishlist Table
-CREATE TABLE IF NOT EXISTS public.wishlist (
-    id bigint NOT NULL PRIMARY KEY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    product_id bigint NOT NULL REFERENCES public.products(id) ON DELETE CASCADE,
-    created_at timestamp with time zone DEFAULT now(),
-    UNIQUE (user_id, product_id)
-);
-CREATE SEQUENCE IF NOT EXISTS public.wishlist_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.wishlist ALTER COLUMN id SET DEFAULT nextval('public.wishlist_id_seq'::regclass);
-
-
--- Settings Table
-CREATE TABLE IF NOT EXISTS public.settings (
-    key text NOT NULL PRIMARY KEY,
-    value text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
+    created_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
--- Notifications Table
-CREATE TABLE IF NOT EXISTS public.notifications (
-    id bigint NOT NULL PRIMARY KEY,
-    user_id uuid REFERENCES auth.users(id),
-    type text,
-    title text NOT NULL,
-    message text,
-    link text,
-    is_read boolean DEFAULT false,
-    created_at timestamp with time zone DEFAULT now()
-);
-CREATE SEQUENCE IF NOT EXISTS public.notifications_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.notifications ALTER COLUMN id SET DEFAULT nextval('public.notifications_id_seq'::regclass);
-
--- Contact Messages Table
-CREATE TABLE IF NOT EXISTS public.contact_messages (
-    id bigint NOT NULL PRIMARY KEY,
-    name text,
-    email text,
-    subject text,
-    message text,
-    status text DEFAULT 'unread'::text,
-    created_at timestamp with time zone DEFAULT now()
-);
-CREATE SEQUENCE IF NOT EXISTS public.contact_messages_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.contact_messages ALTER COLUMN id SET DEFAULT nextval('public.contact_messages_id_seq'::regclass);
-
--- Order History Table
-CREATE TABLE IF NOT EXISTS public.order_history (
-    id bigint NOT NULL PRIMARY KEY,
-    order_id bigint NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
-    status public.order_status NOT NULL,
-    created_at timestamp with time zone DEFAULT now()
-);
-CREATE SEQUENCE IF NOT EXISTS public.order_history_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.order_history ALTER COLUMN id SET DEFAULT nextval('public.order_history_id_seq'::regclass);
-
--- Offers Table
-CREATE TABLE IF NOT EXISTS public.offers (
-    id bigint NOT NULL PRIMARY KEY,
-    title text NOT NULL,
-    subtitle text,
-    code text NOT NULL UNIQUE,
-    discount_percentage integer NOT NULL,
-    status text,
-    start_date timestamp with time zone,
-    end_date timestamp with time zone,
-    image_url text,
-    category_ids integer[],
-    product_ids integer[],
-    created_at timestamp with time zone DEFAULT now()
-);
-CREATE SEQUENCE IF NOT EXISTS public.offers_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.offers ALTER COLUMN id SET DEFAULT nextval('public.offers_id_seq'::regclass);
-
-
--- Home Page Sections Table
-CREATE TABLE IF NOT EXISTS public.home_page_sections (
-    id bigint NOT NULL PRIMARY KEY,
-    category_id bigint NOT NULL UNIQUE REFERENCES public.categories(id) ON DELETE CASCADE,
-    display_order integer NOT NULL
-);
-CREATE SEQUENCE IF NOT EXISTS public.home_page_sections_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.home_page_sections ALTER COLUMN id SET DEFAULT nextval('public.home_page_sections_id_seq'::regclass);
-
-
--- Refunds Table
-CREATE TABLE IF NOT EXISTS public.refunds (
-    id bigint NOT NULL PRIMARY KEY,
-    order_id bigint NOT NULL REFERENCES public.orders(id) ON DELETE RESTRICT,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    amount numeric(10,2) NOT NULL,
-    reason text,
-    status text DEFAULT 'Pending'::text,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone
-);
-CREATE SEQUENCE IF NOT EXISTS public.refunds_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-ALTER TABLE ONLY public.refunds ALTER COLUMN id SET DEFAULT nextval('public.refunds_id_seq'::regclass);
-
--- Pages Table (for static content)
-CREATE TABLE IF NOT EXISTS public.pages (
-    slug text NOT NULL PRIMARY KEY,
-    title text NOT NULL,
-    content jsonb,
-    created_at timestamp with time zone DEFAULT now(),
-    updated_at timestamp with time zone DEFAULT now()
-);
-
--- Cards Table
 CREATE TABLE IF NOT EXISTS public.cards (
-    id bigint NOT NULL PRIMARY KEY,
-    user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    id bigint NOT NULL,
+    user_id uuid NOT NULL,
     card_type text,
     last4 text,
     expiry_month integer,
     expiry_year integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.contact_messages (
+    id bigint NOT NULL,
+    name text NOT NULL,
+    email text NOT NULL,
+    subject text,
+    message text NOT NULL,
+    status text DEFAULT 'unread'::text,
     created_at timestamp with time zone DEFAULT now()
 );
-CREATE SEQUENCE IF NOT EXISTS public.cards_id_seq
-    AS bigint
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
+
+CREATE TABLE IF NOT EXISTS public.notifications (
+    id bigint NOT NULL,
+    user_id uuid,
+    title text NOT NULL,
+    message text,
+    link text,
+    is_read boolean DEFAULT false,
+    created_at timestamp with time zone DEFAULT now(),
+    type text
+);
+
+CREATE TABLE IF NOT EXISTS public.refunds (
+    id bigint NOT NULL,
+    order_id bigint NOT NULL,
+    user_id uuid NOT NULL,
+    amount numeric NOT NULL,
+    reason text NOT NULL,
+    status text DEFAULT 'Pending'::text NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.order_history (
+    id bigint NOT NULL,
+    order_id bigint NOT NULL,
+    status public.order_status NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+-- Sequence and Primary Key definitions
+CREATE SEQUENCE IF NOT EXISTS public.categories_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.categories ALTER COLUMN id SET DEFAULT nextval('public.categories_id_seq'::regclass);
+ALTER TABLE ONLY public.categories ADD CONSTRAINT categories_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.categories ADD CONSTRAINT categories_slug_key UNIQUE (slug);
+
+CREATE SEQUENCE IF NOT EXISTS public.tags_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.tags ALTER COLUMN id SET DEFAULT nextval('public.tags_id_seq'::regclass);
+ALTER TABLE ONLY public.tags ADD CONSTRAINT tags_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.tags ADD CONSTRAINT tags_slug_key UNIQUE (slug);
+
+CREATE SEQUENCE IF NOT EXISTS public.products_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.products ALTER COLUMN id SET DEFAULT nextval('public.products_id_seq'::regclass);
+ALTER TABLE ONLY public.products ADD CONSTRAINT products_pkey PRIMARY KEY (id);
+
+CREATE SEQUENCE IF NOT EXISTS public.orders_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.orders ALTER COLUMN id SET DEFAULT nextval('public.orders_id_seq'::regclass);
+ALTER TABLE ONLY public.orders ADD CONSTRAINT orders_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.orders ADD CONSTRAINT orders_order_number_key UNIQUE (order_number);
+
+CREATE SEQUENCE IF NOT EXISTS public.order_items_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.order_items ALTER COLUMN id SET DEFAULT nextval('public.order_items_id_seq'::regclass);
+ALTER TABLE ONLY public.order_items ADD CONSTRAINT order_items_pkey PRIMARY KEY (id);
+
+CREATE SEQUENCE IF NOT EXISTS public.transactions_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.transactions ALTER COLUMN id SET DEFAULT nextval('public.transactions_id_seq'::regclass);
+ALTER TABLE ONLY public.transactions ADD CONSTRAINT transactions_pkey PRIMARY KEY (id);
+
+CREATE SEQUENCE IF NOT EXISTS public.reviews_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.reviews ALTER COLUMN id SET DEFAULT nextval('public.reviews_id_seq'::regclass);
+ALTER TABLE ONLY public.reviews ADD CONSTRAINT reviews_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.reviews ADD CONSTRAINT reviews_user_id_product_id_key UNIQUE (user_id, product_id);
+
+CREATE SEQUENCE IF NOT EXISTS public.questions_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.questions ALTER COLUMN id SET DEFAULT nextval('public.questions_id_seq'::regclass);
+ALTER TABLE ONLY public.questions ADD CONSTRAINT questions_pkey PRIMARY KEY (id);
+
+CREATE SEQUENCE IF NOT EXISTS public.wishlist_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.wishlist ALTER COLUMN id SET DEFAULT nextval('public.wishlist_id_seq'::regclass);
+ALTER TABLE ONLY public.wishlist ADD CONSTRAINT wishlist_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.wishlist ADD CONSTRAINT wishlist_user_id_product_id_key UNIQUE (user_id, product_id);
+
+ALTER TABLE ONLY public.settings ADD CONSTRAINT settings_pkey PRIMARY KEY (key);
+
+CREATE SEQUENCE IF NOT EXISTS public.pages_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.pages ALTER COLUMN id SET DEFAULT nextval('public.pages_id_seq'::regclass);
+ALTER TABLE ONLY public.pages ADD CONSTRAINT pages_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.pages ADD CONSTRAINT pages_slug_key UNIQUE (slug);
+
+CREATE SEQUENCE IF NOT EXISTS public.offers_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.offers ALTER COLUMN id SET DEFAULT nextval('public.offers_id_seq'::regclass);
+ALTER TABLE ONLY public.offers ADD CONSTRAINT offers_pkey PRIMARY KEY (id);
+
+CREATE SEQUENCE IF NOT EXISTS public.promos_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.promos ALTER COLUMN id SET DEFAULT nextval('public.promos_id_seq'::regclass);
+ALTER TABLE ONLY public.promos ADD CONSTRAINT promos_pkey PRIMARY KEY (id);
+
+CREATE SEQUENCE IF NOT EXISTS public.home_page_sections_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.home_page_sections ALTER COLUMN id SET DEFAULT nextval('public.home_page_sections_id_seq'::regclass);
+ALTER TABLE ONLY public.home_page_sections ADD CONSTRAINT home_page_sections_pkey PRIMARY KEY (id);
+ALTER TABLE ONLY public.home_page_sections ADD CONSTRAINT home_page_sections_category_id_key UNIQUE (category_id);
+
+CREATE SEQUENCE IF NOT EXISTS public.addresses_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.addresses ALTER COLUMN id SET DEFAULT nextval('public.addresses_id_seq'::regclass);
+ALTER TABLE ONLY public.addresses ADD CONSTRAINT addresses_pkey PRIMARY KEY (id);
+
+CREATE SEQUENCE IF NOT EXISTS public.cards_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
 ALTER TABLE ONLY public.cards ALTER COLUMN id SET DEFAULT nextval('public.cards_id_seq'::regclass);
+ALTER TABLE ONLY public.cards ADD CONSTRAINT cards_pkey PRIMARY KEY (id);
+
+CREATE SEQUENCE IF NOT EXISTS public.contact_messages_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.contact_messages ALTER COLUMN id SET DEFAULT nextval('public.contact_messages_id_seq'::regclass);
+ALTER TABLE ONLY public.contact_messages ADD CONSTRAINT contact_messages_pkey PRIMARY KEY (id);
+
+CREATE SEQUENCE IF NOT EXISTS public.notifications_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.notifications ALTER COLUMN id SET DEFAULT nextval('public.notifications_id_seq'::regclass);
+ALTER TABLE ONLY public.notifications ADD CONSTRAINT notifications_pkey PRIMARY KEY (id);
+
+CREATE SEQUENCE IF NOT EXISTS public.refunds_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.refunds ALTER COLUMN id SET DEFAULT nextval('public.refunds_id_seq'::regclass);
+ALTER TABLE ONLY public.refunds ADD CONSTRAINT refunds_pkey PRIMARY KEY (id);
+
+CREATE SEQUENCE IF NOT EXISTS public.order_history_id_seq START WITH 1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
+ALTER TABLE ONLY public.order_history ALTER COLUMN id SET DEFAULT nextval('public.order_history_id_seq'::regclass);
+ALTER TABLE ONLY public.order_history ADD CONSTRAINT order_history_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.profiles ADD CONSTRAINT profiles_pkey PRIMARY KEY (id);
+
+ALTER TABLE ONLY public.product_categories ADD CONSTRAINT product_categories_pkey PRIMARY KEY (product_id, category_id);
+
+ALTER TABLE ONLY public.product_tags ADD CONSTRAINT product_tags_pkey PRIMARY KEY (product_id, tag_id);
+
+-- Foreign Key definitions
+ALTER TABLE ONLY public.categories ADD CONSTRAINT categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES public.categories(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.orders ADD CONSTRAINT orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
+ALTER TABLE ONLY public.order_items ADD CONSTRAINT order_items_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.order_items ADD CONSTRAINT order_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.product_categories ADD CONSTRAINT product_categories_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.product_categories ADD CONSTRAINT product_categories_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.product_tags ADD CONSTRAINT product_tags_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.product_tags ADD CONSTRAINT product_tags_tag_id_fkey FOREIGN KEY (tag_id) REFERENCES public.tags(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.questions ADD CONSTRAINT questions_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.questions ADD CONSTRAINT questions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.reviews ADD CONSTRAINT reviews_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.reviews ADD CONSTRAINT reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.transactions ADD CONSTRAINT transactions_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.wishlist ADD CONSTRAINT wishlist_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.wishlist ADD CONSTRAINT wishlist_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.home_page_sections ADD CONSTRAINT home_page_sections_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.addresses ADD CONSTRAINT addresses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.cards ADD CONSTRAINT cards_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.notifications ADD CONSTRAINT notifications_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.refunds ADD CONSTRAINT refunds_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.refunds ADD CONSTRAINT refunds_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE ONLY public.order_history ADD CONSTRAINT order_history_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id) ON DELETE CASCADE;
 
 
--- =================================================================
--- 3. FUNCTIONS
--- =================================================================
+-- Functions and Triggers
 
--- Function to handle new user and create a profile
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
-BEGIN
-    INSERT INTO public.profiles (id, full_name, avatar_url, role, created_at)
-    VALUES (
-        new.id,
-        new.raw_user_meta_data->>'full_name',
-        new.raw_user_meta_data->>'avatar_url',
-        'customer',
-        new.created_at
-    );
-    RETURN new;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+begin
+  insert into public.profiles (id, full_name, avatar_url, email)
+  values (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'avatar_url', new.email);
+  return new;
+end;
+$$;
 
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- Function to create an order and its items
-CREATE OR REPLACE FUNCTION public.create_order(
-    p_total_amount numeric,
-    p_shipping_details jsonb,
-    p_items jsonb,
-    p_payment_method text,
-    p_transaction_details jsonb,
-    p_coupon_code text,
-    p_discount_amount numeric,
-    p_initial_status public.order_status DEFAULT 'Pending'::public.order_status
-)
-RETURNS text AS $$
+CREATE OR REPLACE FUNCTION public.create_order(p_total_amount numeric, p_shipping_details jsonb, p_items jsonb, p_payment_method text, p_transaction_details jsonb, p_coupon_code text, p_discount_amount numeric, p_initial_status public.order_status)
+RETURNS text
+LANGUAGE plpgsql
+AS $$
 DECLARE
     new_order_id bigint;
     new_order_number text;
     item record;
-    tran_id bigint;
+    new_transaction_id bigint;
 BEGIN
-    -- Insert into orders table and get the new order's ID and order_number
-    INSERT INTO public.orders (user_id, total_amount, shipping_details, status, coupon_code, discount_amount)
-    VALUES (
-        auth.uid(),
-        p_total_amount,
-        p_shipping_details,
-        p_initial_status,
-        p_coupon_code,
-        p_discount_amount
-    )
-    RETURNING id, order_number INTO new_order_id, new_order_number;
+    -- Generate a unique order number
+    new_order_number := 'KB-' || to_char(CURRENT_TIMESTAMP, 'YYMMDD') || '-' || nextval('orders_id_seq');
 
-    -- Insert order items
-    FOR item IN SELECT * FROM jsonb_to_recordset(p_items) AS x(product_id int, quantity int, price numeric)
+    -- Create the order
+    INSERT INTO public.orders (user_id, order_number, total_amount, status, shipping_details, coupon_code, discount_amount)
+    VALUES (auth.uid(), new_order_number, p_total_amount, p_initial_status, p_shipping_details, p_coupon_code, p_discount_amount)
+    RETURNING id INTO new_order_id;
+
+    -- Create order items
+    FOR item IN SELECT * FROM jsonb_to_recordset(p_items) AS x(product_id bigint, quantity int, price numeric)
     LOOP
         INSERT INTO public.order_items (order_id, product_id, quantity, price_at_purchase)
         VALUES (new_order_id, item.product_id, item.quantity, item.price);
     END LOOP;
-    
-    -- Insert a transaction record
-    INSERT INTO public.transactions(order_id, user_id, amount, payment_method, transaction_details, status)
-    VALUES (new_order_id, auth.uid(), p_total_amount, p_payment_method, p_transaction_details, 'Completed')
-    RETURNING id INTO tran_id;
 
-    -- Log initial order creation
-    INSERT INTO public.order_history (order_id, status)
-    VALUES (new_order_id, p_initial_status);
-    
+    -- Create a transaction record
+    INSERT INTO public.transactions (order_id, payment_method, transaction_details, amount)
+    VALUES (new_order_id, p_payment_method, p_transaction_details, p_total_amount)
+    RETURNING id INTO new_transaction_id;
+
     RETURN new_order_number;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
--- Other functions...
--- (Remaining functions from the original script)
-CREATE OR REPLACE FUNCTION public.get_all_users()
-RETURNS TABLE(id uuid, full_name text, email text, avatar_url text, role user_role, created_at timestamp with time zone) AS $$
-BEGIN
-    RETURN QUERY
-    SELECT u.id, p.full_name, u.email, p.avatar_url, p.role, u.created_at
-    FROM auth.users u
-    LEFT JOIN public.profiles p ON u.id = p.id;
-END;
-$$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION public.log_order_status_change()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.log_order_history()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
 BEGIN
-    IF OLD.status IS DISTINCT FROM NEW.status THEN
+    IF TG_OP = 'INSERT' THEN
         INSERT INTO public.order_history (order_id, status)
         VALUES (NEW.id, NEW.status);
+    ELSIF TG_OP = 'UPDATE' THEN
+        IF NEW.status IS DISTINCT FROM OLD.status THEN
+            INSERT INTO public.order_history (order_id, status)
+            VALUES (NEW.id, NEW.status);
+        END IF;
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
-CREATE OR REPLACE FUNCTION public.update_order_status_and_log(p_order_id integer, p_new_status text)
-RETURNS SETOF public.orders AS $$
-BEGIN
-    UPDATE public.orders
-    SET status = p_new_status::public.order_status
-    WHERE id = p_order_id;
-
-    RETURN QUERY SELECT * FROM public.orders WHERE id = p_order_id;
-END;
-$$ LANGUAGE plpgsql;
+CREATE TRIGGER log_order_history_trigger
+AFTER INSERT OR UPDATE ON public.orders
+FOR EACH ROW EXECUTE FUNCTION public.log_order_history();
 
 
--- =================================================================
--- 4. TRIGGERS
--- =================================================================
--- Trigger to call handle_new_user on new user sign up
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+-- Seed Data
+INSERT INTO public.categories (id, name, slug, parent_id, icon) OVERRIDING SYSTEM VALUE VALUES
+(1, 'Fruits & Vegetables', 'fruits-vegetables', NULL, 'Apple'),
+(2, 'Meat & Fish', 'meat-fish', NULL, 'Beef'),
+(3, 'Snacks', 'snacks', NULL, 'Cookie'),
+(4, 'Pet Care', 'pet-care', NULL, 'Dog'),
+(5, 'Home & Cleaning', 'home-cleaning', NULL, 'Home'),
+(6, 'Dairy', 'dairy', NULL, 'Milk'),
+(7, 'Cooking', 'cooking', NULL, 'Soup'),
+(8, 'Breakfast', 'breakfast', NULL, 'Cake'),
+(9, 'Beverage', 'beverage', NULL, 'GlassWater'),
+(10, 'Fruits', 'fruits', 1, NULL),
+(11, 'Vegetables', 'vegetables', 1, NULL),
+(12, 'Meat', 'meat', 2, NULL),
+(13, 'Fish', 'fish', 2, NULL);
 
--- Trigger to set created_at and updated_at on settings table
-DROP TRIGGER IF EXISTS set_settings_timestamp ON public.settings;
-CREATE TRIGGER set_settings_timestamp
-BEFORE UPDATE ON public.settings
-FOR EACH ROW
-EXECUTE FUNCTION public.trigger_set_timestamp();
+INSERT INTO public.tags (id, name, slug) OVERRIDING SYSTEM VALUE VALUES
+(1, 'fresh', 'fresh'),
+(2, 'healthy', 'healthy'),
+(3, 'organic', 'organic'),
+(4, 'sale', 'sale');
 
--- Trigger to log order status changes
-DROP TRIGGER IF EXISTS on_order_status_change ON public.orders;
-CREATE TRIGGER on_order_status_change
-    AFTER UPDATE OF status ON public.orders
-    FOR EACH ROW
-    EXECUTE FUNCTION public.log_order_status_change();
+INSERT INTO public.products (id, name, description, price, original_price, featured_image_url, status, stock, unit) OVERRIDING SYSTEM VALUE VALUES
+(1, 'Apples', 'An apple is a sweet, edible fruit produced by an apple tree.', 1.60, 2.00, 'https://images.unsplash.com/photo-1439127989242-c3749a012eac?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxyZWQlMjBhcHBsZXN8ZW58MHx8fHwxNzY4ODg3MzQxfDA&ixlib=rb-4.1.0&q=80&w=1080', 'active', 50, '1lb'),
+(2, 'Baby Spinach', 'Tender and mild baby spinach leaves, perfect for salads.', 0.60, NULL, 'https://images.unsplash.com/photo-1598278242809-6c21ee17aef1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxzcGluYWNofGVufDB8fHx8MTc2ODk3ODI1N3ww&ixlib=rb-4.1.0&q=80&w=1080', 'active', 30, '2lb'),
+(3, 'Blueberries', 'Sweet and juicy blueberries, packed with antioxidants.', 3.00, NULL, 'https://images.unsplash.com/photo-1606757389667-45c2024f9fa4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxibHVlYmVycmllc3xlbnwwfHx8fDE3Njg5MDQ2ODR8MA&ixlib=rb-4.1.0&q=80&w=1080', 'active', 40, '1lb'),
+(4, 'Brussels Sprout', 'Small, cabbage-like buds with a nutty flavor.', 3.69, 4.50, 'https://images.unsplash.com/photo-1670843840538-9fe8d95b59f5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxicnVzc2VscyUyMHNwcm91dHxlbnwwfHx8fDE3Njg5MDA4NjR8MA&ixlib=rb-4.1.0&q=80&w=1080', 'active', 25, '1lb'),
+(5, 'Clementines', 'Small, sweet, and easy-to-peel citrus fruits.', 2.50, 2.75, 'https://images.unsplash.com/photo-1706773183787-c03c3eb709f4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjbGVtZW50aW5lc3xlbnwwfHx8fDE3Njg5MDA4NjR8MA&ixlib=rb-4.1.0&q=80&w=1080', 'active', 60, '1lb'),
+(6, 'Sweet Corn', 'Fresh and sweet corn on the cob.', 1.80, NULL, 'https://images.unsplash.com/photo-1675501342249-bdaaeb27c5cf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzd2VldCUyMGNvcm58ZW58MHx8fHwxNzY4OTAwODY0fDA&ixlib=rb-4.1.0&q=80&w=1080', 'active', 35, '1lb'),
+(7, 'Cucumber', 'Cool and crisp cucumber, great for salads and sandwiches.', 0.75, NULL, 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxjdWN1bWJlcnxlbnwwfHx8fDE3Njg5MDA4NjR8MA&ixlib=rb-4.1.0&q=80&w=1080', 'active', 50, '1pc'),
+(8, 'Dates', 'Naturally sweet and chewy dates.', 4.50, NULL, 'https://images.unsplash.com/photo-1649335889120-4084d7456c7c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxkYXRlc3xlbnwwfHx8fDE3Njg5MDA4NjR8MA&ixlib=rb-4.1.0&q=80&w=1080', 'active', 20, '250g'),
+(9, 'French Green Beans', 'Tender and flavorful green beans.', 2.20, NULL, 'https://images.unsplash.com/photo-1574963835594-61eede2070dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxncmVlbiUyMGJlYW5zfGVufDB8fHx8MTc2ODkwMDg2NHww&ixlib=rb-4.1.0&q=80&w=1080', 'active', 45, '1lb'),
+(10, 'Radish', 'Crisp and peppery root vegetable.', 2.11, 2.59, 'https://images.unsplash.com/photo-1687199129802-3e4cc27baac0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxmcmVzaCUyMHJhZGlzaGVzfGVufDB8fHx8MTc2ODk3ODI1OHww&ixlib=rb-4.1.0&q=80&w=1080', 'active', 30, '1lbs'),
+(11, 'Wegman''s Carrots', 'Fresh and sweet carrots from Wegman''s farm.', 2.10, NULL, 'https://images.unsplash.com/photo-1741518359356-623aa8385826?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxmcmVzaCUyMGNhcnJvdHN8ZW58MHx8fHwxNzY4OTExMDI2fDA&ixlib=rb-4.1.0&q=80&w=1080', 'active', 40, '1lbs'),
+(12, 'White Radish', 'Mild and crunchy daikon radish.', 2.99, NULL, 'https://images.unsplash.com/photo-1593629718347-283811841101?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx3aGl0ZSUyMHJhZGlzaHxlbnwwfHx8fDE3Njg5NzgyNTh8MA&ixlib=rb-4.1.0&q=80&w=1080', 'active', 20, '1lbs'),
+(13, 'Baby Radish', 'Small and tender baby radishes.', 1.00, NULL, 'https://images.unsplash.com/photo-1528826234716-96aaa8e9a413?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxiYWJ5JTIwdHVybmlwfGVufDB8fHx8MTc2ODk3ODI1OHww&ixlib=rb-4.1.0&q=80&w=1080', 'active', 50, '1lbs');
 
--- =================================================================
--- 5. RLS (ROW LEVEL SECURITY)
--- =================================================================
+INSERT INTO public.product_categories (product_id, category_id) VALUES
+(1, 10), (2, 11), (3, 10), (4, 11), (5, 10), (6, 11), (7, 11), (8, 10), (9, 11), (10, 11), (11, 11), (12, 11), (13, 11);
+
+INSERT INTO public.product_tags (product_id, tag_id) VALUES
+(1, 1), (1, 2), (2, 1), (2, 3), (3, 1), (3, 2), (4, 1), (5, 1), (10, 4);
+
+INSERT INTO public.pages (id, slug, title, content, updated_at) OVERRIDING SYSTEM VALUE VALUES
+(1, 'about', 'About Us', '{"title": "About Karwanbazar", "subtitle": "Your daily dose of freshness, delivered.", "missionTitle": "Our Mission", "missionText": "<p>To provide our customers with the freshest, highest-quality groceries, sourced responsibly and delivered with care. We believe in making healthy eating convenient and accessible for everyone.</p>", "teamTitle": "Meet the Team", "team": [{"name": "John Doe", "role": "CEO & Founder", "bio": "<p>John started Karwanbazar with a passion for fresh food and technology.</p>"}, {"name": "Jane Smith", "role": "Head of Operations", "bio": "<p>Jane ensures everything runs smoothly from farm to your fork.</p>"}, {"name": "Peter Jones", "role": "Lead Developer", "bio": "<p>Peter is the wizard behind our seamless online experience.</p>"}]}', '2024-07-25 12:00:00+00'),
+(2, 'contact', 'Contact Us', '{"address": "123 Green Grocer Lane, Farmville, CA 90210", "email": "support@karwanbazar.com", "phone": "+1 (555) 123-4567"}', '2024-07-25 12:00:00+00'),
+(3, 'faq', 'Frequently Asked Questions', '{"faqs": [{"question": "What are your delivery hours?", "answer": "We deliver from 8 AM to 10 PM, 7 days a week."}, {"question": "Is there a minimum order value?", "answer": "Yes, the minimum order value is $15 for free delivery."}, {"question": "How do I return an item?", "answer": "You can initiate a return from the ''My Orders'' section within 24 hours of delivery for perishable items."}]}', '2024-07-25 12:00:00+00'),
+(4, 'privacy-policy', 'Privacy Policy', '{"html": "<h2>1. Information We Collect</h2><p>We collect information you provide directly to us, such as when you create an account, place an order, or contact customer support. This may include your name, email address, postal address, phone number, and payment information.</p><h2>2. How We Use Your Information</h2><p>We use the information we collect to process your orders, communicate with you, and improve our services. We do not sell your personal information to third parties.</p>"}', '2024-07-25 12:00:00+00'),
+(5, 'terms-and-conditions', 'Terms & Conditions', '{"html": "<h2>1. Agreement to Terms</h2><p>By using our services, you agree to be bound by these Terms and Conditions. If you do not agree, do not use the services.</p><h2>2. Orders and Payment</h2><p>All orders are subject to availability. We reserve the right to refuse or cancel an order for any reason. Payment must be received before an order is processed.</p>"}', '2024-07-25 12:00:00+00');
+
+-- Policies (RLS)
+
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.product_categories ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.product_tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public profiles are viewable by everyone." ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Users can insert their own profile." ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Users can update their own profile." ON public.profiles FOR UPDATE USING (auth.uid() = id);
+
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.contact_messages ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.order_history ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.offers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.home_page_sections ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.refunds ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.pages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own orders." ON public.orders FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can create orders for themselves." ON public.orders FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+ALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage their own addresses." ON public.addresses FOR ALL USING (auth.uid() = user_id);
+
 ALTER TABLE public.cards ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage their own cards." ON public.cards FOR ALL USING (auth.uid() = user_id);
 
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Reviews are public." ON public.reviews FOR SELECT USING (true);
+CREATE POLICY "Users can create reviews." ON public.reviews FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update their own reviews." ON public.reviews FOR UPDATE USING (auth.uid() = user_id);
 
--- Policies for public tables (read-only for all)
-CREATE POLICY "Allow public read access to products" ON public.products FOR SELECT USING (true);
-CREATE POLICY "Allow public read access to categories" ON public.categories FOR SELECT USING (true);
-CREATE POLICY "Allow public read access to tags" ON public.tags FOR SELECT USING (true);
-CREATE POLICY "Allow public read access to product_categories" ON public.product_categories FOR SELECT USING (true);
-CREATE POLICY "Allow public read access to product_tags" ON public.product_tags FOR SELECT USING (true);
-CREATE POLICY "Allow public read access to reviews" ON public.reviews FOR SELECT USING (true);
-CREATE POLICY "Allow public read access to questions" ON public.questions FOR SELECT USING (true);
-CREATE POLICY "Allow public read access to settings" ON public.settings FOR SELECT USING (true);
-CREATE POLICY "Allow public read access to offers" ON public.offers FOR SELECT USING (true);
-CREATE POLICY "Allow public read access to home_page_sections" ON public.home_page_sections FOR SELECT USING (true);
-CREATE POLICY "Allow public read access to pages" ON public.pages FOR SELECT USING (true);
+ALTER TABLE public.questions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Questions are public." ON public.questions FOR SELECT USING (true);
+CREATE POLICY "Users can ask questions." ON public.questions FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+ALTER TABLE public.wishlist ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage their own wishlist." ON public.wishlist FOR ALL USING (auth.uid() = user_id);
 
--- Policies for profiles
-CREATE POLICY "Users can view their own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users can update their own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+ALTER TABLE public.refunds ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their own refunds." ON public.refunds FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can request refunds for their orders." ON public.refunds FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can cancel their pending refund requests." ON public.refunds FOR DELETE USING (auth.uid() = user_id AND status = 'Pending');
 
--- Policies for authenticated users
-CREATE POLICY "Authenticated users can submit reviews" ON public.reviews FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Authenticated users can submit questions" ON public.questions FOR INSERT TO authenticated WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can manage their own addresses" ON public.addresses FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can view their own orders" ON public.orders FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can view their own order items" ON public.order_items FOR SELECT USING (order_id IN (SELECT id FROM public.orders WHERE user_id = auth.uid()));
-CREATE POLICY "Users can view their own transactions" ON public.transactions FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can manage their own wishlist" ON public.wishlist FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can view their own notifications" ON public.notifications FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can update their own notifications" ON public.notifications FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can manage their own refund requests" ON public.refunds FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can manage their own cards" ON public.cards FOR ALL USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-
-
--- Policies for Admins
--- (Assuming an is_admin() function or similar role check)
-
--- This is a placeholder for a role check function.
--- You MUST create this function in your database for admin policies to work.
-CREATE OR REPLACE FUNCTION public.is_admin()
-RETURNS boolean AS $$
-BEGIN
-    RETURN EXISTS (
-        SELECT 1 FROM public.profiles
-        WHERE id = auth.uid() AND role IN ('admin', 'super-admin', 'manager')
-    );
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE POLICY "Admins can manage all users" ON public.profiles FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage all products" ON public.products FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage categories" ON public.categories FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage tags" ON public.tags FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage product-category links" ON public.product_categories FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage product-tag links" ON public.product_tags FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage all reviews" ON public.reviews FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage all questions" ON public.questions FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage all orders" ON public.orders FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage all order items" ON public.order_items FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can view all transactions" ON public.transactions FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage site settings" ON public.settings FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage all notifications" ON public.notifications FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage contact messages" ON public.contact_messages FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can view order history" ON public.order_history FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage offers" ON public.offers FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage home page sections" ON public.home_page_sections FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage refunds" ON public.refunds FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage pages" ON public.pages FOR ALL USING (public.is_admin());
-CREATE POLICY "Admins can manage cards" ON public.cards FOR ALL USING (public.is_admin());
-
-
--- Grant usage on schemas
-GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT USAGE ON SCHEMA auth TO postgres, anon, authenticated, service_role;
-
--- Grant all privileges on all tables in public
-GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT ALL ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
-
-
--- Grant exec on all functions to anon, authenticated, service_role
-GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public TO anon, authenticated, service_role;
-
+  
