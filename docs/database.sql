@@ -1,61 +1,55 @@
--- This script is designed to be "idempotent," meaning you can run it multiple
--- times without causing errors. It will only create tables, types, or functions
--- if they don't already exist.
 
--- Create the ENUM type for order status if it doesn't exist
-DO $$
-BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'order_status') THEN
-        CREATE TYPE public.order_status AS ENUM (
-            'Pending',
-            'Processing',
-            'Shipped',
-            'Delivered',
-            'Cancelled',
-            'Failed'
-        );
-    END IF;
-END$$;
+-- This file documents the database schema for the Karwanbazar application.
+-- It is intended for reference and for setting up a local development environment.
+-- IMPORTANT: To apply these changes, copy the content and run it in your Supabase SQL Editor.
 
--- Create the orders table if it doesn't exist
+-- Drop the old, ambiguous 7-argument function if it exists.
+-- This ensures that only the correct 8-argument version is present.
+DROP FUNCTION IF EXISTS public.create_order(numeric, jsonb, jsonb, text, jsonb, text, numeric);
+
+
+-- Tables
 CREATE TABLE IF NOT EXISTS public.orders (
-    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    id bigint NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     user_id uuid REFERENCES auth.users(id),
-    order_number text UNIQUE NOT NULL,
-    total_amount numeric(10, 2) NOT NULL,
-    status order_status NOT NULL DEFAULT 'Pending',
+    order_number text NOT NULL UNIQUE,
+    total_amount numeric NOT NULL,
+    status text NOT NULL DEFAULT 'Pending'::text,
     shipping_details jsonb,
-    created_at timestamp with time zone DEFAULT now() NOT NULL,
-    updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    payment_details jsonb,
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at timestamp with time zone NOT NULL DEFAULT now(),
     coupon_code text,
-    discount_amount numeric(10, 2)
+    discount_amount numeric
 );
 
--- Create the order_items table if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.order_items (
-    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    order_id bigint REFERENCES public.orders(id) ON DELETE CASCADE,
-    product_id bigint,
+    id bigint NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    order_id bigint NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+    product_id bigint NOT NULL REFERENCES public.products(id),
     quantity integer NOT NULL,
-    price_at_purchase numeric(10, 2) NOT NULL,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    price_at_purchase numeric NOT NULL
 );
 
--- Create the transactions table if it doesn't exist
 CREATE TABLE IF NOT EXISTS public.transactions (
-    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
-    order_id bigint REFERENCES public.orders(id) ON DELETE CASCADE,
-    user_id uuid REFERENCES auth.users(id),
-    amount numeric(10, 2) NOT NULL,
-    payment_method text,
-    status text,
+    id bigint NOT NULL PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    order_id bigint NOT NULL REFERENCES public.orders(id) ON DELETE CASCADE,
+    amount numeric NOT NULL,
+    payment_method text NOT NULL,
+    status text NOT NULL,
     transaction_details jsonb,
-    created_at timestamp with time zone DEFAULT now() NOT NULL
+    created_at timestamp with time zone NOT NULL DEFAULT now()
 );
 
--- Create or replace the function to create an order
--- This function handles creating an order, its associated items, and a transaction record.
+-- Note: The `settings` table is a simple key-value store.
+CREATE TABLE IF NOT EXISTS public.settings (
+    key text NOT NULL PRIMARY KEY,
+    value text
+);
+
+
+-- Functions
+
+-- Function to create a new order and its associated items, and return the order number.
 CREATE OR REPLACE FUNCTION public.create_order(
     p_total_amount numeric,
     p_shipping_details jsonb,
@@ -64,42 +58,58 @@ CREATE OR REPLACE FUNCTION public.create_order(
     p_transaction_details jsonb,
     p_coupon_code text,
     p_discount_amount numeric,
-    p_initial_status text DEFAULT 'Pending'
+    p_initial_status text DEFAULT 'Processing'::text
 )
 RETURNS text
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-    v_order_id bigint;
-    v_order_number text;
-    v_user_id uuid;
+    new_order_id bigint;
+    new_order_number text;
     item record;
+    new_transaction_id bigint;
+    auth_user_id uuid;
 BEGIN
-    -- Get user ID from session
-    SELECT auth.uid() INTO v_user_id;
+    -- Get the authenticated user's ID
+    auth_user_id := auth.uid();
 
-    -- Generate a unique order number
-    v_order_number := 'KB-' || to_char(now(), 'YYMMDD') || '-' || substr(md5(random()::text), 1, 6);
+    -- Generate a unique order number (e.g., KBN-timestamp-random)
+    new_order_number := 'KBN-' || to_char(now(), 'YYMMDDHH24MISS') || '-' || upper(substring(md5(random()::text) for 6));
 
     -- Insert into orders table
-    INSERT INTO public.orders (user_id, order_number, total_amount, shipping_details, status, coupon_code, discount_amount, payment_details)
-    VALUES (v_user_id, v_order_number, p_total_amount, p_shipping_details, p_initial_status::order_status, p_coupon_code, p_discount_amount, p_transaction_details)
-    RETURNING id INTO v_order_id;
+    INSERT INTO public.orders (user_id, order_number, total_amount, status, shipping_details, coupon_code, discount_amount)
+    VALUES (auth_user_id, new_order_number, p_total_amount, p_initial_status, p_shipping_details, p_coupon_code, p_discount_amount)
+    RETURNING id INTO new_order_id;
 
     -- Insert into order_items table
     FOR item IN SELECT * FROM jsonb_to_recordset(p_items) AS x(product_id bigint, quantity int, price numeric)
     LOOP
         INSERT INTO public.order_items (order_id, product_id, quantity, price_at_purchase)
-        VALUES (v_order_id, item.product_id, item.quantity, item.price);
+        VALUES (new_order_id, item.product_id, item.quantity, item.price);
     END LOOP;
-
+    
     -- Insert into transactions table
-    IF p_payment_method IS NOT NULL THEN
-      INSERT INTO public.transactions (order_id, user_id, amount, payment_method, status, transaction_details)
-      VALUES (v_order_id, v_user_id, p_total_amount, p_payment_method, p_initial_status, p_transaction_details);
-    END IF;
+    INSERT INTO public.transactions (order_id, amount, payment_method, status, transaction_details)
+    VALUES (new_order_id, p_total_amount, p_payment_method, p_initial_status, p_transaction_details)
+    RETURNING id INTO new_transaction_id;
 
-    RETURN v_order_number;
+    -- Return the generated order number
+    RETURN new_order_number;
 END;
 $$;
+
+
+-- Grant permissions
+GRANT EXECUTE ON FUNCTION public.create_order(numeric, jsonb, jsonb, text, jsonb, text, numeric, text) TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE orders_id_seq TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE order_items_id_seq TO authenticated;
+GRANT USAGE, SELECT ON SEQUENCE transactions_id_seq TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.orders TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.order_items TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.transactions TO authenticated;
+GRANT SELECT ON TABLE public.settings TO authenticated;
+GRANT SELECT ON TABLE public.products TO authenticated;
+
+-- Make sure RLS is enabled on these tables and policies are in place
+-- that allow authenticated users to perform these actions on their own data.

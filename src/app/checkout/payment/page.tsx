@@ -90,40 +90,23 @@ export default function PaymentPage() {
 
         const fetchSettings = async () => {
             setLoadingSettings(true);
-            const { data, error } = await supabase.from('settings').select('key, value');
-            if (error) {
-                toast({ variant: 'destructive', title: 'Error fetching settings' });
-                setLoadingSettings(false);
-                return;
-            }
+            const { data } = await supabase.rpc('get_all_settings');
+            const settingsData = data?.[0] || {};
+            
+            setPaymentSettings(settingsData);
+            document.title = `Payment | ${settingsData.site_title || 'Karwanbazar'}`;
 
-            if (data) {
-                const settingsData = data.reduce((acc, { key, value }) => {
-                    if (!key) return acc;
-                    if (key.startsWith('enable_') || key === 'maintenance_mode') {
-                        (acc as any)[key] = value === 'true';
-                    } else {
-                        (acc as any)[key] = value;
-                    }
-                    return acc;
-                }, {} as { [key: string]: any });
-                
-                setPaymentSettings(settingsData);
-                document.title = `Payment | ${settingsData.site_title || 'Karwanbazar'}`;
-
-                // Set default payment method
-                if (settingsData.enable_card_payment) {
-                    setSelectedMethod('card');
-                } else if (settingsData.enable_mobile_banking) {
-                    setSelectedMethod('mobile-banking');
-                } else if (settingsData.enable_aamarpay) {
-                    setSelectedMethod('aamarpay');
-                } else if (settingsData.enable_cod) {
-                    setSelectedMethod('cod');
-                }
-            } else {
-                 document.title = `Payment | Karwanbazar`;
+            // Set default payment method
+            if (settingsData.enable_card_payment) {
+                setSelectedMethod('card');
+            } else if (settingsData.enable_mobile_banking) {
+                setSelectedMethod('mobile-banking');
+            } else if (settingsData.enable_aamarpay) {
+                setSelectedMethod('aamarpay');
+            } else if (settingsData.enable_cod) {
+                setSelectedMethod('cod');
             }
+            
             setLoadingSettings(false);
         };
         fetchSettings();
@@ -157,10 +140,10 @@ export default function PaymentPage() {
             p_transaction_details: transactionDetails,
             p_coupon_code: appliedDiscount?.code || null,
             p_discount_amount: discountAmount,
+            p_initial_status: 'Processing'
         });
 
         if (error) {
-            console.log('error',error)
             toast({
                 variant: 'destructive',
                 title: 'Order Failed',
