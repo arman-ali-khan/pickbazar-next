@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
         throw new Error("Transaction ID (mer_txnid) not found in aamarPay response.");
     }
 
-    if (pay_status === 'Successful') {
+    if (pay_status === 'Successful') {Loading 
         const cookieStore = cookies();
         const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
             cookies: {
