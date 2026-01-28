@@ -12,7 +12,7 @@ import { Separator } from '@/components/ui/separator';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from '@/components/ui/input';
-import { CreditCard, Landmark, Smartphone, ShieldCheck, Trash2 } from 'lucide-react';
+import { CreditCard, Landmark, Smartphone, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
@@ -22,7 +22,6 @@ import Image from 'next/image';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createOrderNotification } from '@/app/actions/order';
 import { Dialog, DialogTrigger } from '@/components/ui/dialog';
-import { AamarPayDialog } from '@/components/aamarpay-dialog';
 
 interface ShippingInfo {
   firstName: string;
@@ -101,8 +100,6 @@ export default function PaymentPage() {
                 setSelectedMethod('card');
             } else if (settingsData.enable_mobile_banking) {
                 setSelectedMethod('mobile-banking');
-            } else if (settingsData.enable_aamarpay) {
-                setSelectedMethod('aamarpay');
             } else if (settingsData.enable_cod) {
                 setSelectedMethod('cod');
             }
@@ -296,16 +293,6 @@ export default function PaymentPage() {
                             )}
                            </>
                         )}
-                        {paymentSettings?.enable_aamarpay && (
-                             <Label htmlFor="aamarpay" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
-                                <ShieldCheck className="h-6 w-6 text-primary" />
-                                <div className="flex-1">
-                                <p className="font-semibold">aamarPay</p>
-                                <p className="text-sm text-muted-foreground">Secure online payment gateway</p>
-                                </div>
-                                <RadioGroupItem value="aamarpay" id="aamarpay" />
-                            </Label>
-                        )}
                         {paymentSettings?.enable_cod && (
                             <Label htmlFor="cod" className="flex items-center gap-4 p-4 border rounded-md cursor-pointer hover:bg-muted/50 has-[:checked]:bg-primary/10 has-[:checked]:border-primary">
                                 <Landmark className="h-6 w-6 text-primary" />
@@ -343,25 +330,9 @@ export default function PaymentPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                 {selectedMethod === 'aamarpay' ? (
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button className="w-full h-12 text-lg" disabled={isProcessing || total < 0}>
-                                {`Pay $${total.toFixed(2)}`}
-                            </Button>
-                        </DialogTrigger>
-                        <AamarPayDialog
-                            amount={total}
-                            shippingInfo={shippingInfo}
-                            cartItems={cartItems}
-                            appliedDiscount={appliedDiscount}
-                        />
-                    </Dialog>
-                ) : (
-                    <Button onClick={handlePayment} className="w-full h-12 text-lg" disabled={isProcessing || total < 0 || (selectedMethod === 'mobile-banking' && (!trxId || !mobileLast4))}>
-                        {isProcessing ? 'Processing...' : `Pay $${total.toFixed(2)}`}
-                    </Button>
-                )}
+                <Button onClick={handlePayment} className="w-full h-12 text-lg" disabled={isProcessing || total < 0 || (selectedMethod === 'mobile-banking' && (!trxId || !mobileLast4))}>
+                    {isProcessing ? 'Processing...' : `Pay $${total.toFixed(2)}`}
+                </Button>
               </CardFooter>
             </Card>
         </div>
