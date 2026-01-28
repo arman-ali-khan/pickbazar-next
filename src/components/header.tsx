@@ -325,6 +325,14 @@ export default function Header({ logoUrl: propLogoUrl, siteTitle: propSiteTitle 
     }
   };
 
+  const handleNotificationClick = async (notification: UserNotification) => {
+    if (!notification.is_read) {
+      // Let realtime subscription handle the UI update for simplicity
+      await supabase.from('notifications').update({ is_read: true }).eq('id', notification.id);
+    }
+    router.push(notification.link || '/profile/notifications');
+  };
+
   const userName = user?.user_metadata?.full_name || user?.user_metadata?.name;
   const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url;
   const allowedAdminRoles = ['admin', 'manager', 'super-admin'];
@@ -459,16 +467,12 @@ export default function Header({ logoUrl: propLogoUrl, siteTitle: propSiteTitle 
                       <DropdownMenuSeparator />
                       {notifications.length > 0 ? (
                         notifications.map(n => (
-                          <DropdownMenuItem key={n.id} asChild className={cn("cursor-pointer", !n.is_read && "bg-primary/10")}>
-                            <Link href={n.link || '/profile/notifications'}>
-                              <div className="flex flex-col">
-                                <p className={cn("font-semibold text-sm", !n.is_read && "font-bold")}>{n.title}</p>
-                                <p className="text-xs text-muted-foreground truncate">{n.message}</p>
-                                <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
-                                  {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
-                                </p>
-                              </div>
-                            </Link>
+                          <DropdownMenuItem key={n.id} onClick={() => handleNotificationClick(n)} className={cn("cursor-pointer flex flex-col items-start gap-1 p-2", !n.is_read && "bg-primary/10")}>
+                              <p className={cn("font-semibold text-sm", !n.is_read && "font-bold")}>{n.title}</p>
+                              <p className="text-xs text-muted-foreground truncate w-full">{n.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
+                                {formatDistanceToNow(new Date(n.created_at), { addSuffix: true })}
+                              </p>
                           </DropdownMenuItem>
                         ))
                       ) : (

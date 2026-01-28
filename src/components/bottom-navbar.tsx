@@ -210,9 +210,11 @@ export default function BottomNavbar() {
         setUnreadCount(notifications.filter(n => !n.is_read).length);
     }, [notifications]);
 
-    const markAsRead = async (id: number) => {
-        await supabase.from('notifications').update({ is_read: true }).eq('id', id);
-        setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    const handleNotificationClick = async (notification: UserNotification) => {
+        if (!notification.is_read) {
+            await supabase.from('notifications').update({ is_read: true }).eq('id', notification.id);
+        }
+        router.push(notification.link || '/profile/notifications');
     };
 
     const handleProfileClick = () => {
@@ -289,14 +291,12 @@ export default function BottomNavbar() {
                         <DropdownMenuSeparator />
                         {notifications.length > 0 ? (
                             notifications.slice(0, 4).map((notification) => (
-                                 <DropdownMenuItem key={notification.id} onSelect={() => markAsRead(notification.id)} asChild className={cn("flex flex-col items-start gap-1 p-2 cursor-pointer", !notification.is_read && "bg-primary/10")}>
-                                    <Link href={notification.link || '/profile/notifications'}>
-                                        <p className={cn("font-semibold text-sm", !notification.is_read && "font-bold")}>{notification.title}</p>
-                                        <p className="text-xs text-muted-foreground whitespace-normal">{notification.message}</p>
-                                        <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
-                                            {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
-                                        </p>
-                                    </Link>
+                                 <DropdownMenuItem key={notification.id} onClick={() => handleNotificationClick(notification)} className={cn("flex flex-col items-start gap-1 p-2 cursor-pointer", !notification.is_read && "bg-primary/10")}>
+                                    <p className={cn("font-semibold text-sm", !notification.is_read && "font-bold")}>{notification.title}</p>
+                                    <p className="text-xs text-muted-foreground whitespace-normal">{notification.message}</p>
+                                    <p className="text-xs text-muted-foreground mt-1" suppressHydrationWarning>
+                                        {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                                    </p>
                                 </DropdownMenuItem>
                             ))
                         ) : (
