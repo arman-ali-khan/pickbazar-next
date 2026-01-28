@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
@@ -16,6 +17,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import React from 'react';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface Category { id: number; name: string; parent_id: number | null; }
 interface CategoryWithSubcategories extends Category { subcategories: Category[]; }
@@ -243,7 +245,61 @@ export default function EditProductPage() {
     };
 
 
-    if (loading) return <p>Loading product details...</p>;
+    if (loading) {
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <div className="flex items-center gap-4">
+                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-6 w-40" />
+                    <div className="hidden items-center gap-2 md:ml-auto md:flex">
+                        <Skeleton className="h-9 w-24" />
+                        <Skeleton className="h-9 w-32" />
+                    </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-[1fr_250px] lg:grid-cols-3 lg:gap-8">
+                    <div className="grid auto-rows-max items-start gap-4 lg:col-span-2 lg:gap-8">
+                        <Card>
+                            <CardHeader><Skeleton className="h-6 w-32" /></CardHeader>
+                            <CardContent className="space-y-4">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-24 w-full" />
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader><Skeleton className="h-6 w-24" /></CardHeader>
+                            <CardContent className="space-y-6">
+                                <Skeleton className="h-40 w-full" />
+                                <Skeleton className="h-40 w-full" />
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+                            <CardContent className="grid md:grid-cols-2 gap-4">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </CardContent>
+                        </Card>
+                    </div>
+                    <div className="grid auto-rows-max items-start gap-4 lg:gap-8">
+                        <Card>
+                            <CardHeader><Skeleton className="h-6 w-28" /></CardHeader>
+                            <CardContent><Skeleton className="h-10 w-full" /></CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader><Skeleton className="h-6 w-36" /></CardHeader>
+                            <CardContent className="space-y-4">
+                                <Skeleton className="h-10 w-full" />
+                                <Skeleton className="h-10 w-full" />
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </main>
+        );
+    }
 
     return (
          <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">

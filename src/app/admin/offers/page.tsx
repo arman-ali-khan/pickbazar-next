@@ -31,6 +31,7 @@ import Image from "next/image";
 import { format } from "date-fns";
 import { useSupabase } from "@/lib/supabase/provider";
 import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type OfferStatus = 'active' | 'inactive' | 'expired';
 
@@ -88,7 +89,47 @@ export default function AdminOffersPage() {
     };
 
     if (loading) {
-        return <p>Loading offers...</p>;
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <Skeleton className="h-7 w-24" />
+                            <Skeleton className="h-4 w-64 mt-2" />
+                        </div>
+                        <Skeleton className="h-8 w-28" />
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-32" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-40" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-20" /></TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-16 w-16 rounded-md" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-40" /></TableCell>
+                                        <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-12" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                                        <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </main>
+        )
     }
 
     return (

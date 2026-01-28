@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -44,6 +45,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type UserRole = 'customer' | 'manager' | 'admin' | 'super-admin';
 interface User {
@@ -170,7 +172,57 @@ export default function AdminUsersPage() {
     };
 
     if (loading) {
-        return <p>Loading users...</p>;
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <Card>
+                    <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                            <Skeleton className="h-7 w-20" />
+                            <Skeleton className="h-4 w-72 mt-2" />
+                        </div>
+                        <Skeleton className="h-9 w-36" />
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead><Skeleton className="h-4 w-8" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-40" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-5 w-5" /></TableCell>
+                                        <TableCell><div className="flex items-center gap-3"><Skeleton className="h-9 w-9 rounded-full" /><div className="space-y-1"><Skeleton className="h-4 w-24" /><Skeleton className="h-3 w-32" /></div></div></TableCell>
+                                        <TableCell><Skeleton className="h-6 w-24 rounded-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                        <TableCell className="text-right"><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+                 <Card className="mt-8">
+                    <CardHeader>
+                        <Skeleton className="h-7 w-56" />
+                        <Skeleton className="h-4 w-full" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid gap-2"><Skeleton className="h-4 w-12" /><Skeleton className="h-10 w-full" /></div>
+                        <div className="grid gap-2"><Skeleton className="h-4 w-32" /><Skeleton className="h-20 w-full" /></div>
+                        <div className="grid gap-2"><Skeleton className="h-4 w-16" /><Skeleton className="h-10 w-full" /></div>
+                    </CardContent>
+                    <CardFooter className="border-t pt-6">
+                        <Skeleton className="h-10 w-48" />
+                    </CardFooter>
+                </Card>
+            </main>
+        )
     }
     
     const isAllSelected = selectedUserIds.length > 0 && selectedUserIds.length === filteredUsers.length;

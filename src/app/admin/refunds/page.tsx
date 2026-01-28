@@ -32,6 +32,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from 'date-fns';
 import { updateRefundStatus } from "@/app/actions/order";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 interface AdminRefund {
@@ -94,7 +95,44 @@ export default function AdminRefundsPage() {
     }
 
     if (loading) {
-        return <p>Loading refunds...</p>
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-7 w-24" />
+                        <Skeleton className="h-4 w-64 mt-2" />
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-32" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-40" /></TableHead>
+                                    <TableHead><Skeleton className="h-4 w-24" /></TableHead>
+                                    <TableHead><span className="sr-only">Actions</span></TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {Array.from({ length: 5 }).map((_, i) => (
+                                    <TableRow key={i}>
+                                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                                        <TableCell><div className="flex items-center gap-2"><Skeleton className="h-8 w-8 rounded-full" /><Skeleton className="h-5 w-24" /></div></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                                        <TableCell><Skeleton className="h-5 w-48" /></TableCell>
+                                        <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                                        <TableCell><Skeleton className="h-8 w-8 ml-auto" /></TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </main>
+        );
     }
 
     return (

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -11,6 +12,7 @@ import { useRouter, notFound, useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabase } from '@/lib/supabase/provider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface UserProfile {
     id: string;
@@ -126,7 +128,40 @@ export default function EditUserPage() {
     };
 
     if (loading) {
-        return <p>Loading user details...</p>;
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-6 w-24" />
+                </div>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-4 w-56" />
+                    </CardHeader>
+                    <CardContent className="grid gap-6">
+                        <div className="grid gap-3">
+                            <Skeleton className="h-4 w-16" />
+                            <div className="flex items-center gap-4">
+                                <Skeleton className="h-20 w-20 rounded-full" />
+                                <Skeleton className="h-20 flex-1" />
+                            </div>
+                        </div>
+                        <div className="grid gap-3">
+                            <Skeleton className="h-4 w-20" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                        <div className="grid gap-3">
+                            <Skeleton className="h-4 w-12" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                    </CardContent>
+                    <CardFooter className="justify-end border-t pt-6">
+                        <Skeleton className="h-10 w-32" />
+                    </CardFooter>
+                </Card>
+            </main>
+        );
     }
 
     if (!user) {

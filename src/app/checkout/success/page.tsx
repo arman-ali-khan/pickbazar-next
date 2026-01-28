@@ -14,6 +14,7 @@ import { Separator } from '@/components/ui/separator';
 import { useSupabase } from '@/lib/supabase/provider';
 import { useAppDispatch } from '@/lib/redux/hooks';
 import { clearCart } from '@/lib/redux/slices/cartSlice';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 interface OrderItem {
@@ -31,6 +32,45 @@ interface OrderData {
     total_amount: number;
     order_items: OrderItem[];
 }
+
+const SuccessSkeleton = () => (
+    <div className="max-w-2xl mx-auto">
+        <Card>
+            <CardHeader className="text-center">
+                <Skeleton className="h-16 w-16 mx-auto rounded-full mb-4" />
+                <Skeleton className="h-7 w-48 mx-auto" />
+                <Skeleton className="h-4 w-64 mx-auto" />
+                <Skeleton className="h-6 w-40 mx-auto mt-2" />
+            </CardHeader>
+            <CardContent>
+                <Skeleton className="h-5 w-32 mb-4" />
+                <div className="space-y-4">
+                    {Array.from({ length: 2 }).map((_, i) => (
+                        <div key={i} className="flex items-center justify-between">
+                            <div className="flex items-center gap-4">
+                                <Skeleton className="h-16 w-16 rounded-md" />
+                                <div className="space-y-1">
+                                    <Skeleton className="h-5 w-32" />
+                                    <Skeleton className="h-4 w-16" />
+                                </div>
+                            </div>
+                            <Skeleton className="h-5 w-16" />
+                        </div>
+                    ))}
+                </div>
+                <Separator className="my-4" />
+                <div className="flex justify-between font-bold text-lg">
+                    <Skeleton className="h-6 w-16" />
+                    <Skeleton className="h-6 w-24" />
+                </div>
+                 <div className="flex flex-col sm:flex-row gap-4 mt-6">
+                    <Skeleton className="h-11 w-full" />
+                    <Skeleton className="h-11 w-full" />
+                </div>
+            </CardContent>
+        </Card>
+    </div>
+);
 
 function SuccessContent() {
     const searchParams = useSearchParams();
@@ -94,11 +134,7 @@ function SuccessContent() {
     }, [getOrderDetails, authLoading]);
 
     if (loading || authLoading) {
-        return (
-            <div className="text-center">
-                <p>Loading order details...</p>
-            </div>
-        );
+        return <SuccessSkeleton />;
     }
     
     if (!orderData) {
@@ -161,7 +197,7 @@ export default function OrderSuccessPage() {
         <div className="bg-muted/20 min-h-screen">
             <Header />
             <main className="container mx-auto py-12">
-                <Suspense fallback={<p>Loading...</p>}>
+                <Suspense fallback={<SuccessSkeleton />}>
                     <SuccessContent />
                 </Suspense>
             </main>

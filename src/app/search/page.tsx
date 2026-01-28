@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -193,7 +194,7 @@ function SearchContent() {
                         </div>
                     </div>
                     {loading ? (
-                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
                         {Array.from({ length: 8 }).map((_, i) => (
                           <div key={i} className="space-y-2">
                             <Skeleton className="aspect-[3/2] w-full" />
@@ -232,11 +233,45 @@ function SearchContent() {
   );
 }
 
+const SearchSkeleton = () => (
+    <main className="container py-12">
+        <div className="text-center mb-12">
+            <Skeleton className="h-12 w-3/4 mx-auto" />
+            <Skeleton className="h-5 w-1/2 mx-auto mt-4" />
+        </div>
+         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-8">
+            <div className="hidden lg:block space-y-6">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-40 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-32 w-full" />
+            </div>
+            <div>
+                <div className="flex justify-between items-center mb-6">
+                    <Skeleton className="h-10 w-32 lg:hidden" />
+                    <Skeleton className="h-6 w-40 hidden sm:block" />
+                    <Skeleton className="h-10 w-48" />
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="space-y-2">
+                        <Skeleton className="aspect-[3/2] w-full" />
+                        <Skeleton className="h-4 w-20" />
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    </main>
+);
+
 export default function SearchPage() {
   return (
     <div className="bg-background min-h-screen">
       <Header />
-      <Suspense fallback={<div className="container py-12 text-center">Loading search results...</div>}>
+      <Suspense fallback={<SearchSkeleton />}>
         <SearchContent />
       </Suspense>
       <CartDrawer />

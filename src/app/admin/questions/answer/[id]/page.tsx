@@ -17,6 +17,7 @@ import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { useSupabase } from '@/lib/supabase/provider';
 import { answerQuestion } from '@/app/actions/product';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function AnswerQuestionPage() {
@@ -57,7 +58,41 @@ export default function AnswerQuestionPage() {
 
 
     if (loading) {
-        return <p>Loading question...</p>;
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-6 w-40" />
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid auto-rows-max gap-4 lg:col-span-2">
+                        <Card>
+                            <CardHeader><Skeleton className="h-6 w-40" /></CardHeader>
+                            <CardContent className="space-y-6">
+                                <Skeleton className="h-16 w-full" />
+                                <div className="space-y-2">
+                                    <Skeleton className="h-6 w-3/4" />
+                                    <Skeleton className="h-4 w-1/2" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-4 w-24" />
+                                    <Skeleton className="h-36 w-full" />
+                                </div>
+                            </CardContent>
+                            <CardFooter className="justify-end border-t pt-6">
+                                <Skeleton className="h-10 w-32" />
+                            </CardFooter>
+                        </Card>
+                    </div>
+                    <div className="grid auto-rows-max gap-4">
+                        <Card>
+                            <CardHeader><Skeleton className="h-6 w-24" /></CardHeader>
+                            <CardContent><Skeleton className="h-6 w-40" /></CardContent>
+                        </Card>
+                    </div>
+                </div>
+            </main>
+        )
     }
 
     if (!question) {

@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import { useSupabase } from '@/lib/supabase/provider';
+import { Skeleton } from '@/components/ui/skeleton';
 
 type PromoStatus = 'active' | 'inactive';
 
@@ -122,7 +123,33 @@ export default function EditPromoPage() {
     };
 
     if (loading) {
-        return <p>Loading promo details...</p>
+        return (
+            <main className="grid flex-1 items-start gap-4 sm:py-0 md:gap-8">
+                <div className="flex items-center gap-4 mb-4">
+                    <Skeleton className="h-7 w-7" />
+                    <Skeleton className="h-6 w-32" />
+                </div>
+                <Card>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-32" />
+                        <Skeleton className="h-4 w-64" />
+                    </CardHeader>
+                    <CardContent className="grid gap-6">
+                        <Skeleton className="h-48 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <Skeleton className="h-10 w-full" />
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <Skeleton className="h-10 w-full" />
+                            <Skeleton className="h-10 w-full" />
+                        </div>
+                        <Skeleton className="h-10 w-full" />
+                    </CardContent>
+                    <CardFooter className="justify-end border-t pt-6">
+                        <Skeleton className="h-10 w-32" />
+                    </CardFooter>
+                </Card>
+            </main>
+        )
     }
 
     return (
