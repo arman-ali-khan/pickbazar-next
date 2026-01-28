@@ -1,3 +1,4 @@
+
 import { createClient } from '@/lib/supabase/server';
 import type { Product } from '@/lib/data';
 import RecommendedProductsClient from './recommended-products-client';
@@ -8,7 +9,7 @@ export default async function RecommendedProducts() {
   const { data, error } = await supabase.rpc('get_recommended_products', { p_limit: 12 });
 
   if (error) {
-    console.error("Error fetching recommended products:", error);
+    console.warn("Could not fetch recommended products:", error.message);
     return null;
   }
 
