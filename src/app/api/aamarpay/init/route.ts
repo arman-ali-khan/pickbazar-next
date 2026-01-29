@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
         price: item.price,
     }));
     
-    const { data: orderNumber, error: createOrderError } = await supabase.rpc('create_order', {
+    const { data: orderNumber, error: createOrderError } = await supabase.rpc('create_new_order', {
         p_total_amount: amount,
         p_shipping_details: shippingInfo,
         p_items: orderItems,
