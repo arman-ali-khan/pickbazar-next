@@ -1,3 +1,4 @@
+
 'use client';
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -108,6 +109,17 @@ export default function AdminHeader() {
         setIsMarking(false);
     };
 
+    const handleLogout = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            toast({ variant: "destructive", title: "Logout Failed", description: error.message });
+        } else {
+            router.push('/');
+            router.refresh();
+            toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
+        }
+    };
+
     const userName = profile?.full_name || user?.user_metadata?.full_name || 'Admin';
     const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url;
 
@@ -197,7 +209,7 @@ export default function AdminHeader() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild><Link href="/admin/settings">Settings</Link></DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Logout</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
         </header>

@@ -36,7 +36,7 @@ import {
   LayoutPanelTop
 } from 'lucide-react';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '../ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { cn } from '@/lib/utils';
@@ -46,6 +46,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import Image from 'next/image';
 import { useSupabase } from '@/lib/supabase/provider';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 const navItems = [
   { href: '/admin', icon: LayoutGrid, label: 'Dashboard' },
@@ -183,6 +184,8 @@ interface AdminSidebarProps {
 export default function AdminSidebar({ logoUrl, siteTitle }: AdminSidebarProps) {
   const { state } = useSidebar();
   const { supabase, user } = useSupabase();
+  const router = useRouter();
+  const { toast } = useToast();
   const [counts, setCounts] = useState({
       notifications: 0,
       products: 0,
@@ -254,6 +257,17 @@ export default function AdminSidebar({ logoUrl, siteTitle }: AdminSidebarProps) 
   const userEmail = user?.email || 'admin@karwanbazar.com';
   const userAvatar = profile?.avatar_url || user?.user_metadata?.avatar_url;
 
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+        toast({ variant: "destructive", title: "Logout Failed", description: error.message });
+    } else {
+        router.push('/');
+        router.refresh();
+        toast({ title: 'Logged Out', description: 'You have been successfully logged out.' });
+    }
+  };
+
   return (
     <Sidebar collapsible="icon" className="border-r bg-card hidden md:flex">
        <SidebarHeader className={cn("flex items-center justify-between  p-4", state === 'expanded' ? 'flex-row-reverse' : '')}>
@@ -306,7 +320,7 @@ export default function AdminSidebar({ logoUrl, siteTitle }: AdminSidebarProps) 
                 <p className="font-semibold text-sm">{userName}</p>
                 <p className="text-xs text-muted-foreground">{userEmail}</p>
             </div>
-             <Button variant="ghost" size="icon" className={cn("transition-all duration-300", state === 'expanded' ? 'ml-auto' : '')}>
+             <Button variant="ghost" size="icon" className={cn("transition-all duration-300", state === 'expanded' ? 'ml-auto' : '')} onClick={handleLogout}>
                 <LogOut className="h-5 w-5" />
             </Button>
         </div>
