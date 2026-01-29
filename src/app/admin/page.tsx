@@ -58,7 +58,7 @@ export default async function AdminDashboardPage() {
     const [
         revenueData,
         ordersCountData,
-        newCustomersCountData,
+        allUsersData,
         productsInStockData,
         reviewsData,
         questionsData,
@@ -69,7 +69,7 @@ export default async function AdminDashboardPage() {
     ] = await Promise.all([
         supabase.from('orders').select('total_amount').eq('status', 'Delivered'),
         supabase.from('orders').select('id', { count: 'exact', head: true }),
-        supabase.from('profiles').select('id', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo.toISOString()),
+        supabase.rpc('get_all_users'),
         supabase.from('products').select('id', { count: 'exact', head: true }).eq('status', 'active'),
         supabase.rpc('get_admin_reviews'),
         supabase.rpc('get_admin_questions'),
@@ -81,7 +81,10 @@ export default async function AdminDashboardPage() {
 
     const totalRevenue = revenueData.data?.reduce((acc, order) => acc + order.total_amount, 0) || 0;
     const totalOrders = ordersCountData.count || 0;
-    const newCustomers = newCustomersCountData.count || 0;
+    
+    const allUsers = allUsersData.data as { created_at: string }[] | null;
+    const newCustomers = allUsers ? allUsers.filter(user => new Date(user.created_at) >= thirtyDaysAgo).length : 0;
+    
     const productsInStock = productsInStockData.count || 0;
     
     const pendingReviews = (reviewsData.data as AdminReview[] || []).filter((r) => r.status === 'Pending');
