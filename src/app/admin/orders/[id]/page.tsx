@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
@@ -16,7 +17,6 @@ import type { OrderStatus } from '@/lib/data';
 import { Skeleton } from '@/components/ui/skeleton';
 import { updateOrderStatus } from '@/app/actions/order';
 import { Timeline, TimelineItem, TimelinePoint, TimelineTime, TimelineTitle } from '@/components/ui/timeline';
-import { format } from 'date-fns';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 
@@ -42,7 +42,7 @@ interface OrderDetails {
         city: string;
         state: string;
         zip: string;
-    };
+    } | null;
     profiles: {
         full_name: string;
         avatar_url: string | null;
@@ -295,21 +295,21 @@ export default function OrderDetailsPage() {
                         <CardContent className="space-y-4">
                              <div className="flex items-center gap-4">
                                 <Avatar className="h-12 w-12">
-                                    <AvatarImage src={order.profiles?.avatar_url || undefined} alt={order.shipping_details.firstName} />
-                                    <AvatarFallback>{order.shipping_details.firstName.charAt(0)}</AvatarFallback>
+                                    <AvatarImage src={order.profiles?.avatar_url || undefined} alt={order.shipping_details?.firstName} />
+                                    <AvatarFallback>{order.shipping_details?.firstName?.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold">{order.shipping_details.firstName} {order.shipping_details.lastName}</p>
-                                    <p className="text-sm text-muted-foreground">{order.shipping_details.email}</p>
-                                    <p className="text-sm text-muted-foreground">{order.shipping_details.phone}</p>
+                                    <p className="font-semibold">{order.shipping_details?.firstName} {order.shipping_details?.lastName}</p>
+                                    <p className="text-sm text-muted-foreground">{order.shipping_details?.email}</p>
+                                    <p className="text-sm text-muted-foreground">{order.shipping_details?.phone}</p>
                                 </div>
                             </div>
                             <Separator />
                             <div>
                                 <h4 className="font-semibold mb-2">Shipping Address</h4>
                                 <address className="not-italic text-muted-foreground text-sm">
-                                    {order.shipping_details.address}<br />
-                                    {order.shipping_details.city}, {order.shipping_details.state} {order.shipping_details.zip}
+                                    {order.shipping_details?.address}<br />
+                                    {order.shipping_details?.city}, {order.shipping_details?.state} {order.shipping_details?.zip}
                                 </address>
                             </div>
                         </CardContent>
