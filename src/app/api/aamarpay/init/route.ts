@@ -49,27 +49,50 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Create a 'Pending' order to get a transaction ID
-    const orderItems = cartItems.map((item: any) => ({
+    const orderNumber = 'KBZ-' + Date.now();
+    const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+            user_id: user.id,
+            order_number: orderNumber,
+            total_amount: amount,
+            shipping_details: shippingInfo,
+            status: 'Pending',
+            payment_method: 'aamarpay',
+            payment_details: null,
+            coupon_code: appliedDiscount?.code || null,
+            discount_amount: appliedDiscount?.discount || 0,
+        })
+        .select('id')
+        .single();
+    
+    if (orderError || !orderData) {
+        throw new Error(orderError?.message || 'Failed to create order for aamarPay.');
+    }
+
+    const newOrderId = orderData.id;
+    
+    const orderItemsToInsert = cartItems.map((item: any) => ({
+        order_id: newOrderId,
         product_id: item.id,
         quantity: item.quantity,
-        price: item.price,
+        price_at_purchase: item.price,
     }));
-    
-    const { data: orderNumber, error: createOrderError } = await supabase.rpc('create_new_order', {
-        p_total_amount: amount,
-        p_shipping_details: shippingInfo,
-        p_items: orderItems,
-        p_payment_method: 'aamarpay',
-        p_transaction_details: null,
-        p_coupon_code: appliedDiscount?.code || null,
-        p_discount_amount: appliedDiscount?.discount || 0,
-        p_initial_status: 'Pending',
-        p_user_id: user.id
+
+    const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItemsToInsert);
+
+    if (itemsError) {
+        await supabase.from('orders').delete().eq('id', newOrderId);
+        throw new Error(itemsError.message || 'Failed to add items to order for aamarPay.');
+    }
+
+    await supabase.from('order_history').insert({
+        order_id: newOrderId,
+        status: 'Pending',
     });
 
-    if (createOrderError) {
-      throw new Error(`Failed to create order: ${createOrderError.message}`);
-    }
 
     const origin = request.nextUrl.origin;
     const paymentData = {
@@ -102,6 +125,8 @@ export async function POST(request: NextRequest) {
 
     if (aamarPayData.result !== 'true' || !aamarPayData.payment_url) {
         console.error("aamarPay initialization failed:", aamarPayData);
+        // Attempt to update the order status to Failed
+        await supabase.from('orders').update({ status: 'Failed' }).eq('id', newOrderId);
         throw new Error('Failed to initialize aamarPay payment gateway.');
     }
     

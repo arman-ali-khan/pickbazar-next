@@ -120,45 +120,74 @@ export default function PaymentPage() {
 
         setIsProcessing(true);
 
-        const orderItems = cartItems.map(item => ({
-            product_id: item.id,
-            quantity: item.quantity,
-            price: item.price,
-        }));
-        
-        const transactionDetails = selectedMethod === 'mobile-banking' ? { trxId, mobileLast4 } : null;
+        try {
+            const transactionDetails = selectedMethod === 'mobile-banking' ? { trxId, mobileLast4 } : null;
+            const orderNumber = 'KBZ-' + Date.now();
 
-        const { data: orderNumber, error } = await supabase.rpc('create_new_order', {
-            p_total_amount: total,
-            p_shipping_details: shippingInfo,
-            p_items: orderItems,
-            p_payment_method: selectedMethod,
-            p_transaction_details: transactionDetails,
-            p_coupon_code: appliedDiscount?.code || null,
-            p_discount_amount: discountAmount,
-            p_initial_status: 'Processing',
-            p_user_id: user.id
-        });
+            const { data: orderData, error: orderError } = await supabase
+                .from('orders')
+                .insert({
+                    user_id: user.id,
+                    order_number: orderNumber,
+                    total_amount: total,
+                    shipping_details: shippingInfo,
+                    status: 'Processing',
+                    payment_method: selectedMethod,
+                    payment_details: transactionDetails,
+                    coupon_code: appliedDiscount?.code || null,
+                    discount_amount: discountAmount,
+                })
+                .select('id')
+                .single();
 
-        if (error) {
+            if (orderError || !orderData) {
+                throw new Error(orderError?.message || 'Failed to create order.');
+            }
+
+            const newOrderId = orderData.id;
+
+            const orderItemsToInsert = cartItems.map(item => ({
+                order_id: newOrderId,
+                product_id: item.id,
+                quantity: item.quantity,
+                price_at_purchase: item.price,
+            }));
+
+            const { error: itemsError } = await supabase
+                .from('order_items')
+                .insert(orderItemsToInsert);
+
+            if (itemsError) {
+                // Attempt to delete the order if items fail to insert
+                await supabase.from('orders').delete().eq('id', newOrderId);
+                throw new Error(itemsError.message || 'Failed to add items to order.');
+            }
+
+            // Log initial status in order_history
+            await supabase.from('order_history').insert({
+                order_id: newOrderId,
+                status: 'Processing',
+            });
+            
+            // Notify Admins
+            await createOrderNotification(orderNumber, total);
+
+            localStorage.removeItem('shippingInfo');
+            localStorage.removeItem('appliedDiscount');
+            localStorage.removeItem('shippingCost');
+            dispatch(clearCart());
+            
+            router.push(`/checkout/success?order_number=${orderNumber}`);
+
+        } catch (error: any) {
             toast({
                 variant: 'destructive',
                 title: 'Order Failed',
                 description: error.message,
             });
+        } finally {
             setIsProcessing(false);
-            return;
         }
-
-        // Notify Admins
-        await createOrderNotification(orderNumber, total);
-
-        localStorage.removeItem('shippingInfo');
-        localStorage.removeItem('appliedDiscount');
-        localStorage.removeItem('shippingCost');
-        dispatch(clearCart());
-        
-        router.push(`/checkout/success?order_number=${orderNumber}`);
     };
 
   return (
