@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -137,7 +136,8 @@ export default function PaymentPage() {
             p_transaction_details: transactionDetails,
             p_coupon_code: appliedDiscount?.code || null,
             p_discount_amount: discountAmount,
-            p_initial_status: 'Processing'
+            p_initial_status: 'Processing',
+            p_user_id: user.id
         });
 
         if (error) {

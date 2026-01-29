@@ -18,6 +18,11 @@ export async function POST(request: NextRequest) {
         },
     });
 
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return NextResponse.json({ error: 'User is not authenticated' }, { status: 401 });
+    }
+
     // 1. Fetch aamarPay settings
     const { data: settingsList, error: settingsError } = await supabase.from('settings').select('key, value');
 
@@ -58,7 +63,8 @@ export async function POST(request: NextRequest) {
         p_transaction_details: null,
         p_coupon_code: appliedDiscount?.code || null,
         p_discount_amount: appliedDiscount?.discount || 0,
-        p_initial_status: 'Pending'
+        p_initial_status: 'Pending',
+        p_user_id: user.id
     });
 
     if (createOrderError) {
