@@ -100,30 +100,68 @@ function SuccessContent() {
         }
 
         setLoading(true);
-        const { data, error } = await supabase
-            .from('orders')
-            .select(`
-                order_number,
-                total_amount,
-                order_items (
-                    id,
-                    quantity,
-                    price_at_purchase,
-                    products (
-                        name,
-                        featured_image_url
-                    )
-                )
-            `)
-            .eq('order_number', orderNumber)
-            .single();
         
-        if (error || !data) {
-            console.error("Failed to fetch order data", error);
+        // 1. Fetch the order
+        const { data: order, error: orderError } = await supabase
+            .from('orders')
+            .select('id, order_number, total_amount')
+            .eq('order_number', orderNumber)
+            .eq('user_id', user.id) // Ensure user can only see their own order
+            .single();
+
+        if (orderError || !order) {
+            console.error("Failed to fetch order data for success page:", orderError);
             setOrderData(null);
-        } else {
-            setOrderData(data as OrderData);
+            setLoading(false);
+            return;
         }
+
+        // 2. Fetch order items
+        const { data: orderItems, error: itemsError } = await supabase
+            .from('order_items')
+            .select('id, quantity, price_at_purchase, product_id')
+            .eq('order_id', order.id);
+        
+        if (itemsError || !orderItems) {
+            console.error("Failed to fetch order items:", itemsError);
+            setOrderData(null);
+            setLoading(false);
+            return;
+        }
+
+        // 3. Fetch product details for all items
+        const productIds = orderItems.map(item => item.product_id);
+        const { data: productsData, error: productsError } = await supabase
+            .from('products')
+            .select('id, name, featured_image_url')
+            .in('id', productIds);
+
+        if (productsError) {
+            console.error("Failed to fetch product details:", productsError);
+            setOrderData(null);
+            setLoading(false);
+            return;
+        }
+
+        const productsById = productsData.reduce((acc, p) => {
+            acc[p.id] = p;
+            return acc;
+        }, {} as Record<number, { id: number, name: string, featured_image_url: string }>);
+
+        // 4. Combine data
+        const hydratedItems: OrderItem[] = orderItems.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            price_at_purchase: item.price_at_purchase,
+            products: productsById[item.product_id] || null
+        }));
+
+        setOrderData({
+            order_number: order.order_number,
+            total_amount: order.total_amount,
+            order_items: hydratedItems,
+        });
+
         setLoading(false);
     }, [orderNumber, supabase, user]);
 
