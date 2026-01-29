@@ -260,14 +260,58 @@ export default function AdminOrdersPage() {
 
     const fetchOrders = useCallback(async () => {
         setLoading(true);
-        const { data, error } = await supabase.rpc('get_admin_order_list');
 
-        if (error) {
-            toast({ variant: 'destructive', title: 'Error fetching orders', description: error.message });
+        const { data: ordersData, error: ordersError } = await supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (ordersError) {
+            toast({ variant: 'destructive', title: 'Error fetching orders', description: ordersError.message });
             setAllOrders([]);
-        } else if (data) {
-            setAllOrders(data as OrderWithCustomer[]);
+            setLoading(false);
+            return;
         }
+
+        if (!ordersData) {
+            setAllOrders([]);
+            setLoading(false);
+            return;
+        }
+
+        const userIds = [...new Set(ordersData.map(o => o.user_id).filter(id => id !== null))];
+        let profilesMap = new Map<string, { full_name: string | null; avatar_url: string | null; }>();
+
+        if (userIds.length > 0) {
+            const { data: profilesData, error: profilesError } = await supabase
+                .from('profiles')
+                .select('id, full_name, avatar_url')
+                .in('id', userIds);
+
+            if (profilesError) {
+                toast({ variant: 'destructive', title: 'Error fetching customer profiles', description: profilesError.message });
+            } else if (profilesData) {
+                profilesData.forEach(p => profilesMap.set(p.id, p));
+            }
+        }
+
+        const combinedOrders: OrderWithCustomer[] = ordersData.map(order => {
+            const profile = order.user_id ? profilesMap.get(order.user_id) : null;
+            const shippingDetails = order.shipping_details as { firstName?: string, lastName?: string, email?: string };
+
+            return {
+                id: order.id,
+                order_number: order.order_number,
+                created_at: order.created_at,
+                total_amount: order.total_amount,
+                status: order.status,
+                customer_name: profile?.full_name || `${shippingDetails?.firstName || ''} ${shippingDetails?.lastName || ''}`.trim() || 'Guest User',
+                customer_email: shippingDetails?.email || 'N/A',
+                customer_avatar_url: profile?.avatar_url || null,
+            };
+        });
+
+        setAllOrders(combinedOrders);
         setLoading(false);
     }, [supabase, toast]);
 
