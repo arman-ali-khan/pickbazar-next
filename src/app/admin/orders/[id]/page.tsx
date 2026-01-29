@@ -19,6 +19,7 @@ import { updateOrderStatus } from '@/app/actions/order';
 import { Timeline, TimelineItem, TimelinePoint, TimelineTime, TimelineTitle } from '@/components/ui/timeline';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
+import { format } from 'date-fns';
 
 interface OrderItem {
     id: number;
@@ -88,51 +89,48 @@ export default function OrderDetailsPage() {
     const fetchOrder = useCallback(async () => {
         setLoading(true);
 
-        // 1. Fetch the main order data
+        // 1. Fetch Order
         const { data: orderData, error: orderError } = await supabase
             .from('orders')
             .select('*')
             .eq('order_number', orderNumber)
             .single();
-
+        
         if (orderError || !orderData) {
             toast({ variant: "destructive", title: "Error", description: `Order not found. ${orderError?.message || ''}`.trim() });
             notFound();
             return;
         }
-
-        // 2. Fetch related data in parallel
-        const [itemsRes, profileRes, timelineRes] = await Promise.all([
-            supabase.from('order_items').select('*, products(name, featured_image_url)').eq('order_id', orderData.id),
+        
+        // Parallel fetch for related data
+        const [profileRes, itemsRes, timelineRes] = await Promise.all([
+            // 2. Fetch Profile
             orderData.user_id ? supabase.from('profiles').select('full_name, avatar_url').eq('id', orderData.user_id).single() : Promise.resolve({ data: null, error: null }),
+            // 3. Fetch Order Items
+            supabase.from('order_items').select('*, products(name, featured_image_url)').eq('order_id', orderData.id),
+            // 4. Fetch Timeline
             supabase.from('order_history').select('status, created_at').eq('order_id', orderData.id).order('created_at', { ascending: true })
         ]);
-        
-        const { data: orderItems, error: itemsError } = itemsRes;
-        const { data: profile, error: profileError } = profileRes;
+
+        const { data: profileData } = profileRes;
+        const { data: orderItemsData } = itemsRes;
         const { data: timelineData, error: timelineError } = timelineRes;
 
-        if (itemsError) {
-            toast({ variant: "destructive", title: "Error", description: `Could not fetch order items. ${itemsError.message}` });
-        }
-        if (profileError && profileError.code !== 'PGRST116') { // Ignore 'not found' for guests
-             toast({ variant: "destructive", title: "Error", description: `Could not fetch customer profile. ${profileError.message}` });
-        }
         if (timelineError) {
             toast({ variant: "destructive", title: "Error", description: `Could not fetch order history. ${timelineError.message}` });
+        } else {
+            setTimeline(timelineData || []);
         }
 
-        const constructedOrder: OrderDetails = {
-            ...(orderData as any), // Cast to any to avoid type conflicts before assembly
-            order_items: (orderItems || []) as OrderItem[],
-            profiles: profile ? {
-                full_name: profile.full_name,
-                avatar_url: profile.avatar_url,
-            } : null,
+        // 5. Combine data
+        const combinedOrder: OrderDetails = {
+            ...orderData,
+            profiles: profileData,
+            order_items: (orderItemsData || []) as OrderItem[],
+            transaction_details: orderData.payment_details,
         };
 
-        setOrder(constructedOrder);
-        setTimeline(timelineData || []);
+        setOrder(combinedOrder);
         setLoading(false);
     }, [orderNumber, supabase, toast]);
 
