@@ -77,28 +77,73 @@ export default function MyOrderDetailsPage() {
     const getOrder = useCallback(async () => {
         if (!user) return;
         setLoading(true);
-        const { data, error } = await supabase
+
+        // 1. Fetch the order
+        const { data: orderData, error: orderError } = await supabase
             .from('orders')
-            .select(`
-                *,
-                order_items ( id, quantity, price_at_purchase, products ( name, featured_image_url ) )
-            `)
+            .select('*')
             .eq('user_id', user.id)
             .eq('order_number', orderNumber)
             .single();
 
-        if (error || !data) {
+        if (orderError || !orderData) {
             toast({ variant: "destructive", title: "Error", description: "Order not found or you don't have permission to view it." });
             notFound();
-        } else {
-            setOrder(data as OrderDetails);
-            const { data: timelineData } = await supabase.rpc('get_order_history', { p_order_id: data.id });
-            if (timelineData) {
-                setTimeline(timelineData);
-            }
+            return;
         }
+
+        // 2. Fetch order items
+        const { data: orderItems, error: itemsError } = await supabase
+            .from('order_items')
+            .select('id, quantity, price_at_purchase, product_id')
+            .eq('order_id', orderData.id);
+        
+        if (itemsError) {
+            toast({ variant: "destructive", title: "Error", description: "Could not fetch order items." });
+            setLoading(false);
+            return;
+        }
+
+        // 3. Fetch product details
+        const productIds = orderItems.map(item => item.product_id);
+        const { data: productsData, error: productsError } = await supabase
+            .from('products')
+            .select('id, name, featured_image_url')
+            .in('id', productIds);
+        
+        if (productsError) {
+            toast({ variant: "destructive", title: "Error", description: "Could not fetch product details for the order." });
+            setLoading(false);
+            return;
+        }
+
+        const productsById = productsData.reduce((acc, p) => {
+            acc[p.id] = p;
+            return acc;
+        }, {} as Record<number, { id: number, name: string, featured_image_url: string }>);
+
+        const hydratedItems: OrderItem[] = orderItems.map(item => ({
+            id: item.id,
+            quantity: item.quantity,
+            price_at_purchase: item.price_at_purchase,
+            products: productsById[item.product_id] || null
+        }));
+
+        const combinedOrder: OrderDetails = {
+            ...orderData,
+            order_items: hydratedItems,
+        };
+        
+        setOrder(combinedOrder);
+        
+        const { data: timelineData } = await supabase.rpc('get_order_history', { p_order_id: orderData.id });
+        if (timelineData) {
+            setTimeline(timelineData);
+        }
+        
         setLoading(false);
     }, [user, supabase, toast, orderNumber]);
+
 
     useEffect(() => {
         getOrder();
