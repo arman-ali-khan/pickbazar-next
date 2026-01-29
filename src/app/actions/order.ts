@@ -231,7 +231,7 @@ export async function updateOrderStatus(orderId: number, status: string) {
         return { error: 'Permission denied.' };
     }
 
-    const { data: order, error: updateError } = await supabase.rpc('update_order_status_and_log', {
+    const { data: order, error: updateError } = await supabase.rpc('update_order_status_and_log_v2', {
         p_order_id: orderId,
         p_new_status: status
     });
