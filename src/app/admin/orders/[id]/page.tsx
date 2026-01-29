@@ -88,9 +88,10 @@ export default function OrderDetailsPage() {
     const fetchOrder = useCallback(async () => {
         setLoading(true);
 
+        // Step 1: Fetch the main order details
         const { data: orderData, error: orderError } = await supabase
             .from('orders')
-            .select(`*, profiles (full_name, avatar_url)`)
+            .select('*')
             .eq('order_number', orderNumber)
             .single();
 
@@ -100,31 +101,34 @@ export default function OrderDetailsPage() {
             return;
         }
 
-        const { data: orderItemsData, error: itemsError } = await supabase
-            .from('order_items')
-            .select(`
-                id,
-                quantity,
-                price_at_purchase,
-                products ( name, featured_image_url )
-            `)
-            .eq('order_id', orderData.id);
+        // Step 2: Fetch related data in parallel
+        const [profileRes, itemsRes, timelineRes] = await Promise.all([
+            orderData.user_id ? supabase.from('profiles').select('full_name, avatar_url').eq('id', orderData.user_id).single() : Promise.resolve({ data: null, error: null }),
+            supabase.from('order_items').select(`id, quantity, price_at_purchase, products ( name, featured_image_url )`).eq('order_id', orderData.id),
+            supabase.from('order_history').select('status, created_at').eq('order_id', orderData.id).order('created_at', { ascending: true })
+        ]);
+        
+        const { data: profileData } = profileRes;
+        const { data: orderItemsData, error: itemsError } = itemsRes;
+        const { data: timelineData, error: timelineError } = timelineRes;
 
         if (itemsError) {
             toast({ variant: "destructive", title: "Error", description: `Could not fetch order items. ${itemsError.message}` });
         }
         
+        if (timelineError) {
+             toast({ variant: "destructive", title: "Error", description: `Could not fetch order history. ${timelineError.message}` });
+        }
+        
+        // Step 3: Construct the final order object
         const constructedOrder = {
             ...orderData,
+            profiles: profileData,
             order_items: orderItemsData || [],
         } as OrderDetails;
 
         setOrder(constructedOrder);
-
-        const { data: timelineData } = await supabase.rpc('get_order_history', { p_order_id: orderData.id });
-        if (timelineData) {
-            setTimeline(timelineData);
-        }
+        setTimeline(timelineData || []);
         
         setLoading(false);
     }, [orderNumber, supabase, toast]);
