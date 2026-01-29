@@ -261,35 +261,13 @@ export default function AdminOrdersPage() {
     const fetchOrders = useCallback(async () => {
         setLoading(true);
         const { data, error } = await supabase
-            .from('orders')
-            .select(`
-                id,
-                order_number,
-                created_at,
-                total_amount,
-                status,
-                shipping_details,
-                profiles (
-                    avatar_url
-                )
-            `)
-            .order('created_at', { ascending: false });
+            .rpc('get_admin_order_list');
 
         if (error) {
             toast({ variant: 'destructive', title: 'Error fetching orders', description: error.message });
             setAllOrders([]);
         } else if (data) {
-            const transformedData: OrderWithCustomer[] = data.map((order: any) => ({
-                id: order.id,
-                order_number: order.order_number,
-                created_at: order.created_at,
-                total_amount: order.total_amount,
-                status: order.status,
-                customer_name: `${order.shipping_details?.firstName || ''} ${order.shipping_details?.lastName || ''}`.trim() || null,
-                customer_email: order.shipping_details?.email || 'No email available',
-                customer_avatar_url: order.profiles?.avatar_url || null,
-            }));
-            setAllOrders(transformedData);
+            setAllOrders(data as OrderWithCustomer[]);
         }
         setLoading(false);
     }, [supabase, toast]);
@@ -474,11 +452,3 @@ export default function AdminOrdersPage() {
         </main>
     );
 }
-
-    
-
-    
-
-    
-
-    
