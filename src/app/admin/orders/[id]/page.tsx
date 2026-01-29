@@ -33,6 +33,7 @@ interface OrderDetails {
     created_at: string;
     total_amount: number;
     status: OrderStatus;
+    user_id: string | null;
     shipping_details: {
         firstName: string;
         lastName: string;
@@ -44,7 +45,7 @@ interface OrderDetails {
         zip: string;
     } | null;
     profiles: {
-        full_name: string;
+        full_name: string | null;
         avatar_url: string | null;
     } | null;
     order_items: OrderItem[];
@@ -86,21 +87,45 @@ export default function OrderDetailsPage() {
 
     const fetchOrder = useCallback(async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .rpc('get_admin_order_details', { p_order_number: orderNumber });
 
-        if (error || !data || data.length === 0) {
-            toast({ variant: "destructive", title: "Error", description: `Order not found. ${error?.message || ''}`.trim() });
+        const { data: orderData, error: orderError } = await supabase
+            .from('orders')
+            .select(`*, profiles (full_name, avatar_url)`)
+            .eq('order_number', orderNumber)
+            .single();
+
+        if (orderError || !orderData) {
+            toast({ variant: "destructive", title: "Error", description: `Order not found. ${orderError?.message || ''}`.trim() });
             notFound();
-        } else {
-            const orderData = data[0] as OrderDetails;
-            setOrder(orderData);
-
-            const { data: timelineData } = await supabase.rpc('get_order_history', { p_order_id: orderData.id });
-            if (timelineData) {
-                setTimeline(timelineData);
-            }
+            return;
         }
+
+        const { data: orderItemsData, error: itemsError } = await supabase
+            .from('order_items')
+            .select(`
+                id,
+                quantity,
+                price_at_purchase,
+                products ( name, featured_image_url )
+            `)
+            .eq('order_id', orderData.id);
+
+        if (itemsError) {
+            toast({ variant: "destructive", title: "Error", description: `Could not fetch order items. ${itemsError.message}` });
+        }
+        
+        const constructedOrder = {
+            ...orderData,
+            order_items: orderItemsData || [],
+        } as OrderDetails;
+
+        setOrder(constructedOrder);
+
+        const { data: timelineData } = await supabase.rpc('get_order_history', { p_order_id: orderData.id });
+        if (timelineData) {
+            setTimeline(timelineData);
+        }
+        
         setLoading(false);
     }, [orderNumber, supabase, toast]);
 
@@ -391,3 +416,5 @@ export default function OrderDetailsPage() {
         </main>
     );
 }
+
+    
