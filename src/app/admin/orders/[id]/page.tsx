@@ -88,37 +88,48 @@ export default function OrderDetailsPage() {
     const fetchOrder = useCallback(async () => {
         setLoading(true);
 
-        const { data: rpcData, error: rpcError } = await supabase
-            .rpc('get_admin_order_details', { p_order_number: orderNumber });
-        
-        if (rpcError || !rpcData || rpcData.length === 0) {
-            toast({ variant: "destructive", title: "Error", description: `Order not found. ${rpcError?.message || ''}`.trim() });
+        // 1. Fetch the main order data
+        const { data: orderData, error: orderError } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('order_number', orderNumber)
+            .single();
+
+        if (orderError || !orderData) {
+            toast({ variant: "destructive", title: "Error", description: `Order not found. ${orderError?.message || ''}`.trim() });
             notFound();
             return;
         }
 
-        const orderData = rpcData[0];
+        // 2. Fetch related data in parallel
+        const [itemsRes, profileRes, timelineRes] = await Promise.all([
+            supabase.from('order_items').select('*, products(name, featured_image_url)').eq('order_id', orderData.id),
+            orderData.user_id ? supabase.from('profiles').select('full_name, avatar_url').eq('id', orderData.user_id).single() : Promise.resolve({ data: null, error: null }),
+            supabase.from('order_history').select('status, created_at').eq('order_id', orderData.id).order('created_at', { ascending: true })
+        ]);
+        
+        const { data: orderItems, error: itemsError } = itemsRes;
+        const { data: profile, error: profileError } = profileRes;
+        const { data: timelineData, error: timelineError } = timelineRes;
 
-        let timelineData: OrderTimelineItem[] = [];
-        const { data: fetchedTimeline, error: timelineError } = await supabase
-            .from('order_history')
-            .select('status, created_at')
-            .eq('order_id', orderData.id)
-            .order('created_at', { ascending: true });
-
+        if (itemsError) {
+            toast({ variant: "destructive", title: "Error", description: `Could not fetch order items. ${itemsError.message}` });
+        }
+        if (profileError && profileError.code !== 'PGRST116') { // Ignore 'not found' for guests
+             toast({ variant: "destructive", title: "Error", description: `Could not fetch customer profile. ${profileError.message}` });
+        }
         if (timelineError) {
             toast({ variant: "destructive", title: "Error", description: `Could not fetch order history. ${timelineError.message}` });
-        } else {
-            timelineData = fetchedTimeline;
         }
-        
-        const constructedOrder = {
-            ...orderData,
-            profiles: {
-                full_name: orderData.customer_name,
-                avatar_url: orderData.customer_avatar_url,
-            },
-        } as OrderDetails;
+
+        const constructedOrder: OrderDetails = {
+            ...(orderData as any), // Cast to any to avoid type conflicts before assembly
+            order_items: (orderItems || []) as OrderItem[],
+            profiles: profile ? {
+                full_name: profile.full_name,
+                avatar_url: profile.avatar_url,
+            } : null,
+        };
 
         setOrder(constructedOrder);
         setTimeline(timelineData || []);
@@ -412,7 +423,3 @@ export default function OrderDetailsPage() {
         </main>
     );
 }
-
-    
-
-    
