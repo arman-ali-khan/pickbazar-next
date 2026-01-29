@@ -260,8 +260,7 @@ export default function AdminOrdersPage() {
 
     const fetchOrders = useCallback(async () => {
         setLoading(true);
-        const { data, error } = await supabase
-            .rpc('get_admin_order_list');
+        const { data, error } = await supabase.rpc('get_admin_order_list');
 
         if (error) {
             toast({ variant: 'destructive', title: 'Error fetching orders', description: error.message });
