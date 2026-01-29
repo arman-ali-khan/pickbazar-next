@@ -1,39 +1,41 @@
--- Drops the old, broken function if it exists
+-- This script definitively fixes the admin order list page by recreating the database function
+-- with the correct column names, aliases, and data types.
+
+-- Drop the old, broken function to ensure a clean state.
 DROP FUNCTION IF EXISTS public.get_admin_order_list();
 
--- Re-creates the function with the CORRECT return types to match the table schema
+-- Create the new function with explicit column aliases that exactly match the `RETURNS TABLE` definition.
 CREATE OR REPLACE FUNCTION public.get_admin_order_list()
- RETURNS TABLE(
-    id bigint, 
-    order_number text, 
-    created_at timestamp with time zone, 
-    total_amount numeric, 
-    status public.order_status, 
-    customer_name text, 
-    customer_email text, 
+RETURNS TABLE(
+    id bigint,
+    order_number text,
+    created_at timestamptz,
+    total_amount numeric,
+    status text,
+    customer_name text,
+    customer_email text,
     customer_avatar_url text
 )
- LANGUAGE plpgsql
- SECURITY DEFINER
-AS $function$
-BEGIN
-    RETURN QUERY
-    SELECT
-        o.id,
-        o.order_number,
-        o.created_at,
-        o.total_amount,
-        o.status,
-        p.full_name,
-        u.email,
-        p.avatar_url
-    FROM
-        public.orders o
-    LEFT JOIN
-        public.profiles p ON o.user_id = p.id
-    LEFT JOIN
-        auth.users u ON o.user_id = u.id
-    ORDER BY
-        o.created_at DESC;
-END;
-$function$;
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public
+AS $$
+  SELECT
+      o.id,
+      o.order_number,
+      o.created_at,
+      o.total_amount,
+      o.status::text,
+      p.full_name AS customer_name,
+      u.email AS customer_email,
+      p.avatar_url AS customer_avatar_url
+  FROM
+      public.orders AS o
+  LEFT JOIN
+      public.profiles AS p ON o.user_id = p.id
+  LEFT JOIN
+      auth.users AS u ON o.user_id = u.id
+  ORDER BY
+      o.created_at DESC;
+$$;
+
+-- Grant permissions for authenticated users (admins) to call this function.
+GRANT EXECUTE ON FUNCTION public.get_admin_order_list() TO authenticated;
