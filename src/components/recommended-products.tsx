@@ -5,10 +5,18 @@ import RecommendedProductsClient from './recommended-products-client';
 export default async function RecommendedProducts() {
   const supabase = createClient();
   
-  const { data, error } = await supabase.rpc('get_recommended_products', { p_limit: 12 });
+  // Fetch products with highest view_count as "recommended"
+  const { data, error } = await supabase
+    .from('products')
+    .select('*')
+    .eq('status', 'active')
+    .order('view_count', { ascending: false, nulls: 'last' })
+    .limit(12);
 
-  if (error && error.message) {
-    // Error is handled gracefully by not showing the section.
+  if (error) {
+    console.error('Error fetching recommended products:', error);
+    // Gracefully fail by not showing the section
+    return null;
   }
 
   const productsToShow: Product[] = (data || []).map((p: any) => ({
