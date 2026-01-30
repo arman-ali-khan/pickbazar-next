@@ -66,30 +66,39 @@ export default async function ProductPage({ params }: { params: { id: string } }
     if (error) console.error('Error incrementing view count:', error);
   });
 
-  // Fetch all product data in parallel
-  const [productRes, relatedRes, reviewsRes, ratingStatsRes, questionsRes] = await Promise.all([
-    supabase
-      .from('products')
-      .select('*, product_categories(categories(name)), product_tags(tags(name))')
-      .eq('id', productId)
-      .single(),
-    supabase.rpc('get_related_products', { p_id: productId, p_limit: 6 }),
-    supabase.rpc('get_product_reviews', { p_product_id: productId }),
-    supabase.rpc('get_product_rating_stats', { p_product_id: productId }).single(),
-    supabase.rpc('get_product_questions', { p_product_id: productId }),
-  ]);
-
-  const { data: productData, error: productError } = productRes;
+  // Fetch product data
+  const { data: productData, error: productError } = await supabase
+    .from('products')
+    .select('*, product_categories(categories(id, name)), product_tags(tags(name))')
+    .eq('id', productId)
+    .single();
 
   if (productError || !productData) {
     console.error('Error fetching product:', productError?.message);
     notFound();
   }
   
-  const { data: relatedProductsData } = relatedRes;
+  const currentCategoryId = productData.product_categories?.[0]?.categories?.id;
+
+  // Fetch other data in parallel
+  const [reviewsRes, ratingStatsRes, questionsRes, relatedProductsRes] = await Promise.all([
+    supabase.rpc('get_product_reviews', { p_product_id: productId }),
+    supabase.rpc('get_product_rating_stats', { p_product_id: productId }).single(),
+    supabase.rpc('get_product_questions', { p_product_id: productId }),
+    currentCategoryId ? supabase
+        .from('products')
+        .select('id, name, price, original_price, featured_image_url, unit, product_categories!inner(category_id)')
+        .eq('product_categories.category_id', currentCategoryId)
+        .neq('id', productId)
+        .eq('status', 'active')
+        .limit(6)
+      : Promise.resolve({ data: [], error: null })
+  ]);
+
   const { data: reviewsData } = reviewsRes;
   const { data: ratingStatsData } = ratingStatsRes;
   const { data: questionsData } = questionsRes;
+  const { data: relatedProductsData } = relatedProductsRes;
 
 
   const relatedProducts: RelatedProduct[] = (relatedProductsData || []).map((p: any) => ({
