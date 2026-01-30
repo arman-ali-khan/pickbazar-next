@@ -117,3 +117,9 @@
   max-width: 300px;
   font-family: 'Arial', sans-serif;
 }
+
+.dialog-close{
+  background: #ddd;
+  border-radius: 8px;
+  padding: 10px 16px;
+}
