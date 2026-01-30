@@ -8,7 +8,7 @@ export function SetupSupabase() {
     <div className="flex min-h-screen w-full items-center justify-center bg-muted">
       <Card className="max-w-xl">
         <CardHeader>
-          <CardTitle>Welcome to Your Pickbazar App!</CardTitle>
+          <CardTitle>Welcome to Your Karwanbazar App!</CardTitle>
           <CardDescription>
             Just one more step to get started. You need to connect your Supabase database.
           </CardDescription>

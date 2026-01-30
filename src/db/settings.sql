@@ -12,16 +12,16 @@ CREATE TABLE IF NOT EXISTS settings (
 -- Insert default settings if they don't exist.
 -- This ensures that on repeated runs, we don't try to re-insert existing data.
 INSERT INTO settings (key, value) VALUES
-    ('site_title', 'Pickbazar'),
+    ('site_title', 'Karwanbazar'),
     ('site_subtitle', 'Your one-stop shop for fresh groceries.'),
     ('logo_url', NULL),
     ('favicon_url', NULL),
     ('link_preview_image_url', NULL),
-    ('meta_title', 'Pickbazar - Fresh Groceries Delivered'),
+    ('meta_title', 'Karwanbazar - Fresh Groceries Delivered'),
     ('meta_description', 'High-quality fresh food and grocery delivery service.'),
     ('meta_tags', 'groceries, fresh food, delivery'),
-    ('canonical_url', 'https://www.pickbazar.com'),
-    ('og_title', 'Pickbazar - Fresh Groceries Delivered'),
+    ('canonical_url', 'https://www.schoolbd.top'),
+    ('og_title', 'PickbKarwanbazarazar - Fresh Groceries Delivered'),
     ('og_description', 'The best place to buy fresh food and groceries online.'),
     ('enable_cod', 'true'),
     ('enable_mobile_banking', 'true'),

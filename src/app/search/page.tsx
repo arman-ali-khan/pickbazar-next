@@ -41,9 +41,9 @@ function SearchContent() {
 
   useEffect(() => {
     if (query) {
-      document.title = `Search for "${query}" | Pickbazar`;
+      document.title = `Search for "${query}" | Karwanbazar`;
     } else {
-      document.title = 'Search | Pickbazar';
+      document.title = 'Search | Karwanbazar';
     }
   }, [query]);
 

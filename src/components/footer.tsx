@@ -33,7 +33,7 @@ export default function Footer({ settings }: FooterProps) {
               ) : (
                   <Leaf className="h-7 w-7 text-primary" />
               )}
-              <span className="font-bold text-xl">{settings?.site_title || 'Pickbazar'}</span>
+              <span className="font-bold text-xl">{settings?.site_title || 'Karwanbazar'}</span>
             </div>
             <p className="text-muted-foreground text-sm max-w-xs">
               {settings?.site_subtitle || 'Your one-stop shop for fresh, high-quality groceries delivered to your door.'}
@@ -61,7 +61,7 @@ export default function Footer({ settings }: FooterProps) {
         </div>
         <div className="mt-8 pt-8 border-t flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-muted-foreground order-2 md:order-1 mt-4 md:mt-0">
-             © {new Date().getFullYear()} {settings?.site_title || 'Pickbazar'}. All rights reserved.
+             © {new Date().getFullYear()} {settings?.site_title || 'Karwanbazar'}. All rights reserved.
           </p>
           <div className="flex space-x-2 order-1 md:order-2">
               {socialLinks.map((link, index) => (

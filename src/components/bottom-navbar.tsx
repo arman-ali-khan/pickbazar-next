@@ -95,8 +95,8 @@ function PagesDrawer() {
                 <SheetTitle className="sr-only">Pages Menu</SheetTitle>
                 <div className="p-6">
                     <Link href="/" className="mr-6 flex items-center space-x-2 mb-6">
-                      <Leaf className="h-7 w-7 text-primary" />
-                      <h1 className="text-2xl font-bold text-gray-800">Pickbazar</h1>
+                      {/* <Leaf className="h-7 w-7 text-primary" />
+                      <h1 className="text-2xl font-bold text-gray-800">Karwanbazar</h1> */}
                     </Link>
                   <div className="flex flex-col space-y-4">
                      <Accordion type="multiple" className="w-full -my-2">
