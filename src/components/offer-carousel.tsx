@@ -16,6 +16,7 @@ import Image from 'next/image';
 export interface OfferForCarousel {
   id: number;
   title: string;
+  code: string;
   subtitle: string | null;
   image_url: string | null;
   product_ids: number[] | null;
@@ -29,7 +30,7 @@ export default function OfferCarousel({ offers }: { offers: OfferForCarousel[] }
   if (!offers || offers.length === 0) {
     return null;
   }
-
+  console.log(offers,'offers')
   return (
     <section className="py-8 px-4 md:px-8">
       <Carousel
